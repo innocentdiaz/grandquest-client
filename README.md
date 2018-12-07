@@ -1,5 +1,19 @@
 # grandquest-client
+Front-end for GrandQuest
 
+## Main technologies:
+ - Vue.js
+ - Vuex
+ - VueRouter
+ - (Vue Class Component)[https://github.com/vuejs/vue-class-component]
+ - (Vue Property Decorator)[https://github.com/kaorun343/vue-property-decorator]
+ - Babel ES6
+ - TypeScript
+ - TSLint
+ - Postcss
+ - Sass
+ - Cypress
+ 
 ## Project setup
 ```
 yarn install
