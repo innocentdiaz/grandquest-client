@@ -20,7 +20,7 @@ export default new Router({
       component: About,
     },
     {
-      path: '/devlog',
+      path: '/devlog/:id?',
       name: 'devlog',
       component: DevLog,
     },
