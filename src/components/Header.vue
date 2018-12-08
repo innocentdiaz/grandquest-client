@@ -1,7 +1,7 @@
 <template>
   <div class="main-header">
     <div class="main-header__content">
-      <a title="looking for a logo!" href="/" id="title">GRANDQUEST</a>
+      <router-link title="Looking for a logo!" id="title" to="/">GRANDQUEST</router-link>
       <div class="main-header__navigation">
         <a href="forum">Forum</a>
         <a href="signup">Register</a>
@@ -9,9 +9,9 @@
       </div>
     </div>
     <div class="main-header__sub">
-      <a href="about">about</a>
+      <router-link to="about">about</router-link>
       <a href="contributing">contributing</a>
-      <a href="devlog">Dev Log</a>
+      <router-link to="devlog">devlog</router-link>
     </div>
   </div>
 </template>
