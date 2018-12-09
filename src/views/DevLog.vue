@@ -3,13 +3,20 @@
     <div class="main-thumb"></div>
     <div class="main">
       <div class="content">
-        <h1 class="title">GrandQuest - Devlog</h1>
+        <h1 v-if="!selectedBlog" class="title" >GrandQuest - Devlog</h1>
+        <h2 v-else class="subtitle-back" v-on:click="navigateTo(false)">Back</h2>
         <div id="devlog-container">
           <div v-if="loading">
             <span>
-              Now loading devlogs
+              Now loading 
               <ActivityIndicator/>
             </span>
+          </div>
+          <div v-else-if="selectedBlog">
+            <h1 class="log-title">{{ selectedBlog.title }}</h1>
+            <h2 class="date">Created {{new Date(selectedBlog.ts).toLocaleDateString()}}</h2>
+            <div class="log-single" v-html="selectedBlog.html">
+            </div>
           </div>
           <div v-else-if="devLogs.length">
             <div v-for="log in devLogs" :key="log.id" class="devlog-item" v-on:click="navigateTo(log.id)">
@@ -35,6 +42,7 @@
 </template>
 
 <script lang="ts">
+import { ApiResponse } from 'apisauce';
 import { Component, Vue } from 'vue-property-decorator';
 import ActivityIndicator from '../components/ActivityIndicator.vue';
 import api from '../api';
@@ -46,42 +54,64 @@ import api from '../api';
   data() {
     return {
       loading: true,
+      selectedBlog: null,
       devLogs: [],
     };
   },
-  methods: {
-    navigateTo: function (devLogId) {
-      this.$router.push(`/devlog/${devLogId}`)
-    },
-    setLog: function(id) {
-      api.get(`/devlog/${id}`)
-      .then((res) => {
-        if (res.ok) {
-          // set html
-        }
-      });
-    }
-  }
 })
 
 export default class DevLog extends Vue {
   private mounted() {
-    const { id } = this.$route.params
+    const id = typeof this.$route.params.id === 'string' && !isNaN(Number(this.$route.params.id))
+      ? Number(this.$route.params.id)
+      : false;
 
     if (id) {
-      // request and show the devlog html!
+      this.setLog(id);
     } else {
-      api.get('/devlog')
-      .then((res) => {
-        const body = {...res.data};
-
-        if (res.ok) {
-          this.devLogs = body.data;
-        }
-
-        this.loading = false
-      });
+      this.fetchBlogs();
     }
+  }
+  private navigateTo(id: any) {
+    if (!id) {
+      this.$router.replace(`/devlog`);
+      this.fetchBlogs();
+    } else {
+      this.$router.replace(`/devlog/${id}`);
+      this.setLog(id);
+    }
+  }
+  private fetchBlogs() {
+    this.$data.loading = false;
+    this.$data.selectedBlog = null;
+    this.$data.devLogs = [];
+
+    api.get('/devlog')
+    .then((res: ApiResponse<any>) => {
+      const body = res.data;
+
+      if (res.ok) {
+        this.$data.devLogs = body.data;
+      }
+
+      this.$data.loading = false;
+    });
+  }
+  private setLog(id: any) {
+    this.$data.loading = true;
+    api.get(`/devlog/${id}`)
+    .then((res: ApiResponse<any>) => {
+      this.$data.loading = false;
+      if (res.ok) {
+        const body = res.data;
+        this.$data.selectedBlog = body.data;
+      } else {
+        this.showError('Could not load html');
+      }
+    });
+  }
+  private showError(err: string) {
+    alert(err);
   }
 }
 </script>
@@ -117,10 +147,28 @@ $mainGrey: rgb(179, 179, 179);
       }
     } 
   }
+  .subtitle-back {
+    transition: .2s all ease-in-out;
+  }
+  .subtitle-back:hover {
+    color: $mainBlue;
+    cursor: pointer;
+    padding-left: 2px;
+    border-left: 5px solid $mainBlue;
+  }
 
   #devlog-container {
     min-height: 70vh;
 
+    .log-title {
+      margin-bottom: 0;
+    }
+    .date {
+      margin-bottom: 2em;
+      color: $mainGrey;
+      font-size: large;
+      font-weight: lighter;
+    }
     .devlog-item {
       border-bottom: 1px solid $mainGrey;
       padding-bottom: 1em;
