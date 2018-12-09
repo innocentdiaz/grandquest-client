@@ -11,12 +11,12 @@ import { Component, Vue, Prop } from 'vue-property-decorator';
 
 @Component
 export default class ActivityIndicator extends Vue {
-  data() {
+  @Prop(Number) private size!: number | string;
+  private data() {
     return {
-      chosenSize: 30 || this.$props.size
-    }
+      chosenSize: 30 || this.$props.size,
+    };
   }
-  @Prop(Number) size!: number | string
 }
 </script>
 
