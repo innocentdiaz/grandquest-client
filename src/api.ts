@@ -1,4 +1,4 @@
-import { create, ApiErrorResponse } from 'apisauce';
+import { create } from 'apisauce';
 
 const api = create({
   baseURL: process.env.VUE_APP_API_ROOT,
