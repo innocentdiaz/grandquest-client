@@ -1,17 +1,30 @@
 <template>
   <div class="main-header">
-    <div class="main-header__content">
-      <router-link title="Looking for a logo!" id="title" to="/">GRANDQUEST</router-link>
-      <div class="main-header__navigation">
-        <a href="forum">Forum</a>
-        <a href="signup">Register</a>
-        <a href="login">Log In</a>
+    <div class="header-main">
+      <div class="title-container">
+        <h1>GRANDQUEST</h1>
+      </div>
+      <div class="auth-container">
+        <div class="sign">
+          <h2>{{'Skepdimi'}}</h2>
+          <div>
+
+          </div>
+        </div>
       </div>
     </div>
-    <div class="main-header__sub">
-      <router-link to="about">about</router-link>
-      <a href="contributing">contributing</a>
-      <router-link to="devlog">devlog</router-link>
+    <div class="header-sub">
+      <ul>
+        <li>
+          <router-link to="/">Home</router-link>
+        </li>
+        <li>
+          <router-link to="/forum">Forum</router-link>
+        </li>
+        <li>
+          <router-link to="/shops">Shops</router-link>
+        </li>
+      </ul>
     </div>
   </div>
 </template>
@@ -33,48 +46,63 @@ $mainGrey: rgb(179, 179, 179);
 .main-header {
   background: white;
   z-index: 100;
-  
-  #title { 
-    margin: 0;
-    margin-right: auto;
-    font-size: larger;
-    text-decoration: none;
-    color: $mainBlue;
-  }
-  .main-header__content {
-    // background: #005485;
+
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  .header-main {
+    min-height: 150px;
+    background-image: url('../assets/img/devlog.jpeg');
     display: flex;
-    align-items: center;
-    padding: 0 10px;
-    .main-header__navigation {
-      flex: 1;
-      text-align: right;
+    flex-direction: row;
+    align-items: stretch;
+    justify-content: space-between;
+
+    .title-container {
       display: flex;
-      flex-direction: row;
-      justify-content: flex-end;
       align-items: center;
-      min-height: 4rem;
-  
-      a {
-        color: $mainGrey;
-        text-decoration: none;
-        margin-right: 5px;
-        transition: .2s all ease-in-out;
+      justify-content: center;
+
+      padding: 1em 2em 1em .75em;
+      color: white;
+      background: #111;
+    }
+
+    .auth-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5em 1em;
+
+      .sign {
+        text-align: right;
+        min-width: 180px;
+        height: 100%;
+        padding: 10px;
+
+        color: white;
+        background: saddlebrown;
+        border-radius: 1em;
+        h2 {
+          margin: 5px;
+        }
       }
-  }
-    a:hover {
-      color: $mainBlack;
     }
   }
-  .main-header__sub {
+  .header-sub ul {
+    font-size: large;
     align-self: stretch;
     background: $mainBlack;
+    margin: 0;
     padding: 5px 10px;
 
     display: flex;
     flex-direction: row;
     align-items: center;
     justify-content: flex-start;
+    li {
+      list-style: none;
+    }
     a {
       color: white;
       text-decoration: none;
