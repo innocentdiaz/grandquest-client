@@ -8,27 +8,41 @@
         </div>
         <div class="forum-content">
             <div class="forum-main">
+                <!-- header rendering -->
                 <div class="header">
-                    <router-link to="/forum">FORUMS</router-link> /
-                    <router-link v-if="selectedForum.title" to="selectedForumRoute">{{selectedForum.title}}</router-link>
+                    <span
+                            class="forum-link"
+                            v-on:click="backToMainForums"
+                    >FORUMS</span>
                 </div>
-                <div v-if="mainForums.loading" class="container">
+
+                <!-- container rendering -->
+                <div v-if="mainForums.loading" class="mainForums">
                     <span>
                         <ActivityIndicator /> Now loading
                     </span>
                 </div>
-                <div class="container">
-                    <div v-for="forum in mainForums.data" :key="forum.title" class="main-forum-container" v-on:click="navigateToForum(forum.title)">
-                        <h1 class="title">{{ forum.title }}</h1>
-                        <p class="description">
-                            {{ forum.description }}
-                        </p>
-                        <ul class="tags">
-                            <li>#computers</li>
-                            <li>#some</li>
-                            <li>#tags</li>
-                        </ul>
+                <div v-else class="mainForums">
+                    <div class="grid">
+                        <div v-for="forum in mainForums" :key="forum.title" class="forum-showcase">
+                            <h1 class="title">{{ forum.title }}</h1>
+                            <p class="description">
+                                {{ forum.description }}
+                            </p>
+                        </div>
                     </div>
+                    <div class="selection">
+                        <button
+                                v-for="forum in mainForums"
+                                :key="forum.title"
+                                :class="setSelectorClass(forum)"
+                        >
+                            {{ forum.title }}
+                        </button>
+                    </div>
+                </div>
+                <div class="container">
+                    <h1>Forums unavailable</h1>
                 </div>
             </div>
         </div>
@@ -59,26 +73,52 @@
         },
         data() {
             return {
-                mainForums: {
-                    data: [],
-                    loading: true,
-                },
+                activeForumTitle: 'GrandQuest',
+                mainForums: [
+                    { title: 'GrandQuest', description: 'The main forum, dedicated to the development of GrandQuest' },
+                    { title: 'Art', description: 'Dedicated to the discussion of music, painting, poetry.' },
+                    { title: 'General', description: 'A forum for discussing general topics.' },
+                ],
                 selectedForum: {
-                    title: null,
+                    data: null,
                     loading: false,
+                },
+                selectedBoard: {
+                    data: null,
+                    loading: false,
+                    topics: [],
+                },
+                selectedTopic: {
+                    data: null,
                 },
             };
         },
     })
 
     export default class Forum extends Vue {
-        private navigateToForum(title: string) {
+        public backToMainForums() {
+            this.$data.selectedForum = {
+                data: null,
+                loading: false,
+            };
+        }
+        public setSelectorClass(forum: { title: string }) {
+            const title = forum.title.toLowerCase().trim();
+            let className = title;
+
+            if (this.$data.activeForumTitle.toLowerCase().trim() === title) {
+                className += ' active';
+            }
+
+            return className;
+        }
+        public navigateToForum(title: string) {
             api.get(`/forum/${title}`)
                 .then((res: ApiResponse<any>) => {
                     const body = res.data;
 
                     if (res.ok) {
-                        this.$data.selectedForum = {...body.data};
+                        this.$data.selectedForum.data = {...body.data};
                     } else {
                         alert('Could not load forum');
                     }
@@ -87,8 +127,8 @@
                 });
         }
         private selectedForumRoute() {
-            if (this.$data.selectedForum.title) {
-                return `forum/${this.$data.selectedForum.title}`;
+            if (this.$data.selectedForum.data.title) {
+                return `forum/${this.$data.selectedForum.data.title}`;
             }
         }
     }
@@ -111,6 +151,14 @@
         justify-content: space-between;
         align-items: flex-start;
 
+        .forum-link {
+            color: white;
+            font-size: large;
+        }
+        .forum-link:hover {
+            color: $mainBlue;
+            cursor: pointer;
+        }
         .user-control {
             flex: 1;
             margin-right: 2em;
@@ -149,13 +197,91 @@
                         color: $mainGrey;
                     }
                 }
-                .container {
+                .mainForums {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: stretch;
+                    color: white;
+                    padding: 1em;
+
+                    .grid {
+                        border-radius: 15px 15px 0 0;
+                        display: grid;
+                        padding: 10px;
+                        grid-gap: 10px;
+                        grid-template-columns: auto auto;
+                        background: $mainLightGrey;
+
+                        .forum-showcase {
+                            padding: 15px;
+                            background: #eeeeee;
+                            border-radius: 15px;
+                            color: $mainBlue;
+
+                            transition: .1s all ease-in-out;
+                            .title {
+                                font-size: larger;
+                                margin: auto auto;
+                            }
+                        }
+                        .forum-showcase:hover {
+                            background: white;
+                            color: $mainGreen;
+                            cursor: pointer;
+                        }
+                    }
+                    .selection {
+                        display: flex;
+                        flex-direction: row;
+
+                        button {
+                            flex: 1;
+                            height: 100%;
+                            font-weight: bold;
+                            color: white;
+                            border: none;
+                            font-size: large;
+                            padding: 1em;
+                            box-shadow: inset 2px 2px 3px $mainGrey;
+                            &:last-of-type {
+                                border-radius: 0 0 5px 0;
+                            }
+                            &:first-of-type {
+                                border-radius: 0 0 0 5px;
+                            }
+                        }
+                        button.grandquest {
+                            background: $mainBlue;
+                        }
+                        button.art {
+                            background: $mainGreen;
+                        }
+                        button.general {
+                            background: $mainLightGrey;
+                        }
+
+                        button.active {
+                            height: inherit;
+                            box-shadow: none;
+                            border-radius: 0 0 5px 5px;
+                        }
+                    }
+                }
+                .mainForums.blue {
+                    background: $mainBlue;
+                }
+                .mainForums.green {
+                    background: $mainGreen;
+                }
+
+                .boards {
+                    color: $mainBlack;
                     padding: 10px;
                     display: grid;
                     grid-gap: 10px;
                     grid-template-columns: auto auto;
 
-                    .main-forum-container {
+                    .main-board-container{
                         border-radius: 15px;
                         padding: 8px 8px 12px 8px;
                         background: $mainLightGrey;
@@ -188,6 +314,11 @@
                         opacity: 0.7;
                         .title {
                             color: $mainBlue;
+                        }
+                    }
+                    .forum-showcase {
+                        .boards {
+
                         }
                     }
                 }
