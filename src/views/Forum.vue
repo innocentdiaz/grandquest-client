@@ -12,30 +12,39 @@
                 <div class="header">
                     <span
                             class="forum-link"
-                            v-on:click="backToMainForums"
-                    >FORUMS</span>
+                    >FORUMS / </span>
+                    <span class="forum-link">
+                        {{selectedForum().title}}
+                    </span>
                 </div>
 
                 <!-- container rendering -->
-                <div v-if="mainForums.loading" class="mainForums">
-                    <span>
-                        <ActivityIndicator /> Now loading
-                    </span>
-                </div>
-                <div v-else class="mainForums">
-                    <div class="grid">
-                        <div v-for="forum in mainForums" :key="forum.title" class="forum-showcase">
-                            <h1 class="title">{{ forum.title }}</h1>
-                            <p class="description">
-                                {{ forum.description }}
-                            </p>
+                <div
+                        class="mainForums"
+                >
+                    <div :class="setShowcaseClass()">
+                        <div v-if="!selectedForum()">
+                            <ActivityIndicator/>
+                        </div>
+                        <div v-else
+                             class="forum-showcase"
+                             v-for="board in selectedForum().boards"
+                             :key="board.id"
+                        >
+                            <div>
+                                <h1 class="title">{{ board.title }}</h1>
+                                <p class="description">
+                                    {{ board.description }}
+                                </p>
+                            </div>
                         </div>
                     </div>
                     <div class="selection">
                         <button
-                                v-for="forum in mainForums"
+                                v-for="(forum, index) in mainForums"
                                 :key="forum.title"
                                 :class="setSelectorClass(forum)"
+                                v-on:click="() => setForum(index)"
                         >
                             {{ forum.title }}
                         </button>
@@ -51,38 +60,36 @@
 
 <script lang="ts">
     import { Component, Vue } from 'vue-property-decorator';
-    import { ApiResponse } from 'apisauce';
-    import api from '../api';
     import ActivityIndicator from '@/components/ActivityIndicator.vue';
 
     @Component({
         components: { ActivityIndicator },
-        mounted() {
-            api.get('/forum')
-                .then((res: ApiResponse<any>) => {
-                    const body = res.data;
-
-                    if (res.ok) {
-                        this.$data.mainForums.data = [...body.data];
-                    } else {
-                        alert(body ? body.message : 'Failed to load forums');
-                    }
-
-                    this.$data.mainForums.loading = false;
-                });
-        },
         data() {
             return {
-                activeForumTitle: 'GrandQuest',
+                currentForumIndex: 0,
                 mainForums: [
-                    { title: 'GrandQuest', description: 'The main forum, dedicated to the development of GrandQuest' },
-                    { title: 'Art', description: 'Dedicated to the discussion of music, painting, poetry.' },
-                    { title: 'General', description: 'A forum for discussing general topics.' },
+                    {
+                        title: 'GrandQuest',
+                        description: 'The main forum, dedicated to the development of GrandQuest',
+                        boards: [
+                            {
+                                id: 1,
+                                title: 'Announcements',
+                                description: `
+                                        Welcome to the GrandQuest announcements!
+                                        We regularly update you on the occurrences in our world here
+                                    `,
+                            },
+                            {
+                                id: 2,
+                                title: 'Bug Reporting',
+                                description: 'Find bugs and report them to us so we can remove them!',
+                            },
+                        ],
+                    },
+                    { title: 'Art', description: 'Dedicated to the discussion of music, painting, poetry.', boards: [] },
+                    { title: 'General', description: 'A forum for discussing general topics.', boards: [] },
                 ],
-                selectedForum: {
-                    data: null,
-                    loading: false,
-                },
                 selectedBoard: {
                     data: null,
                     loading: false,
@@ -96,40 +103,30 @@
     })
 
     export default class Forum extends Vue {
-        public backToMainForums() {
-            this.$data.selectedForum = {
-                data: null,
-                loading: false,
-            };
+        public selectedForum() {
+            const index = this.$data.currentForumIndex;
+            return this.$data.mainForums[index];
+        }
+        public setForum(index: number) {
+            console.log('ser currentForumIndex')
+            this.$data.currentForumIndex = index;
+        }
+        public setShowcaseClass() {
+            const selectedForum = this.$data.mainForums[this.$data.currentForumIndex];
+            const title = selectedForum.title.toLowerCase().trim();
+
+            return 'grid ' + title;
         }
         public setSelectorClass(forum: { title: string }) {
             const title = forum.title.toLowerCase().trim();
+            const selectedForum = this.$data.mainForums[this.$data.currentForumIndex];
             let className = title;
 
-            if (this.$data.activeForumTitle.toLowerCase().trim() === title) {
+            if (selectedForum.title.toLowerCase().trim() === title) {
                 className += ' active';
             }
 
             return className;
-        }
-        public navigateToForum(title: string) {
-            api.get(`/forum/${title}`)
-                .then((res: ApiResponse<any>) => {
-                    const body = res.data;
-
-                    if (res.ok) {
-                        this.$data.selectedForum.data = {...body.data};
-                    } else {
-                        alert('Could not load forum');
-                    }
-
-                    this.$data.selectedForum.loading = false;
-                });
-        }
-        private selectedForumRoute() {
-            if (this.$data.selectedForum.data.title) {
-                return `forum/${this.$data.selectedForum.data.title}`;
-            }
         }
     }
 </script>
@@ -206,6 +203,7 @@
 
                     .grid {
                         border-radius: 15px 15px 0 0;
+                        min-height: 150px;
                         display: grid;
                         padding: 10px;
                         grid-gap: 10px;
@@ -233,16 +231,21 @@
                     .selection {
                         display: flex;
                         flex-direction: row;
+                        align-items: stretch;
 
                         button {
                             flex: 1;
-                            height: 100%;
+                            cursor: pointer;
                             font-weight: bold;
                             color: white;
                             border: none;
                             font-size: large;
                             padding: 1em;
-                            box-shadow: inset 2px 2px 3px $mainGrey;
+                            box-shadow: inset 2px 2px 3px #3c3c3c;
+                            margin-bottom: 10px;
+
+                            transition: .2s all ease-in-out;
+
                             &:last-of-type {
                                 border-radius: 0 0 5px 0;
                             }
@@ -264,14 +267,15 @@
                             height: inherit;
                             box-shadow: none;
                             border-radius: 0 0 5px 5px;
+                            margin-bottom: 0;
                         }
                     }
-                }
-                .mainForums.blue {
-                    background: $mainBlue;
-                }
-                .mainForums.green {
-                    background: $mainGreen;
+                    .grid.grandquest {
+                        background: $mainBlue;
+                    }
+                    .grid.art {
+                        background: $mainGreen;
+                    }
                 }
 
                 .boards {
