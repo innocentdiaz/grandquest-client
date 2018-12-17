@@ -5,11 +5,17 @@
         <h1>GRANDQUEST</h1>
       </div>
       <div class="auth-container">
-        <div class="sign">
-          <h2>{{'Skepdimi'}}</h2>
-          <div>
+        <div v-if="user.authenticated">
+          <div class="sign">
+            <h2>{{'Skepdimi'}}</h2>
+            <div>
 
+            </div>
           </div>
+        </div>
+        <div v-else class="banner">
+          <router-link to="/register">Register</router-link>
+          <router-link to="/login">Log In</router-link>
         </div>
       </div>
     </div>
@@ -31,10 +37,14 @@
 
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator';
+import { State } from 'vuex-class';
+import { User } from '../types';
 
 @Component
 
-export default class Header extends Vue {}
+export default class Header extends Vue {
+  @State public user!: User;
+}
 </script>
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
@@ -42,6 +52,7 @@ export default class Header extends Vue {}
 $mainBlue: #036ca5;
 $mainBlack: rgb(24, 24, 24);
 $mainGrey: rgb(179, 179, 179);
+$mainGreen: #9dff5c;
 
 .main-header {
   background: white;
@@ -70,10 +81,34 @@ $mainGrey: rgb(179, 179, 179);
 
     .auth-container {
       display: flex;
+      flex-direction: row;
       align-items: center;
       justify-content: center;
-      padding: 1.5em 1em;
+      margin-right: 1.5em;
 
+      .banner {
+        align-self: flex-start;
+
+        a {
+          background-color: $mainGreen;
+          color: white;
+          text-decoration: none;
+          display: inline-block;
+          padding: 8px;
+          font-size: large;
+          border-radius: 0 0 5px 5px;
+          border: none;
+          transition: .2s all ease-in-out;
+
+          &:hover {
+            opacity: .9;
+            cursor: pointer;
+          }
+          &:last-of-type {
+            margin-left: 1em;
+          }
+        }
+      }
       .sign {
         text-align: right;
         min-width: 180px;
