@@ -20,18 +20,29 @@
 
                 <!-- container rendering -->
                 <div
+                        v-if="selectedBoard"
+                        class="mainBoard"
+                >
+                    <span class="forum-link back" v-on:click="() => setForum(0)">
+                        Back to {{selectedForum().title}}
+                    </span>
+
+                    <h1>{{ selectedBoard.title }}</h1>
+                    <span>{{ selectedBoard.description }}</span>
+                </div>
+                <div
+                        v-else
                         class="mainForums"
                 >
                     <div :class="setShowcaseClass()">
-                        <div v-if="!selectedForum()">
-                            <ActivityIndicator/>
-                        </div>
-                        <div v-else
+                        <div
                              class="forum-showcase"
                              v-for="board in selectedForum().boards"
                              :key="board.id"
                         >
-                            <div>
+                            <div
+                                v-on:click="() => setBoard(board)"
+                            >
                                 <h1 class="title">{{ board.title }}</h1>
                                 <p class="description">
                                     {{ board.description }}
@@ -90,11 +101,7 @@
                     { title: 'Art', description: 'Dedicated to the discussion of music, painting, poetry.', boards: [] },
                     { title: 'General', description: 'A forum for discussing general topics.', boards: [] },
                 ],
-                selectedBoard: {
-                    data: null,
-                    loading: false,
-                    topics: [],
-                },
+                selectedBoard: null,
                 selectedTopic: {
                     data: null,
                 },
@@ -108,8 +115,11 @@
             return this.$data.mainForums[index];
         }
         public setForum(index: number) {
-            console.log('ser currentForumIndex')
+            this.$data.selectedBoard = null;
             this.$data.currentForumIndex = index;
+        }
+        public setBoard(board: { id: number, title: string, description: string }) {
+            this.$data.selectedBoard = board
         }
         public setShowcaseClass() {
             const selectedForum = this.$data.mainForums[this.$data.currentForumIndex];
@@ -149,8 +159,13 @@
         align-items: flex-start;
 
         .forum-link {
-            color: white;
             font-size: large;
+        }
+        .forum-link.back {
+            background-color: $mainLightGrey;
+            padding: .5em;
+            border-radius: 15px;
+            margin-bottom: 2em;
         }
         .forum-link:hover {
             color: $mainBlue;
@@ -276,6 +291,10 @@
                     .grid.art {
                         background: $mainGreen;
                     }
+                }
+                .mainBoard {
+                    padding: 1em;
+                    color: $mainBlack;
                 }
 
                 .boards {
