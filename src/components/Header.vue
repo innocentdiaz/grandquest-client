@@ -5,9 +5,12 @@
         <h1>GRANDQUEST</h1>
       </div>
       <div class="auth-container">
-        <div v-if="user.authenticated">
+        <div v-if="user.loading">
+          <ActivityIndicator size=40 />
+        </div>
+        <div v-else-if="user.authenticated">
           <div class="sign">
-            <h2>{{'Skepdimi'}}</h2>
+            <h2>{{user.username}}</h2>
             <div>
 
             </div>
@@ -37,10 +40,13 @@
 
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator';
+import ActivityIndicator from '@/components/ActivityIndicator.vue';
 import { State } from 'vuex-class';
 import { User } from '../types';
 
-@Component
+@Component({
+  components: { ActivityIndicator },
+})
 
 export default class Header extends Vue {
   @State public user!: User;
