@@ -9,4 +9,5 @@ export interface User {
     username: string;
     loading: boolean;
     authenticated: boolean;
+    currentJWT: string;
 }
