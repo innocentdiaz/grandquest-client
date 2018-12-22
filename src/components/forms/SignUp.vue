@@ -60,6 +60,7 @@ export default class Home extends Vue {
     const { email, username, password, gender } = this.$data;
 
     this.formLoading = true;
+    this.apiError = '';
 
     api.post('/auth/default', { email, username, password, gender })
     .then((res: ApiResponse<any>) => {
