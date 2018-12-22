@@ -4,6 +4,7 @@ import Home from './views/Home.vue';
 import About from './views/About.vue';
 import DevLog from './views/DevLog.vue';
 import Forum from './views/Forum.vue';
+import LogIn from './views/LogIn.vue';
 
 Vue.use(Router);
 
@@ -29,6 +30,11 @@ export default new Router({
       path: '/forum',
       name: 'forum',
       component: Forum,
+    },
+    {
+      path: '/login',
+      name: 'login',
+      component: LogIn,
     },
   ],
 });
