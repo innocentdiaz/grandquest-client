@@ -1,20 +1,26 @@
 <template>
     <div class="forum">
-        <div class="user-control">
-            <h2>Skepdimi</h2>
-            <div class="">
-
+        <div class="control">
+            <div class="user-control" v-if="user.authenticated">
+                <h2>{{user.username}}</h2>
+                <p>Joined {{ userJoinDate }}</p>
+            </div>
+            <div class="user-control" v-else>
+                <h2>Have an account?</h2>
+            </div>
+            <div class="selected-board-control" v-if="selectedBoard">
+                <h2>{{selectedBoard.title}}</h2>
+                <h3>Live chat</h3>
+                <p>[ Live chat coming soon ]</p>
             </div>
         </div>
+        
         <div class="forum-content">
             <div class="forum-main">
                 <!-- header rendering -->
                 <div class="header">
-                    <span
-                            class="forum-link"
-                    >FORUMS / </span>
-                    <span class="forum-link">
-                        {{selectedForum().title}}
+                    <span>
+                        FORUMS - {{selectedForum().title}}
                     </span>
                 </div>
 
@@ -29,6 +35,23 @@
 
                     <h1>{{ selectedBoard.title }}</h1>
                     <span>{{ selectedBoard.description }}</span>
+                    <div class="board-posts">
+                        <div class="post">
+                            <div v-if="selectedBoard.loading">
+                                <ActivityIndicator size="36"/>
+                            </div>
+                            <div v-else-if="selectedBoard.posts.length">
+                                <div v-for="post in selectedBoard.posts" :key="post.id" class="post-link-container" v-on:click="setPost(post)">
+                                    <h1 class="title">{{ post.title }}</h1>
+                                    <p class="preview">{{ post.body }}</p>
+                                    <span class="footer">Submitted {{sinceDate(post.created_at)}} by {{ post.user ? post.user.username : ' an anonymous user' }}</span>
+                                </div>
+                            </div>
+                            <div v-else>
+                                <p>There are no posts in this board.</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <div
                         v-else
@@ -39,10 +62,9 @@
                              class="forum-showcase"
                              v-for="board in selectedForum().boards"
                              :key="board.id"
+                             v-on:click="() => setBoard(board)"
                         >
-                            <div
-                                v-on:click="() => setBoard(board)"
-                            >
+                            <div>
                                 <h1 class="title">{{ board.title }}</h1>
                                 <p class="description">
                                     {{ board.description }}
@@ -61,9 +83,6 @@
                         </button>
                     </div>
                 </div>
-                <div class="container">
-                    <h1>Forums unavailable</h1>
-                </div>
             </div>
         </div>
     </div>
@@ -71,7 +90,9 @@
 
 <script lang="ts">
     import { Component, Vue } from 'vue-property-decorator';
-    import ActivityIndicator from '@/components/ActivityIndicator.vue';
+    import { State, Getter } from 'vuex-class';
+    import { User } from '../../types';
+    import ActivityIndicator from '../../components/ActivityIndicator.vue';
 
     @Component({
         components: { ActivityIndicator },
@@ -110,6 +131,9 @@
     })
 
     export default class Forum extends Vue {
+        @State public user!: User;
+        @Getter public userJoinDate: string;
+
         public selectedForum() {
             const index = this.$data.currentForumIndex;
             return this.$data.mainForums[index];
@@ -119,7 +143,7 @@
             this.$data.currentForumIndex = index;
         }
         public setBoard(board: { id: number, title: string, description: string }) {
-            this.$data.selectedBoard = board
+          this.$router.replace(`/forum/${this.selectedForum().title}/${board.id}`);
         }
         public setShowcaseClass() {
             const selectedForum = this.$data.mainForums[this.$data.currentForumIndex];
@@ -166,23 +190,38 @@
             padding: .5em;
             border-radius: 15px;
             margin-bottom: 2em;
+            color: $mainBlack;
+            text-decoration: none;
         }
         .forum-link:hover {
             color: $mainBlue;
             cursor: pointer;
         }
-        .user-control {
+        .control {        
             flex: 1;
             margin-right: 2em;
-            padding: 12px;
-
-            border-radius: 10px;
-            background: $mainGreen;
-            color: white;
-            min-height: 150px;
-
+            color: $mainBlack;
             h2 {
-                margin: 5px;
+                margin: .5em 0;
+            }
+            h3 {
+                font-weight: lighter;
+                color: $mainGrey;
+            }
+            
+            .user-control {
+                padding: 12px;
+                min-height: 150px;
+                border-radius: 10px;
+                background: $mainGreen;
+                color: white;
+                margin-bottom: 1em;
+            }
+            .selected-board-control {
+                padding: 12px;
+                background: white;
+                border-radius: 10px;
+                min-height: 250px;
             }
         }
         .forum-content {
@@ -296,6 +335,9 @@
                     padding: 1em;
                     color: $mainBlack;
                 }
+                .board-posts {
+                    padding-top: 1em;
+                }
 
                 .boards {
                     color: $mainBlack;
@@ -345,6 +387,27 @@
                         }
                     }
                 }
+            }
+        }
+        .post-link-container {
+            border-left: 6px solid $mainBlue;
+            padding: .1em .5em .5em 1em;
+            margin-bottom: 1em;
+
+            transition: .2s all ease-in-out;
+            &:hover {
+                cursor: pointer;
+                background: $mainLightGrey;
+                border-left-width: 8px;
+            }
+            .title {
+                font-size: large;
+            }
+            .preview {
+                font-size: medium;
+            }
+            .footer {
+                color: $mainGrey;
             }
         }
     }

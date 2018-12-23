@@ -3,7 +3,9 @@ import Router from 'vue-router';
 import Home from './views/Home.vue';
 import About from './views/About.vue';
 import DevLog from './views/DevLog.vue';
-import Forum from './views/Forum.vue';
+import Forum from './views/forum/Forum.vue';
+import Board from './views/forum/Board.vue';
+import Post from './views/forum/Post.vue';
 import LogIn from './views/LogIn.vue';
 
 Vue.use(Router);
@@ -30,6 +32,16 @@ export default new Router({
       path: '/forum',
       name: 'forum',
       component: Forum,
+    },
+    {
+      path: '/forum/:forum/:board_id',
+      name: 'board',
+      component: Board,
+    },
+    {
+      path: '/forum/:forum/:board_id/:post_id',
+      name: 'post',
+      component: Post,
     },
     {
       path: '/login',

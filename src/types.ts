@@ -10,4 +10,5 @@ export interface User {
     loading: boolean;
     authenticated: boolean;
     currentJWT: string;
+    created_at: string;
 }
