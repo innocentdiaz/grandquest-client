@@ -27,7 +27,7 @@ export default class App extends Vue {
     if (JWT) {
       this.fetchUser(JWT);
     } else if (cachedUser) {
-      this.setUser(cachedUser);
+      this.setUser(JSON.parse(cachedUser));
     } else {
       this.setUserUnauthorized();
     }
@@ -51,4 +51,15 @@ body {
   height: 100vh;
   width: 100%;
 }
+
+.admin-label {
+  background-color: gold;
+  color: white;
+  border-radius: 5px;
+  padding: 5px;
+}
+  a{
+    color: $mainBlue;
+    font-decoration: none;
+  }
 </style>
