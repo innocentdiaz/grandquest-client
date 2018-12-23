@@ -49,6 +49,6 @@ body {
 
 .root {
   height: 100vh;
-  width: 100vw;
+  width: 100%;
 }
 </style>
