@@ -15,9 +15,12 @@ Front-end for GrandQuest
  - Cypress
  
 ## Project setup
+
 ```
 yarn install
 ```
+Create a `.env` file at the root of your project directory with the following variables in it:
+ - VUE_APP_API_ROOT
 
 ### Compiles and hot-reloads for development
 ```
