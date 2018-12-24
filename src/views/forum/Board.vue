@@ -10,7 +10,7 @@
             </div>
             <div class="selected-board-control" v-if="!board.loading">
                 <h2>{{board.title}}</h2>
-                <span v-if="board.admin_managed === '1'" class="admin-label">
+                <span v-if="board.admin_managed" class="admin-label">
                     Admin managed
                     <br>
                 </span>
@@ -35,15 +35,22 @@
                     <router-link to="/forum" class="forum-link back">
                         Back to forums
                     </router-link>
+                    <router-link
+                            v-if="board.id && !board.admin_managed || board.admin_managed && user.is_admin"
+                            :to="'/submit/post/' + board.id "
+                            class="forum-link back create-post-btn"
+                    >
+                        Create Post
+                    </router-link>
 
                     <h1>{{ board.title }}</h1>
                     <p>{{ board.description }}</p>
                     <div class="board-posts">
-                        <div class="post">
-                            <div v-if="board.loading">
-                                <ActivityIndicator size="36"/>
-                            </div>
-                            <div v-else-if="board.posts.length">
+                        <div v-if="board.loading">
+                            <ActivityIndicator size="36"/>
+                        </div>
+                        <div v-else class="post">
+                            <div v-if="board.posts.length">
                                 <div v-for="post in board.posts" :key="post.id" class="post-link-container" v-on:click="setPost(post)">
                                     <h1 class="title">{{ post.title }}</h1>
                                     <p class="preview">{{ post.body }}</p>
@@ -52,7 +59,7 @@
                             </div>
                             <div v-else>
                                 <p>There are no posts in this board.</p>
-                                <router-link v-if="board.admin_managed === '0'">Be the first!</router-link>
+                                <router-link v-if="!board.admin_managed">Be the first!</router-link>
                             </div>
                         </div>
                     </div>
@@ -118,3 +125,20 @@
     }
   }
 </script>
+<style lang="scss">
+    $mainBlue: #036ca5;
+    $mainBlack: rgb(24, 24, 24);
+    $mainGrey: rgb(179, 179, 179);
+    $mainBlueHover: #005e91;
+
+    .create-post-btn {
+        background-color: $mainBlue !important;
+        color: white !important;
+        border: none;
+        margin-left: 10px;
+
+        &:hover {
+            background-color: $mainBlueHover !important;
+        }
+    }
+</style>
