@@ -8,10 +8,10 @@
             <div class="user-control" v-else>
                 <h2>Have an account?</h2>
             </div>
-            <div class="selected-board-control" v-if="selectedBoard">
-                <h2>{{selectedBoard.title}}</h2>
-                <h3>Live chat</h3>
-                <p>[ Live chat coming soon ]</p>
+            <div class="forum-control">
+                <h2>What's trending</h2>
+                <h3>Live feed</h3>
+                <p>[ Live feed coming soon ]</p>
             </div>
         </div>
         
@@ -96,43 +96,36 @@
 
     @Component({
         components: { ActivityIndicator },
-        data() {
-            return {
-                currentForumIndex: 0,
-                mainForums: [
-                    {
-                        title: 'GrandQuest',
-                        description: 'The main forum, dedicated to the development of GrandQuest',
-                        boards: [
-                            {
-                                id: 1,
-                                title: 'Announcements',
-                                description: `
-                                        Welcome to the GrandQuest announcements!
-                                        We regularly update you on the occurrences in our world here
-                                    `,
-                            },
-                            {
-                                id: 2,
-                                title: 'Bug Reporting',
-                                description: 'Find bugs and report them to us so we can remove them!',
-                            },
-                        ],
-                    },
-                    { title: 'Art', description: 'Dedicated to the discussion of music, painting, poetry.', boards: [] },
-                    { title: 'General', description: 'A forum for discussing general topics.', boards: [] },
-                ],
-                selectedBoard: null,
-                selectedTopic: {
-                    data: null,
-                },
-            };
-        },
     })
 
     export default class Forum extends Vue {
         @State public user!: User;
-        @Getter public userJoinDate: string;
+        @Getter public userJoinDate!: string;
+
+        public currentForumIndex = 0;
+        public mainForums = [
+            {
+                title: 'GrandQuest',
+                description: 'The main forum, dedicated to the development of GrandQuest',
+                boards: [
+                    {
+                        id: 1,
+                        title: 'Announcements',
+                        description: `
+                                Welcome to the GrandQuest announcements!
+                                We regularly update you on the occurrences in our world here
+                            `,
+                    },
+                    {
+                        id: 2,
+                        title: 'Bug Reporting',
+                        description: 'Find bugs and report them to us so we can remove them!',
+                    },
+                ],
+            },
+            { title: 'Art', description: 'Dedicated to the discussion of music, painting, poetry.', boards: [] },
+            { title: 'General', description: 'A forum for discussing general topics.', boards: [] },
+        ];
 
         public selectedForum() {
             const index = this.$data.currentForumIndex;
@@ -143,7 +136,7 @@
             this.$data.currentForumIndex = index;
         }
         public setBoard(board: { id: number, title: string, description: string }) {
-          this.$router.replace(`/forum/${this.selectedForum().title}/${board.id}`);
+          this.$router.replace(`/board/${board.id}`);
         }
         public setShowcaseClass() {
             const selectedForum = this.$data.mainForums[this.$data.currentForumIndex];
@@ -217,7 +210,7 @@
                 color: white;
                 margin-bottom: 1em;
             }
-            .selected-board-control {
+            .forum-control, .selected-board-control {
                 padding: 12px;
                 background: white;
                 border-radius: 10px;
