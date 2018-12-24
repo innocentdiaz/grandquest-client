@@ -11,4 +11,5 @@ export interface User {
     authenticated: boolean;
     currentJWT: string;
     created_at: string;
+    is_admin: boolean;
 }

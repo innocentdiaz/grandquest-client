@@ -16,6 +16,7 @@ const state: State = {
     authenticated: false,
     currentJWT: '',
     created_at: '',
+    is_admin: false,
   },
 };
 const getters = {
