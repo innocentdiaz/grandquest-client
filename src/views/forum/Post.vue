@@ -17,7 +17,17 @@
             <div class="forum-main">
                 <!-- header rendering -->
                 <div class="header">
-                    <router-link to="/forum" class="forum-link">FORUMS - </router-link>
+                    <div v-if="post.status===200">
+                        <router-link to="/forum">FORUMS - {{post.board.forum_title}} / </router-link>
+                        <router-link 
+                            :to="{name: board, params: {board_id: post.board.id}}">{{post.board.title}} / </router-link>
+                        <span>{{post.title}}</span>
+                    </div>
+                    <div v-else>
+                        <router-link to="/forum">
+                            FORUMS
+                        </router-link>
+                    </div>
                 </div>
 
                 <div v-if="post.status == null" class="mainBoard">
@@ -36,8 +46,8 @@
                         v-else
                         class="mainBoard post-container"
                 >
-                    <span class="forum-link back" v-on:click="() => this.$router.back()">
-                        Back to boards
+                    <span class="forum-link back" v-on:click="backToBoard">
+                        Back to {{ post.board.title }}
                     </span>
 
                     <div class="post-content">
@@ -74,6 +84,7 @@ export default class Post extends Vue {
     user: null,
     created_at: '',
     status: null,
+    board: { id: null },
   };
 
   public mounted() {
@@ -88,6 +99,14 @@ export default class Post extends Vue {
   }
   public sinceDate(d: Date) {
     return moment(d).fromNow();
+  }
+  public backToBoard() {
+    this.$router.replace({
+        name: 'board', 
+        params: {
+            board_id: this.post.board.id,
+        }
+    });
   }
 }
 </script>
