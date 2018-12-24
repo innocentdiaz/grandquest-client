@@ -25,7 +25,7 @@
             <div class="forum-main">
                 <!-- header rendering -->
                 <div class="header">
-                    <router-link to="/forum" class="forum-link">FORUMS - {{ selectedForumTitle() }} / </router-link>
+                    <router-link to="/forum" class="forum-link">FORUMS - {{ board.forum_title }} / </router-link>
                     <span>{{ board.title }}</span>
                 </div>
 
@@ -59,7 +59,7 @@
                             </div>
                             <div v-else>
                                 <p>There are no posts in this board.</p>
-                                <router-link v-if="!board.admin_managed">Be the first!</router-link>
+                                <router-link v-if="!board.admin_managed" :to="'/submit/post/' + board.id">Be the first!</router-link>
                             </div>
                         </div>
                     </div>
@@ -105,10 +105,6 @@ export default class Board extends Vue {
       this.board.loading = false;
     });
   }
-
-  public selectedForumTitle() {
-    return this.$route.params.forum;
-  }
   public sinceDate(d: Date) {
     return moment(d).fromNow();
   }
@@ -117,8 +113,6 @@ export default class Board extends Vue {
     this.$router.push({
       name: 'post',
       params: {
-        forum_title: this.selectedForumTitle(),
-        board_id: this.board.id,
         post_id: String(post.id),
       },
     });
