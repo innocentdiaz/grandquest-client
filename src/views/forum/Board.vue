@@ -69,61 +69,61 @@
     </div>
 </template>
 <script lang="ts">
-  import {Component, Vue} from "vue-property-decorator";
-  import { Getter, State } from "vuex-class";
-  import { User } from '@/types';
-  import ActivityIndicator from '../../components/ActivityIndicator.vue';
-  import api from '../../api';
-  import { ApiResponse } from 'apisauce';
-  import moment from 'moment';
+import { Component, Vue } from 'vue-property-decorator';
+import { Getter, State } from 'vuex-class';
+import { User } from '@/types';
+import ActivityIndicator from '../../components/ActivityIndicator.vue';
+import api from '../../api';
+import { ApiResponse } from 'apisauce';
+import moment from 'moment';
 
-  @Component({
-    components: { ActivityIndicator },
-  })
+@Component({
+  components: { ActivityIndicator },
+})
 
-  export default class Board extends Vue {
-    @State public user!: User;
-    @Getter userJoinDate: string;
+export default class Board extends Vue {
+  @State public user!: User;
+  @Getter public userJoinDate!: string;
 
-    public board = {
-      title: '',
-      description: '',
-      posts: [],
-      admin_managed: false,
-      loading: true,
-    };
+  public board = {
+    title: '',
+    description: '',
+    posts: [],
+    admin_managed: false,
+    loading: true,
+  };
 
-    public mounted() {
-      this.board.loading = true;
+  public mounted() {
+    this.board.loading = true;
 
-      api.get(`/boards/${this.$route.params.board_id}`)
-      .then((res: ApiResponse<any>) => {
-        if (res.ok) {
-          this.board = res.data.payload;
-        }
+    api.get(`/boards/${this.$route.params.board_id}`)
+    .then((res: ApiResponse<any>) => {
+      if (res.ok) {
+        this.board = res.data.payload;
+      }
 
-        this.board.loading = false;
-      });
-    }
-
-    public selectedForumTitle() {
-      return this.$route.params.forum;
-    }
-    public sinceDate(d: Date) {
-      return moment(d).fromNow();
-    }
-
-    public setPost(post: { id: number }) {
-      this.$router.push({
-        name: 'post',
-        params: {
-          forum_title: this.selectedForumTitle(),
-          board_id: this.board.id,
-          post_id: String(post.id),
-        },
-      });
-    }
+      this.board.loading = false;
+    });
   }
+
+  public selectedForumTitle() {
+    return this.$route.params.forum;
+  }
+  public sinceDate(d: Date) {
+    return moment(d).fromNow();
+  }
+
+  public setPost(post: { id: number }) {
+    this.$router.push({
+      name: 'post',
+      params: {
+        forum_title: this.selectedForumTitle(),
+        board_id: this.board.id,
+        post_id: String(post.id),
+      },
+    });
+  }
+}
 </script>
 <style lang="scss">
     $mainBlue: #036ca5;
