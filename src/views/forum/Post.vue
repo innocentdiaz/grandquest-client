@@ -53,43 +53,43 @@
     </div>
 </template>
 <script lang="ts">
-  import { Component, Vue } from 'vue-property-decorator';
-  import { State, Getter } from 'vuex-class';
-  import { User } from '@/types';
-  import api from '@/api';
-  import {ApiResponse} from 'apisauce';
-  import ActivityIndicator from '@/components/ActivityIndicator.vue';
-  import moment from 'moment';
+import { Component, Vue } from 'vue-property-decorator';
+import { State, Getter } from 'vuex-class';
+import { User } from '@/types';
+import api from '@/api';
+import {ApiResponse} from 'apisauce';
+import ActivityIndicator from '@/components/ActivityIndicator.vue';
+import moment from 'moment';
 
-  @Component({
-    components: { ActivityIndicator }
-  })
-  export default class Post extends Vue {
-    @State public user!: User;
-    @Getter userJoinDate: string;
+@Component({
+  components: { ActivityIndicator },
+})
+export default class Post extends Vue {
+  @State public user!: User;
+  @Getter public userJoinDate!: string;
 
-    public post = {
-      title: '',
-      body: '',
-      user: null,
-      created_at: '',
-      status: null,
-    };
+  public post = {
+    title: '',
+    body: '',
+    user: null,
+    created_at: '',
+    status: null,
+  };
 
-    public mounted() {
-      api.get(`/posts/${this.$route.params.post_id}`)
-        .then((res: ApiResponse<any>) => {
-          if (res.ok) {
-            this.post = res.data.payload;
-          }
+  public mounted() {
+    api.get(`/posts/${this.$route.params.post_id}`)
+      .then((res: ApiResponse<any>) => {
+        if (res.ok) {
+          this.post = res.data.payload;
+        }
 
-          this.post.status = res.status || 500;
-        });
-    }
-    public sinceDate(d: Date) {
-      return moment(d).fromNow();
-    }
+        this.post.status = res.status || 500;
+      });
   }
+  public sinceDate(d: Date) {
+    return moment(d).fromNow();
+  }
+}
 </script>
 <style lang="scss">
     .post-container {
