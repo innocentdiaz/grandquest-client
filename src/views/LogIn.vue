@@ -62,7 +62,6 @@ export default class LogIn extends Vue {
         const user = res.data.payload;
 
         localStorage.setItem('grandquest:jwt', JWT);
-        localStorage.setItem('grandquest:cache_user', user);
 
         this.setUser(user);
         this.setJWT(JWT);
