@@ -22,12 +22,9 @@ export default class App extends Vue {
 
   private mounted() {
     const JWT = localStorage.getItem('grandquest:jwt');
-    const cachedUser = localStorage.getItem('grandquest:cache_user');
 
     if (JWT) {
       this.fetchUser(JWT);
-    } else if (cachedUser /* make sure the user is not online */) {
-      this.setUser(JSON.parse(cachedUser));
     } else {
       this.setUserUnauthorized();
     }
@@ -40,6 +37,7 @@ $mainBlue: #036ca5;
 $mainBlack: rgb(24, 24, 24);
 $mainGrey: rgb(179, 179, 179);
 $mainBlueHover: #005e91;
+$mainLightGrey: #e0e0e0;
 
 body {
   padding: 0;
@@ -98,6 +96,14 @@ form {
       border-bottom: 2px solid red;
       box-shadow: none;
     }
+  }
+  textarea {
+    margin-top: 5px;
+    border: 1px solid $mainLightGrey;
+    border-bottom: 2px solid $mainBlue;
+    min-height: 4em;
+    padding: 5px;
+    font-family: sans-serif;
   }
   select {
     border: 0;
