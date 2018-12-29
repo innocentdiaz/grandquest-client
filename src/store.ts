@@ -49,19 +49,12 @@ const actions = {
     .then((res: ApiResponse<any>) => {
       if (res.ok) {
         const user = res.data.payload;
-        localStorage.setItem('grandquest:cache_user', JSON.stringify(user));
         commit('setUser', user);
       } else if (res.status === 401 || res.status === 404) {
         localStorage.removeItem('grandquest:jwt');
-        localStorage.removeItem('grandquest:cache_user');
         commit('setUserUnauthorized');
       } else {
-        const cachedUser = localStorage.getItem('grandquest:cache_user');
-        if (cachedUser !== 'undefined') {
-          commit('setUser', JSON.parse(cachedUser));
-        } else {
-          commit('setUserUnauthorized');
-        }
+        commit('setUserUnauthorized');
       }
     });
   },
