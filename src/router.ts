@@ -16,6 +16,9 @@ import submitPost from './views/submit/Post.vue';
 // auth
 import LogIn from './views/LogIn.vue';
 
+// world
+import World from './views/World/Main.vue';
+
 Vue.use(Router);
 
 export default new Router({
@@ -61,5 +64,10 @@ export default new Router({
       name: 'login',
       component: LogIn,
     },
+    {
+      path: '/world',
+      name: 'world',
+      component: World,
+    }
   ],
 });
