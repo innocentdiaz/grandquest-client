@@ -33,6 +33,9 @@
         <li>
           <router-link to="/shops">Shops</router-link>
         </li>
+        <li>
+          <router-link to="/world">World</router-link>
+        </li>
       </ul>
     </div>
   </div>
@@ -69,7 +72,10 @@ $mainGreen: #9dff5c;
   align-items: stretch;
   .header-main {
     min-height: 150px;
-    background-image: url('../assets/img/devlog.jpeg');
+    background-image: url('../assets/img/landscapes/fort.jpg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
     display: flex;
     flex-direction: row;
     align-items: stretch;
