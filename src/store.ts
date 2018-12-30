@@ -1,6 +1,6 @@
 import Vue from 'vue';
 import Vuex from 'vuex';
-import { State, User } from './types';
+import { State, User, World } from './types';
 
 import api from '@/api';
 import { ApiResponse } from 'apisauce';
@@ -17,6 +17,11 @@ const state: State = {
     currentJWT: '',
     created_at: '',
     is_admin: false,
+  },
+  world: {
+    timeOfDay: 0,
+    readableTimeOfDay: 'pending',
+    connections: [],
   },
 };
 const getters = {
@@ -40,6 +45,9 @@ const mutations = {
   setUserUnauthorized(s: State) {
     s.user.loading = false;
   },
+  'SOCKET_WORLD_STATE' (s: State, worldState: World) {
+    s.world = worldState;
+  }
 };
 const actions = {
   fetchUser({ commit }, JWT: string) {
@@ -48,6 +56,7 @@ const actions = {
     api.get('/auth')
     .then((res: ApiResponse<any>) => {
       if (res.ok) {
+        // TODO: switch tokens here
         const user = res.data.payload;
         commit('setUser', user);
       } else if (res.status === 401 || res.status === 404) {
