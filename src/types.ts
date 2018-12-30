@@ -1,6 +1,7 @@
 // Store
 export interface State {
     user: User;
+    world: World;
 }
 
 // Models
@@ -12,4 +13,9 @@ export interface User {
     currentJWT: string;
     created_at: string;
     is_admin: boolean;
+}
+export interface World {
+    timeOfDay:         number;
+    readableTimeOfDay: string;
+    connections:       [string];
 }
