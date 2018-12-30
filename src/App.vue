@@ -8,7 +8,20 @@
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator';
 import { Action, Mutation } from 'vuex-class';
+import VueSocketIO from 'vue-socket.io';
 import Header from './components/Header.vue';
+import api from '@/api';
+import store from '@/store.ts';
+
+Vue.use(new VueSocketIO({
+  // debug: process.env.NODE_ENV === 'development',
+  connection: `${api.getBaseURL()}/game`,
+  vuex: {
+    store,
+    actionPrefix: 'SOCKET_',
+    mutationPrefix: 'SOCKET_',
+  },
+}));
 
 @Component({
   components: {
