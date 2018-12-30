@@ -1,7 +1,13 @@
 <template>
   <div class="world-main">
-    <div class="user-control">
-
+    <div class="user-control" v-if="user.loading">
+      <ActivityIndicator />
+    </div>
+    <div class="user-control" v-else-if="user.authenticated">
+      <h2>{{user.username}}</h2>
+    </div>
+    <div class="user-control" v-else>
+      <h2>You don't appear to be logged in</h2>
     </div>
     <div class="container">
       <header>
@@ -9,8 +15,8 @@
           <h1>GrandQuest World</h1>
         </div>
         <div class="stats">
-          <p>11:28am</p>
-          <p>Players Online 3</p>
+          <p>Current time: {{ world.readableTimeOfDay }}</p>
+          <p>Players Online: {{ Object.keys(world.connections).length }}</p>
         </div>
       </header>
       <div class="content">
@@ -25,10 +31,19 @@
   </div>
 </template>
 <script lang="ts">
-import { Vue, Component } from 'vue-property-decorator'
+import { Vue, Component } from 'vue-property-decorator';
+import { State } from 'vuex-class';
+import { User, World } from '@/types';
+import api from '@/api';
+import ActivityIndicator from '@/components/ActivityIndicator.vue';
 
-@Component
+@Component({
+  components: { ActivityIndicator },
+})
 export default class Main extends Vue {
+  @State public user!: User;
+  @State public world!: World;
+
   public setGame(name: string) {
     console.log('go to ', name);
   }
@@ -51,7 +66,11 @@ export default class Main extends Vue {
       margin-right: 3em;
       background: white;
       border-radius: 15px;
+      padding: 15px;
       min-height: 250px;
+      h2 {
+        margin: 0;
+      }
     }
     .container {
       flex: 3;
