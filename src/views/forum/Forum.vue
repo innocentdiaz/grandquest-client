@@ -1,13 +1,7 @@
 <template>
     <div class="forum">
         <div class="control">
-            <div class="user-control" v-if="user.authenticated">
-                <h2>{{user.username}}</h2>
-                <p>Joined {{ userJoinDate }}</p>
-            </div>
-            <div class="user-control" v-else>
-                <h2>Have an account?</h2>
-            </div>
+            <UserControl />
             <div class="forum-control">
                 <h2>What's trending</h2>
                 <h3>Live feed</h3>
@@ -92,10 +86,12 @@
     import { Component, Vue } from 'vue-property-decorator';
     import { State, Getter } from 'vuex-class';
     import { User } from '../../types';
+    import moment from 'moment';
+    import UserControl from '@/components/UserControl.vue';
     import ActivityIndicator from '../../components/ActivityIndicator.vue';
 
     @Component({
-        components: { ActivityIndicator },
+        components: { ActivityIndicator, UserControl },
     })
 
     export default class Forum extends Vue {
@@ -155,6 +151,9 @@
 
             return className;
         }
+        public sinceDate(date: string) {
+            return moment(date).fromNow();
+        }
     }
 </script>
 
@@ -202,14 +201,6 @@
                 color: $mainGrey;
             }
             
-            .user-control {
-                padding: 12px;
-                min-height: 150px;
-                border-radius: 10px;
-                background: $mainGreen;
-                color: white;
-                margin-bottom: 1em;
-            }
             .forum-control, .selected-board-control {
                 padding: 12px;
                 background: white;
