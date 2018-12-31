@@ -15,6 +15,7 @@ import submitPost from './views/submit/Post.vue';
 
 // auth
 import LogIn from './views/LogIn.vue';
+import LogOut from './views/LogOut.vue';
 
 // world
 import World from './views/World/Main.vue';
@@ -63,6 +64,11 @@ export default new Router({
       path: '/login',
       name: 'login',
       component: LogIn,
+    },
+    {
+      path: '/logout',
+      name: 'logout',
+      component: LogOut,
     },
     {
       path: '/world',

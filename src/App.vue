@@ -35,7 +35,20 @@ export default class App extends Vue {
   @Mutation public setWorldConnected: any;
   @Mutation public setWorldLoading: any;
 
-  private mounted() {
+  private async mounted() {
+    let pendingLogoutJWT = localStorage.getItem('grandquest:pending_logout');
+
+    if (pendingLogoutJWT) {
+      console.log('pending jwt logout');
+      let res = await api.delete(`/auth/${pendingLogoutJWT}`)
+      if (res.ok) {
+        localStorage.removeItem('grandquest:pending_logout');
+        location.reload();
+      } else {
+        console.log('could not request log out');
+      }
+    }
+
     this.$socket.on('connect', () => {
       this.setWorldConnected(true);
       this.setWorldLoading(false);
