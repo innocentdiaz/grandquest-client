@@ -32,12 +32,36 @@ export default class App extends Vue {
   @Action   public fetchUser: any;
   @Mutation public setUser: any;
   @Mutation public setUserUnauthorized: any;
+  @Mutation public setWorldConnected: any;
+  @Mutation public setWorldLoading: any;
 
   private mounted() {
+    this.$socket.on('connect', () => {
+      this.setWorldConnected(true);
+      this.setWorldLoading(false);
+      console.log('SOCKET: connected !');
+    });
+    this.$socket.on('connect_error', (error) => {
+      this.setWorldConnected(false);
+      this.setWorldLoading(false);
+      console.log('SOCKET: Connection Error');
+    });
+    this.$socket.on('reconnect_attempt', () => {
+      console.log('SOCKET: Recon attempt');
+    });
+    this.$socket.on('reconnect_error', () => {
+      console.log('SOCKET: Recon FAIL!');
+    });
+    this.$socket.on('disconnect', () => {
+      this.setWorldConnected(false);
+      console.log('SOCKET: Disconnect');
+    });
+
     const JWT = localStorage.getItem('grandquest:jwt');
 
     if (JWT) {
       this.fetchUser(JWT);
+      this.$socket.emit('AUTHENTICATE_SOCKET', JWT);
     } else {
       this.setUserUnauthorized();
     }

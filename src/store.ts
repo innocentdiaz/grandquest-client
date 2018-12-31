@@ -19,9 +19,11 @@ const state: State = {
     is_admin: false,
   },
   world: {
+    connected: false,
+    loading: true,
     timeOfDay: 0,
     readableTimeOfDay: 'pending',
-    connections: [],
+    connections: {},
   },
 };
 const getters = {
@@ -45,8 +47,16 @@ const mutations = {
   setUserUnauthorized(s: State) {
     s.user.loading = false;
   },
+  setWorldConnected(s: State, bool: boolean) {
+    s.world.connected = !!bool;
+  },
+  setWorldLoading(s: State, bool: boolean) {
+    s.world.loading = !!bool;
+  },
   'SOCKET_WORLD_STATE' (s: State, worldState: World) {
-    s.world = worldState;
+    s.world.connections = worldState.connections;
+    s.world.readableTimeOfDay = worldState.readableTimeOfDay;
+    s.world.timeOfDay = worldState.timeOfDay;
   }
 };
 const actions = {

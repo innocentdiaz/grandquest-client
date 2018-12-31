@@ -15,7 +15,9 @@ export interface User {
     is_admin: boolean;
 }
 export interface World {
+    connected:         boolean;
+    loading:           boolean;
     timeOfDay:         number;
     readableTimeOfDay: string;
-    connections:       [string];
+    connections:       { [socketID: string]: User };
 }
