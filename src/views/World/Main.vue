@@ -1,22 +1,24 @@
 <template>
   <div class="world-main">
-    <div class="user-control" v-if="user.loading">
-      <ActivityIndicator />
-    </div>
-    <div class="user-control" v-else-if="user.authenticated">
-      <h2>{{user.username}}</h2>
-    </div>
-    <div class="user-control" v-else>
-      <h2>You don't appear to be logged in</h2>
+    <div class="aside">
+      <UserControl />
     </div>
     <div class="container">
       <header>
         <div class="landscape">
           <h1>GrandQuest World</h1>
         </div>
-        <div class="stats">
+        <div class="stats" v-if="world.loading">
+          <h2>Connecting to the world <ActivityIndicator /></h2>
+        </div>
+        <div class="stats" v-else-if="world.connected">
+          <h2>GrandQuest World</h2>
           <p>Current time: {{ world.readableTimeOfDay }}</p>
           <p>Players Online: {{ Object.keys(world.connections).length }}</p>
+        </div>
+        <div class="stats" v-else>
+          <h2>GrandQuest World</h2>
+          <h3>You are currently offline</h3>
         </div>
       </header>
       <div class="content">
@@ -35,10 +37,11 @@ import { Vue, Component } from 'vue-property-decorator';
 import { State } from 'vuex-class';
 import { User, World } from '@/types';
 import api from '@/api';
+import UserControl from '@/components/UserControl.vue';
 import ActivityIndicator from '@/components/ActivityIndicator.vue';
 
 @Component({
-  components: { ActivityIndicator },
+  components: { ActivityIndicator, UserControl },
 })
 export default class Main extends Vue {
   @State public user!: User;
@@ -61,19 +64,12 @@ export default class Main extends Vue {
     align-items: flex-start;
     padding: 1.5em;
 
-    .user-control {
+    .aside { 
       flex: 1;
-      margin-right: 3em;
-      background: white;
-      border-radius: 15px;
-      padding: 15px;
-      min-height: 250px;
-      h2 {
-        margin: 0;
-      }
     }
     .container {
       flex: 3;
+      margin-left: 2em;
       display: flex;
       flex-direction: column;
       align-items: stretch;
