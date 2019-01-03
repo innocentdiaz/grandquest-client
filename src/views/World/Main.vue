@@ -14,7 +14,11 @@
         <div class="stats" v-else-if="world.connected">
           <h2>GrandQuest World</h2>
           <p>Current time: {{ world.readableTimeOfDay }}</p>
-          <p>Players Online: {{ Object.keys(world.connections).length }}</p>
+          <p>Players Online: {{ world.connections }}</p>
+          <h2>Members Online</h2>
+          <ul>
+            <li v-for="user in world.users" :key="user.id">{{user.username}}</li>
+          </ul>
         </div>
         <div class="stats" v-else>
           <h2>GrandQuest World</h2>
