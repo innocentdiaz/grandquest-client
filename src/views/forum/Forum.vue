@@ -18,39 +18,7 @@
                     </span>
                 </div>
 
-                <!-- container rendering -->
-                <div
-                        v-if="selectedBoard"
-                        class="mainBoard"
-                >
-                    <span class="forum-link back" v-on:click="() => setForum(0)">
-                        Back to {{selectedForum().title}}
-                    </span>
-
-                    <h1>{{ selectedBoard.title }}</h1>
-                    <span>{{ selectedBoard.description }}</span>
-                    <div class="board-posts">
-                        <div class="post">
-                            <div v-if="selectedBoard.loading">
-                                <ActivityIndicator size="36"/>
-                            </div>
-                            <div v-else-if="selectedBoard.posts.length">
-                                <div v-for="post in selectedBoard.posts" :key="post.id" class="post-link-container" v-on:click="setPost(post)">
-                                    <h1 class="title">{{ post.title }}</h1>
-                                    <p class="preview">{{ post.body }}</p>
-                                    <span class="footer">Submitted {{sinceDate(post.created_at)}} by {{ post.user ? post.user.username : ' an anonymous user' }}</span>
-                                </div>
-                            </div>
-                            <div v-else>
-                                <p>There are no posts in this board.</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div
-                        v-else
-                        class="mainForums"
-                >
+                <div class="mainForums">
                     <div :class="setShowcaseClass()">
                         <div
                              class="forum-showcase"
@@ -128,7 +96,6 @@
             return this.$data.mainForums[index];
         }
         public setForum(index: number) {
-            this.$data.selectedBoard = null;
             this.$data.currentForumIndex = index;
         }
         public setBoard(board: { id: number, title: string, description: string }) {
