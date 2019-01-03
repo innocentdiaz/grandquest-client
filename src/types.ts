@@ -19,5 +19,6 @@ export interface World {
     loading:           boolean;
     timeOfDay:         number;
     readableTimeOfDay: string;
-    connections:       { [socketID: string]: User };
+    users: { [id: string]: User },
+    connections:       number;
 }

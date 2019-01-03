@@ -23,7 +23,8 @@ const state: State = {
     loading: true,
     timeOfDay: 0,
     readableTimeOfDay: 'pending',
-    connections: {},
+    users: {},
+    connections: 0,
   },
 };
 const getters = {
@@ -37,9 +38,12 @@ const getters = {
 };
 const mutations = {
   setUser(s: State, user: User) {
-    s.user = user;
-    s.user.loading = false;
-    s.user.authenticated = true;
+    s.user = {
+      ...s.user, 
+      ...user, 
+      loading: false, 
+      authenticated: true
+    }
   },
   setJWT(s: State, jwt: string) {
     s.user.currentJWT = jwt;
@@ -54,9 +58,7 @@ const mutations = {
     s.world.loading = !!bool;
   },
   'SOCKET_WORLD_STATE' (s: State, worldState: World) {
-    s.world.connections = worldState.connections;
-    s.world.readableTimeOfDay = worldState.readableTimeOfDay;
-    s.world.timeOfDay = worldState.timeOfDay;
+    s.world = { ...s.world, ...worldState };
   }
 };
 const actions = {
@@ -69,6 +71,7 @@ const actions = {
         // TODO: switch tokens here
         const user = res.data.payload;
         commit('setUser', user);
+        commit('setJWT', JWT);
       } else if (res.status === 401 || res.status === 404) {
         localStorage.removeItem('grandquest:jwt');
         commit('setUserUnauthorized');
