@@ -7,7 +7,8 @@
 
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator';
-import { Action, Mutation } from 'vuex-class';
+import { User } from '@/types';
+import { State, Action, Mutation } from 'vuex-class';
 import VueSocketIO from 'vue-socket.io';
 import Header from './components/Header.vue';
 import api from '@/api';
@@ -29,6 +30,7 @@ Vue.use(new VueSocketIO({
   },
 })
 export default class App extends Vue {
+  @State    public user!: User;
   @Action   public fetchUser: any;
   @Mutation public setUser: any;
   @Mutation public setUserUnauthorized: any;
@@ -52,7 +54,12 @@ export default class App extends Vue {
     this.$socket.on('connect', () => {
       this.setWorldConnected(true);
       this.setWorldLoading(false);
+
       console.log('SOCKET: connected !');
+      if (this.user.authenticated) {
+        console.log('SOCKET: authenticating');
+        this.$socket.emit('AUTHENTICATE_SOCKET', this.user.currentJWT);
+      }
     });
     this.$socket.on('connect_error', (error) => {
       this.setWorldConnected(false);
@@ -107,7 +114,7 @@ button {
 
 a {
   color: $mainBlue;
-  font-decoration: none;
+  text-decoration: none;
 }
 
 .admin-label {
