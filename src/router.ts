@@ -19,6 +19,7 @@ import LogOut from './views/LogOut.vue';
 
 // world
 import World from './views/World/Main.vue';
+import Combat from './views/World/Combat.vue';
 
 Vue.use(Router);
 
@@ -74,6 +75,11 @@ export default new Router({
       path: '/world',
       name: 'world',
       component: World,
+    },
+    {
+      path: '/combat',
+      name: 'combat',
+      component: Combat,
     }
   ],
 });
