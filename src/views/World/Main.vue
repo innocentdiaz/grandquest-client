@@ -52,7 +52,7 @@ export default class Main extends Vue {
   @State public world!: World;
 
   public setGame(name: string) {
-    console.log('go to ', name);
+    this.$router.replace(name);
   }
 }
 </script>
