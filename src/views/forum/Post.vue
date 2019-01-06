@@ -115,13 +115,6 @@ export default class Post extends Vue {
         .post-content {
             padding: .5em 0;
             min-height: 50vh;
-
-            .title {
-
-            }
-            .body {
-
-            }
         }
     }
 </style>
