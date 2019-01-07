@@ -85,7 +85,7 @@ const mutations = {
 let socket = io(`${api.getBaseURL()}/game`, { autoConnect: false });
 
 const actions = {
-  fetchUser({ commit }, JWT: string) {
+  fetchUser({ commit, dispatch }, JWT: string) {
     api.setHeader('Authorization', JWT);
 
     api.get('/auth')
@@ -94,6 +94,7 @@ const actions = {
         // TODO: switch tokens here
         const user = res.data.payload;
         commit('setUser', {...user, currentJWT: JWT});
+        dispatch('socketSetUp');
       } else if (res.status === 401 || res.status === 404) {
         localStorage.removeItem('grandquest:jwt');
         commit('setUserUnauthorized');
@@ -102,16 +103,9 @@ const actions = {
       }
     });
   },
-  initializeSocket({ state, commit }) {
+  socketSetUp({ commit, dispatch }) {
     socket.open();
-
-    /*
-      Authenticate connection
-    */
-    if (state.user.authenticated) {
-      console.log('attempting authentication of user');
-      socket.emit('AUTHENTICATE_SOCKET', state.user.currentJWT);
-    }
+    console.log('Socket set up');
 
     /* TODO: connect to rooms that we could have been connected to */
     // user.connectedRooms.forEach(roomName => socket.emit('JOIN_ROOM', roomName))
@@ -121,14 +115,14 @@ const actions = {
     */
     socket.on('connect', () => {
       commit('SET_SOCKET_CONNECTION', true);
-      // authenticate
-      // reconnect to rooms
+
+      dispatch('initializeSocket');
     });
     socket.on('disconnect', () => {
       commit('SET_SOCKET_CONNECTION', false);
     });
     socket.on('connect_error', () => {
-      commit('SET_SOCKET_CONNECTION', true);
+      commit('SET_SOCKET_CONNECTION', false);
     });
     socket.on('reconnect_attempt', () => {
       commit('SET_SOCKET_LOADING');
@@ -136,6 +130,7 @@ const actions = {
     });
     socket.on('reconnect_error', () => {
       console.log('Socket reconnection Fail');
+      commit('SET_SOCKET_CONNECTION', false);
       // TODO: Limit amount of reconnection attempts
       /* world.reconnectionFails++; IF reconFails > n THEN socket.close() and world.connected = false */
     });
@@ -144,8 +139,8 @@ const actions = {
     socket.on('WORLD_STATE', (worldState: World) => {
       commit('SET_WORLD_STATE', worldState);
     });
-    socket.on('COMBAT_HUB_GAME_STATE', (combatHubState: CombatHub) => {
-      commit('SET_COMBAT_HUB_GAME_STATE', combatHubState);
+    socket.on('COMBAT_HUB_STATE', (combatHubState: CombatHub) => {
+      commit('SET_COMBAT_HUB_STATE', combatHubState);
     });
     socket.on('COMBAT_HUB_CONNECT', (error: any) => {
       if (error) {
@@ -153,6 +148,39 @@ const actions = {
       } else {
         commit('SET_COMBAT_HUB_GAME_STATE', { connected: true });
       }
+    });
+  },
+  initializeSocket() {
+    console.log('initializeSocket');
+    /*
+      Authenticate socket
+    */
+    if (state.user.authenticated) {
+      console.log('attempting authentication of user');
+      socket.emit('AUTHENTICATE_SOCKET', state.user.currentJWT, (err) => {
+        if (!err) {
+          // Reconnect to rooms
+        }
+      });
+    }
+  },
+  socketJoinRoom({ commit }, room: string) {
+    if (!socket.connected) console.warn('Attempted to join room before socket connected');
+
+    socket.emit(`${room.toUpperCase()}_CONNECT`, (err: any) => {
+      if (err) alert(err);
+      else {
+        console.log('joined room ', room);
+        commit(`SET_${room.toUpperCase()}_STATE`, { connected: true })
+      }
+    });
+  },
+  socketLeaveRoom({ commit }, room: string) {
+    if (!socket.connected) console.warn('Attempted to leave room before socket connected');
+
+    socket.emit(`${room.toUpperCase()}_DISCONNECT`, () => {
+      console.log('left room ', room);
+      commit(`SET_${room.toUpperCase()}_STATE`, { connected: true })
     });
   },
 };
