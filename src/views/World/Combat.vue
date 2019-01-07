@@ -4,11 +4,8 @@
       <div class="main-title">
         <h2>Journies</h2>
       </div>
-      <div v-if="socketStatus === -1">
-        Attempting connection <ActivityIndicator />
-      </div>
-      <ul v-else-if="socketStatus === 1">
-        <li v-for="room in rooms" :key="room.id" v-on:click="joinRoom(room.id)" 
+      <ul v-if="combatHub.connected">
+        <li v-for="room in combatHub.rooms" :key="room.id" v-on:click="joinRoom(room.id)" 
           :class="room.playerCount + 1 > room.maxPlayers ? 'disabled' : ''"
         >
           <img src="@/assets/img/icon/1bit-swords.png" alt="battle icon">
@@ -36,43 +33,33 @@
 </template>
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator';
+import { State, Action } from 'vuex-class';
 import ActivityIndicator from '@/components/ActivityIndicator.vue';
-import io from 'socket.io-client';
+import { CombatRoom, CombatHub } from '@/types';
 import api from '@/api';
 
-const socket = io(`${api.getBaseURL()}/combat`, { autoConnect: false });
+interface CombatRooms {
+  [id: string]: CombatRoom;
+}
 
 @Component({
   components: { ActivityIndicator },
 })
 export default class Combat extends Vue {
-  public socketStatus = -1;
-  public rooms = {};
+  @State  public combatHub!: CombatHub;
+  @Action public socketJoinRoom: any;
+  @Action public socketLeaveRoom: any;
 
-  public mounted() {
-    socket.open();
-    socket.on('connect', () => {
-      console.log('status combat = 1');
-      this.socketStatus = 1;
-    });
-    socket.on('disconnect', () => {
-      console.log('status combat = 0');
-      this.socketStatus = 0;
-    });
-    socket.on('reconnect_attempt', () => {
-      console.log('status combat =-1');
-      this.socketStatus = -1;
-    });
-    socket.on('COMBAT_GAME_STATE', (combatState) => {
-      this.rooms = combatState.rooms;
-    });
+  public mounted () {
+    this.socketJoinRoom('COMBAT_HUB');
   }
   public destroyed() {
-    socket.close();
+    this.socketLeaveRoom('COMBAT_HUB');
   }
   public joinRoom(roomID: string) {
-    let chosenRoom = this.rooms[roomID];
-    if (chosenRoom.players + 1 > chosenRoom.maxPlayers) {
+    let chosenRoom = this.combatHub.rooms[roomID];
+    
+    if (chosenRoom.playerCount + 1 > chosenRoom.maxPlayers) {
       return console.log('the selected room is already full');
     }
 
