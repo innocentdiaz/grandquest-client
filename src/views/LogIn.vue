@@ -63,8 +63,7 @@ export default class LogIn extends Vue {
 
         localStorage.setItem('grandquest:jwt', JWT);
 
-        this.setUser(user);
-        this.setJWT(JWT);
+        this.setUser({...user, currentJWT: JWT});
 
         this.$router.replace('/forum');
       } else {
