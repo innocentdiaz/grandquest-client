@@ -9,20 +9,9 @@
 import { Component, Vue } from 'vue-property-decorator';
 import { User } from '@/types';
 import { State, Action, Mutation } from 'vuex-class';
-import VueSocketIO from 'vue-socket.io';
 import Header from './components/Header.vue';
 import api from '@/api';
 import store from '@/store.ts';
-
-Vue.use(new VueSocketIO({
-  // debug: process.env.NODE_ENV === 'development',
-  connection: `${api.getBaseURL()}/game`,
-  vuex: {
-    store,
-    actionPrefix: 'SOCKET_',
-    mutationPrefix: 'SOCKET_',
-  },
-}));
 
 @Component({
   components: {
@@ -32,12 +21,14 @@ Vue.use(new VueSocketIO({
 export default class App extends Vue {
   @State    public user!: User;
   @Action   public fetchUser: any;
+  @Action   public initializeSocket: any;
   @Mutation public setUser: any;
   @Mutation public setUserUnauthorized: any;
-  @Mutation public setWorldConnected: any;
-  @Mutation public setWorldLoading: any;
 
   private async mounted() {
+    /*
+      Pending logout request
+    */
     let pendingLogoutJWT = localStorage.getItem('grandquest:pending_logout');
 
     if (pendingLogoutJWT) {
@@ -51,45 +42,28 @@ export default class App extends Vue {
       }
     }
 
-    this.$socket.on('connect', () => {
-      this.setWorldConnected(true);
-      this.setWorldLoading(false);
-
-      console.log('SOCKET: connected !');
-      if (this.user.authenticated) {
-        console.log('SOCKET: authenticating');
-        this.$socket.emit('AUTHENTICATE_SOCKET', this.user.currentJWT);
-      }
-    });
-    this.$socket.on('connect_error', (error) => {
-      this.setWorldConnected(false);
-      this.setWorldLoading(false);
-      console.log('SOCKET: Connection Error');
-    });
-    this.$socket.on('reconnect_attempt', () => {
-      console.log('SOCKET: Recon attempt');
-    });
-    this.$socket.on('reconnect_error', () => {
-      console.log('SOCKET: Recon FAIL!');
-    });
-    this.$socket.on('disconnect', () => {
-      this.setWorldConnected(false);
-      console.log('SOCKET: Disconnect');
-    });
-
+    /*
+      Authenticate user
+    */
     const JWT = localStorage.getItem('grandquest:jwt');
 
     if (JWT) {
       this.fetchUser(JWT);
-      this.$socket.emit('AUTHENTICATE_SOCKET', JWT);
     } else {
       this.setUserUnauthorized();
     }
+
+    /*
+      Initalize socket.io
+    */
+    this.initializeSocket();
   }
 }
 </script>
 
 <style lang="scss">
+@import url('https://fonts.googleapis.com/css?family=Press+Start+2P');
+
 $mainBlue: #036ca5;
 $mainBlack: rgb(24, 24, 24);
 $mainGrey: rgb(179, 179, 179);
@@ -108,7 +82,7 @@ button {
 }
 
 .root {
-  height: 100vh;
+  min-height: 100vh;
   width: 100%;
 }
 
