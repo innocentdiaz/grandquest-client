@@ -13,7 +13,7 @@
         </div>
         <div class="stats" v-else-if="world.connected">
           <h2>GrandQuest World</h2>
-          <p>Current time: {{ world.readableTimeOfDay }}</p>
+          <p>Current time: {{ readableTimeOfDay() }}</p>
           <p>Players Online: {{ world.connections }}</p>
           <h2>Members Online</h2>
           <ul>
@@ -53,6 +53,15 @@ export default class Main extends Vue {
 
   public setGame(name: string) {
     this.$router.replace(name);
+  }
+  public readableTimeOfDay() {
+    let militaryTime = Math.floor(this.world.timeOfDay / 1000);
+    let leftSide = militaryTime > 12 ? militaryTime - 12 : militaryTime;
+    let rightSide = ((this.world.timeOfDay/1000 - leftSide) * 60).toFixed(0);
+
+    let period = militaryTime > 12 ? 'pm' : 'am';
+      
+    return `${leftSide}:${rightSide}${period}`;
   }
 }
 </script>
