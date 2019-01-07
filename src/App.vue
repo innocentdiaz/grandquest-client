@@ -21,7 +21,6 @@ import store from '@/store.ts';
 export default class App extends Vue {
   @State    public user!: User;
   @Action   public fetchUser: any;
-  @Action   public initializeSocket: any;
   @Mutation public setUser: any;
   @Mutation public setUserUnauthorized: any;
 
@@ -52,11 +51,6 @@ export default class App extends Vue {
     } else {
       this.setUserUnauthorized();
     }
-
-    /*
-      Initalize socket.io
-    */
-    this.initializeSocket();
   }
 }
 </script>
