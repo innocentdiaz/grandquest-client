@@ -8,10 +8,10 @@
         <div class="landscape">
           <h1>GrandQuest World</h1>
         </div>
-        <div class="stats" v-if="world.loading">
+        <div class="stats" v-if="socket.loading">
           <h2>Connecting to the world <ActivityIndicator /></h2>
         </div>
-        <div class="stats" v-else-if="world.connected">
+        <div class="stats" v-else-if="socket.connected">
           <h2>GrandQuest World</h2>
           <p>Current time: {{ readableTimeOfDay() }}</p>
           <p>Players Online: {{ world.connections }}</p>
@@ -39,7 +39,7 @@
 <script lang="ts">
 import { Vue, Component } from 'vue-property-decorator';
 import { State } from 'vuex-class';
-import { User, World } from '@/types';
+import { User, World, SocketState } from '@/types';
 import api from '@/api';
 import UserControl from '@/components/UserControl.vue';
 import ActivityIndicator from '@/components/ActivityIndicator.vue';
@@ -49,6 +49,7 @@ import ActivityIndicator from '@/components/ActivityIndicator.vue';
 })
 export default class Main extends Vue {
   @State public user!: User;
+  @State public socket!: SocketState;
   @State public world!: World;
 
   public setGame(name: string) {
@@ -61,7 +62,7 @@ export default class Main extends Vue {
 
     let period = militaryTime > 12 ? 'pm' : 'am';
       
-    return `${leftSide}:${rightSide}${period}`;
+    return `${militaryTime}:${rightSide}${period}`;
   }
 }
 </script>

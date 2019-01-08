@@ -4,7 +4,10 @@
       <div class="main-title">
         <h2>Journies</h2>
       </div>
-      <ul v-if="combatHub.connected">
+      <div v-if="socket.loading">
+        <ActivityIndicator />
+      </div>
+      <ul v-else-if="socket.connected">
         <li v-for="room in combatHub.rooms" :key="room.id" v-on:click="joinRoom(room.id)" 
           :class="room.playerCount + 1 > room.maxPlayers ? 'disabled' : ''"
         >
@@ -16,7 +19,7 @@
         </li>
       </ul>
       <div v-else>
-        you are not connected :(
+        <p>You are not connected to the server</p>
       </div>
     </div>
     <div class="main-container">
@@ -35,7 +38,7 @@
 import { Component, Vue } from 'vue-property-decorator';
 import { State, Action } from 'vuex-class';
 import ActivityIndicator from '@/components/ActivityIndicator.vue';
-import { CombatRoom, CombatHub } from '@/types';
+import { CombatRoom, CombatHub, SocketState } from '@/types';
 import api from '@/api';
 
 interface CombatRooms {
@@ -47,6 +50,7 @@ interface CombatRooms {
 })
 export default class Combat extends Vue {
   @State  public combatHub!: CombatHub;
+  @State  public socket!: SocketState;
   @Action public socketJoinRoom: any;
   @Action public socketLeaveRoom: any;
 
