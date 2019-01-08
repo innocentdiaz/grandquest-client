@@ -168,16 +168,21 @@ const actions = {
       });
     }
   },
-  socketJoinRoom({ commit }, room: string) {
+  socketJoinRoom({ commit }, room: string, extraParam?: any) {
     if (!socket.connected) console.warn('Attempted to join room before socket connected');
 
-    socket.emit(`${room.toUpperCase()}_CONNECT`, (err: any) => {
-      if (err) alert(err);
-      else {
-        console.log('joined room ', room);
-        commit(`SET_SOCKET_ROOM`, room.toUpperCase());
-      }
-    });
+    const event = `${room.toUpperCase()}_CONNECT`;
+    const cb = (err: any) => {
+      if (err) console.log(`room "${room}" error = `, err);
+      else commit(`SET_SOCKET_ROOM`, room.toUpperCase());
+    }
+
+    // if we have a parameter
+    if (typeof extraParam !== 'undefined') {
+      socket.emit(event, extraParam, cb);
+    } else {
+      socket.emit(event, cb);
+    }
   },
   socketLeaveRoom({ commit }, room: string) {
     if (!socket.connected) console.warn('Attempted to leave room before socket connected');
