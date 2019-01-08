@@ -3,6 +3,7 @@ export interface State {
     user: User;
     world: World;
     combatHub: CombatHub;
+    socket: SocketState;
 }
 
 // Models
@@ -14,19 +15,16 @@ export interface User {
     currentJWT:     string;
     created_at:     string;
     is_admin:       boolean;
-    roomConnection: string|null;
 }
 export interface World {
-    connected:         boolean;
-    loading:           boolean;
+    // connected:         boolean;
+    // loading:           boolean;
     timeOfDay:         number;
     readableTimeOfDay: string;
     users: { [id: string]: User },
     connections:       number;
 }
 export interface CombatHub {
-    connected:  boolean;
-    loading:    boolean;
     rooms: {
         [id: string]: CombatRoom,
     }
@@ -36,4 +34,9 @@ export interface CombatRoom {
     title:       string;
     playerCount: number;
     maxPlayers:  number;
+}
+export interface SocketState {
+    connected:  boolean;
+    loading:    boolean;
+    room:       string|null;
 }

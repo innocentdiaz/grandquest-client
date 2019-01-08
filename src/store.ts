@@ -18,21 +18,21 @@ const state: State = {
     currentJWT: '',
     created_at: '',
     is_admin: false,
-    roomConnection: null,
   },
   world: {
-    connected: false,
-    loading: true,
     timeOfDay: 0,
     readableTimeOfDay: 'pending',
     users: {},
     connections: 0,
   },
   combatHub: {
-    connected: false,
-    loading: true,
     rooms: {},
   },
+  socket: {
+    connected: false,
+    loading: false,
+    room: null,
+  }
 };
 const getters = {
   userJoinDate: (s: State) => {
@@ -55,24 +55,21 @@ const mutations = {
   setUserUnauthorized(s: State) {
     s.user.loading = false;
   },
-  setWorldConnected(s: State, bool: boolean) {
-    s.world.connected = !!bool;
-  },
-  setWorldLoading(s: State, bool: boolean) {
-    s.world.loading = !!bool;
-  },
   /*
     Socket events
   */
   // Successful connection
   SET_SOCKET_CONNECTION (s: State, state: boolean) {
-    s.world.loading = false;
-    s.world.connected = state;
+    s.socket.loading = false;
+    s.socket.connected = state;
     // TODO: authenticate socket here
     console.log('Socket connected')
   },
   SET_SOCKET_LOADING (s: State) {
-    s.world.loading = true;
+    s.socket.loading = true;
+  },
+  SET_SOCKET_ROOM (s: State, roomName: string|null) {
+    s.socket.room = roomName;
   },
   SET_WORLD_STATE (s: State, worldState: World) {
     s.world = { ...s.world, ...worldState };
@@ -95,23 +92,20 @@ const actions = {
         const user = res.data.payload;
         commit('setUser', {...user, currentJWT: JWT});
         dispatch('socketSetUp');
+
+        return true;
       } else if (res.status === 401 || res.status === 404) {
         localStorage.removeItem('grandquest:jwt');
-        commit('setUserUnauthorized');
-      } else {
-        commit('setUserUnauthorized');
       }
+      commit('setUserUnauthorized');
     });
   },
   socketSetUp({ commit, dispatch }) {
     socket.open();
     console.log('Socket set up');
-
-    /* TODO: connect to rooms that we could have been connected to */
-    // user.connectedRooms.forEach(roomName => socket.emit('JOIN_ROOM', roomName))
     
     /*
-      Bind socket events
+      Socket events
     */
     socket.on('connect', () => {
       commit('SET_SOCKET_CONNECTION', true);
@@ -125,17 +119,19 @@ const actions = {
       commit('SET_SOCKET_CONNECTION', false);
     });
     socket.on('reconnect_attempt', () => {
-      commit('SET_SOCKET_LOADING');
+      commit('SET_SOCKET_LOADING', true);
       console.log('Socket attempting reconnection');
     });
     socket.on('reconnect_error', () => {
-      console.log('Socket reconnection Fail');
       commit('SET_SOCKET_CONNECTION', false);
+      console.log('Socket reconnection Fail');
       // TODO: Limit amount of reconnection attempts
       /* world.reconnectionFails++; IF reconFails > n THEN socket.close() and world.connected = false */
     });
 
-    // Events
+    /*
+      Server events
+    */
     socket.on('WORLD_STATE', (worldState: World) => {
       commit('SET_WORLD_STATE', worldState);
     });
@@ -150,16 +146,24 @@ const actions = {
       }
     });
   },
-  initializeSocket() {
+  initializeSocket({ state, dispatch }) {
     console.log('initializeSocket');
+
     /*
       Authenticate socket
     */
     if (state.user.authenticated) {
-      console.log('attempting authentication of user');
+      console.log('attempting authentication of socket');
+
       socket.emit('AUTHENTICATE_SOCKET', state.user.currentJWT, (err) => {
-        if (!err) {
-          // Reconnect to rooms
+        if (err) {
+          return console.log('! socket auth error = ', err);
+        } else if (state.socket.room) {
+          /*
+            Join rooms
+          */
+          console.log('joining disconnected rooms ');
+          dispatch('socketJoinRoom', state.socket.room);
         }
       });
     }
@@ -171,17 +175,15 @@ const actions = {
       if (err) alert(err);
       else {
         console.log('joined room ', room);
-        commit(`SET_${room.toUpperCase()}_STATE`, { connected: true })
+        commit(`SET_SOCKET_ROOM`, room.toUpperCase());
       }
     });
   },
   socketLeaveRoom({ commit }, room: string) {
     if (!socket.connected) console.warn('Attempted to leave room before socket connected');
 
-    socket.emit(`${room.toUpperCase()}_DISCONNECT`, () => {
-      console.log('left room ', room);
-      commit(`SET_${room.toUpperCase()}_STATE`, { connected: true })
-    });
+    socket.emit(`${room.toUpperCase()}_DISCONNECT`);
+    commit(`SET_SOCKET_ROOM`, null);
   },
 };
 
