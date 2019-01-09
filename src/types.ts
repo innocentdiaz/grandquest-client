@@ -5,6 +5,12 @@ export interface State {
     combatHub: CombatHub;
     socket: SocketState;
 }
+// Action Context
+export interface ActionContext {
+    state: State,
+    dispatch: any,
+    commit: any,
+}
 
 // Models
 export interface User {
@@ -38,5 +44,8 @@ export interface CombatRoom {
 export interface SocketState {
     connected:  boolean;
     loading:    boolean;
-    room:       string|null;
+    room:       null | {
+        name:       string;
+        parameter:  any;
+    };
 }
