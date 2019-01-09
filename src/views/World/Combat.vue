@@ -55,7 +55,7 @@ export default class Combat extends Vue {
   @Action public socketLeaveRoom: any;
 
   public mounted () {
-    this.socketJoinRoom('COMBAT_HUB');
+    this.socketJoinRoom({ name: 'COMBAT_HUB'});
   }
   public destroyed() {
     this.socketLeaveRoom('COMBAT_HUB');
