@@ -5,7 +5,8 @@ import {
   ActionContext,
   User,
   World,
-  CombatHub
+  CombatHub,
+  CombatRoom,
 } from './types';
 
 import io from 'socket.io-client';
@@ -27,12 +28,16 @@ const state: State = {
   },
   world: {
     timeOfDay: 0,
-    readableTimeOfDay: 'pending',
-    users: {},
     connections: 0,
   },
   combatHub: {
     rooms: {},
+  },
+  combatRoom: {
+    id: '',
+    title: '',
+    playerCount: 0,
+    maxPlayers: 4,
   },
   socket: {
     connected: false,
@@ -79,6 +84,9 @@ const mutations = {
   },
   SET_COMBAT_HUB_STATE (s: State, combatHubState: CombatHub) {
     s.combatHub = { ...s.combatHub, ...combatHubState };
+  },
+  SET_COMBAT_ROOM_STATE (s: State, combatRoomState: CombatRoom) {
+    s.combatRoom = { ...s.combatRoom, ...combatRoomState };
   },
 };
 
@@ -142,6 +150,9 @@ const actions = {
     });
     socket.on('COMBAT_HUB_STATE', (combatHubState: CombatHub) => {
       commit('SET_COMBAT_HUB_STATE', combatHubState);
+    });
+    socket.on('COMBAT_ROOM_STATE', (combatRoomState: CombatRoom) => {
+      commit('SET_COMBAT_ROOM_STATE', combatRoomState);
     });
   },
   initializeSocket({ state, dispatch }: ActionContext) {

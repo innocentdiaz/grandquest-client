@@ -3,6 +3,7 @@ export interface State {
     user: User;
     world: World;
     combatHub: CombatHub;
+    combatRoom: CombatRoom;
     socket: SocketState;
 }
 // Action Context
@@ -23,11 +24,7 @@ export interface User {
     is_admin:       boolean;
 }
 export interface World {
-    // connected:         boolean;
-    // loading:           boolean;
     timeOfDay:         number;
-    readableTimeOfDay: string;
-    users: { [id: string]: User },
     connections:       number;
 }
 export interface CombatHub {
