@@ -27,30 +27,32 @@ import { CombatRoom } from '@/types';
 /*
   Declare interfaces
 */
+interface GiActions {
+  [actionName: string]: () => any,
+}
+interface GiGlobal {
+  gameState: any;
+  gameInstance: {};
+  gameCanvas: any;
+  gameCreated: boolean;
+  gameClouds: any;
+  targetHand: any;
+  playerPlacingLine: PlacingLine;
+  enemyPlacingLine:  PlacingLine;
+};
 interface GameInterface {
   // new Phaser.Game
   game: any;
   // Used to manipulate the game
-  actions:  {
-    [actionName: string]: any,
-  };
+  actions:  GiActions;
   // Stores important game variables
-  global: {
-    gameState: any;
-    gameInstance: {};
-    gameCanvas: any;
-    gameCreated: boolean;
-    gameClouds: any;
-    targetHand: any;
-    playerPlacingLine: PlacingLine;
-    enemyPlacingLine:  PlacingLine;
-  };
+  global: GiGlobal
 }
 interface PlacingLine {
   [index: number]: {
     character:  boolean;
-    next:       number;
-    prev:       number;
+    nextIndex:       number;
+    prevIndex:       number;
   }
 }
 
@@ -59,7 +61,7 @@ interface PlacingLine {
   Will return a GameInterface object
 */
 function launch(gameState: CombatRoom) {
-  let global = {
+  let global: GiGlobal = {
     // state from the server
     gameState: gameState,
     // new Phaser.Game
@@ -69,48 +71,31 @@ function launch(gameState: CombatRoom) {
     gameCanvas: null,
     gameClouds: null,
     targetHand: null,
-    playerPlacingLine: {
-      1: {
-        character: false,
-        next: 2,
-        prev: 0,
-      },
-      2: {
-        character: false,
-        next: 3,
-        prev: 1,
-      },
-      3: {
-        character: false,
-        next: 0,
-        prev: 2,
-      },
-    },
-    enemyPlacingLine: {
-      0: {
-        character: false,
-        next: 1,
-        prev: 3,
-      },
-      1: {
-        character: false,
-        next: 2,
-        prev: 0,
-      },
-      2: {
-        character: false,
-        next: 3,
-        prev: 1,
-      },
-      3: {
-        character: false,
-        next: 0,
-        prev: 2,
-      },
-    },
+    // generate the placing line object using the range of players allowed
+    playerPlacingLine: _.reduce(_.range(1, gameState.maxPlayers + 1), (memo, index) => {
+      return {
+        ...memo,
+        [index]: {
+          character: false,
+          nextIndex: index >= gameState.maxPlayers ? 1 : index + 1,
+          prevIndex: index === 1 ? gameState.maxPlayers : index - 1,
+        },
+      };
+    }, {}),
+    // generate placing line object for enemies in a range from 1-4
+    enemyPlacingLine: _.reduce(_.range(1, 5), (memo, index) => {
+      return {
+        ...memo,
+        [index]: {
+          character: false,
+          nextIndex: index > 5 ? 1 : index + 1,
+          prevIndex: index === 1 ? 4 : index - 1,
+        },
+      };
+    }, {}),
   };
 
-  let game = new Phaser.Game({
+  let game: any = new Phaser.Game({
     type: Phaser.AUTO,
     width: window.innerWidth,
     height: window.innerHeight,
@@ -127,13 +112,16 @@ function launch(gameState: CombatRoom) {
         // set game instance globally
         global.gameInstance = this;
         global.gameCanvas = document.querySelector('#combat canvas');
+
+        // BIND GiActions to game instance
+        _.each(actions, (func: any, action: string) => {
+          actions[action] = func.bind(this);
+        });
       },
       create() {
         /*
           Load images asyncronously
         */
-
-        let imagesLoaded = 0;
 
         _.each([
           ['country-platform', countryPlatformImage],
@@ -150,9 +138,8 @@ function launch(gameState: CombatRoom) {
           img.onload = () => {
             this.textures.addImage(name, img);
 
-            imagesLoaded++;
-            if (imagesLoaded === l.length) {
-              actions.addBackground.bind(this)();
+            if (i === l.length - 1) {
+              actions.addBackground();
             }
           }
         });
@@ -175,8 +162,8 @@ function launch(gameState: CombatRoom) {
     },
   });
 
-  const actions = {
-    addBackground() {
+  const actions: GiActions = {
+    addBackground(): void {
       /*
         Handy dimensions
       */
@@ -211,10 +198,13 @@ function launch(gameState: CombatRoom) {
           img.setScale(exponential * .7);
         }
       });
-    }
+    },
+    updateGameState(): void {
+
+    },
   };
 
-  let gameInterface = {
+  let gameInterface: GameInterface = {
     game,
     global,
     actions,
