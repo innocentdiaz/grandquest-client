@@ -55,16 +55,8 @@ const getters = {
   },
 };
 const mutations = {
-  setUser(s: State, user: User) {
-    s.user = {
-      ...s.user, 
-      ...user, 
-      loading: false, 
-      authenticated: true
-    }
-  },
-  setUserUnauthorized(s: State) {
-    s.user.loading = false;
+  SET_USER(s: State, user: User) {
+    s.user = { ...s.user, ...user };
   },
   /*
     Socket events
@@ -93,29 +85,32 @@ const mutations = {
 let socket = io(`${api.getBaseURL()}/game`, { autoConnect: false });
 
 const actions = {
-  fetchUser({ commit, dispatch }: ActionContext, JWT: string) {
-    api.setHeader('Authorization', JWT);
+  async INIT_AUTH({ commit, dispatch }: ActionContext) {
+    const JWT = localStorage.getItem('grandquest:jwt');
+    let user = { loading: false };
 
-    api.get('/auth')
-    .then((res: ApiResponse<any>) => {
-      
+    if (JWT) {
+      api.setHeader('Authorization', JWT);
+      const res: ApiResponse<any> = await api.get('/auth');
+
       if (res.ok) {
         // TODO: switch tokens here
-        const user = res.data.payload;
-        commit('setUser', {...user, currentJWT: JWT});
-      } else if (res.status === 401 || res.status === 404) {
+        user = {
+          ...res.data.payload,
+          currentJWT: JWT,
+          loading: false,
+          authenticated: true,
+        };
+      } else if (res.status === 401) {
         localStorage.removeItem('grandquest:jwt');
-        commit('setUserUnauthorized');
-      } else {
-        commit('setUserUnauthorized');
       }
-
-      dispatch('socketSetUp');
-    });
+    }
+    commit('SET_USER', user);
+    dispatch('OPEN_SOCKET');
   },
-  socketSetUp({ commit, dispatch }: ActionContext) {
+  OPEN_SOCKET({ commit, dispatch }: ActionContext) {
     socket.open();
-    console.log('vuex - socketSetUp');
+    console.log('vuex - OPEN_SOCKET');
     
     /*
       Socket events
@@ -123,7 +118,7 @@ const actions = {
     socket.on('connect', () => {
       commit('SET_SOCKET_CONNECTION', true);
 
-      dispatch('initializeSocket');
+      dispatch('INIT_SOCKET');
     });
     socket.on('disconnect', () => {
       commit('SET_SOCKET_CONNECTION', false);
@@ -155,7 +150,7 @@ const actions = {
       commit('SET_COMBAT_ROOM_STATE', combatRoomState);
     });
   },
-  initializeSocket({ state, dispatch }: ActionContext) {
+  INIT_SOCKET({ state, dispatch }: ActionContext) {
     console.log('vuex > initializeSocket');
 
     /*

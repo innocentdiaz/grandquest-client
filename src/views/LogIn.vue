@@ -38,8 +38,8 @@ import { ApiResponse } from 'apisauce';
   components: { ActivityIndicator },
 })
 export default class LogIn extends Vue {
-  @Mutation public setUser: any;
-  @Mutation public setJWT: any;
+  @Mutation public SET_USER: any;
+  @Action public INIT_SOCKET: any;
 
   public email = '';
   public password = '';
@@ -63,7 +63,13 @@ export default class LogIn extends Vue {
 
         localStorage.setItem('grandquest:jwt', JWT);
 
-        this.setUser({...user, currentJWT: JWT});
+        this.SET_USER({
+          ...user,
+          currentJWT: JWT,
+          authenticated: true,
+          loading: false 
+        });
+        this.INIT_SOCKET();
 
         this.$router.replace('/forum');
       } else {

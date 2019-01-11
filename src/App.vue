@@ -19,10 +19,7 @@ import store from '@/store.ts';
   },
 })
 export default class App extends Vue {
-  @State    public user!: User;
-  @Action   public fetchUser: any;
-  @Mutation public setUser: any;
-  @Mutation public setUserUnauthorized: any;
+  @Action public INIT_AUTH: any;
 
   private async mounted() {
     /*
@@ -41,16 +38,7 @@ export default class App extends Vue {
       }
     }
 
-    /*
-      Authenticate user
-    */
-    const JWT = localStorage.getItem('grandquest:jwt');
-
-    if (JWT) {
-      this.fetchUser(JWT);
-    } else {
-      this.setUserUnauthorized();
-    }
+    this.INIT_AUTH();
   }
 }
 </script>
