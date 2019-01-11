@@ -52,12 +52,10 @@ export default class Main extends Vue {
     this.$router.replace(name);
   }
   public readableTimeOfDay() {
-    let militaryTime = Math.floor(this.world.timeOfDay / 1000);
-    let leftSide = militaryTime > 12 ? militaryTime - 12 : militaryTime;
-    let rightSide = ((this.world.timeOfDay/1000 - leftSide) * 60).toFixed(0);
-
-    let period = militaryTime > 12 ? 'pm' : 'am';
-      
+    const militaryTime = Math.floor(this.world.timeOfDay / 1000);
+    const leftSide = militaryTime > 12 ? militaryTime - 12 : militaryTime;
+    const rightSide = ((this.world.timeOfDay / 1000 - leftSide) * 60).toFixed(0);
+    const period = militaryTime > 12 ? 'pm' : 'am';
     return `${militaryTime}:${rightSide}${period}`;
   }
 }
