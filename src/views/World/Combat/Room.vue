@@ -2,7 +2,7 @@
   <div class="combat-root" v-if="socket.loading">
     <h1>Loading connection</h1>
   </div>
-  <div class="combat-root" v-else-if="socket.connected">
+  <div class="combat-root" id="combat" v-else-if="socket.connected">
     <header>
       <h1 id="title">
         Combat - {{ combatRoom.title }}
@@ -43,40 +43,43 @@
 import { Component, Vue } from 'vue-property-decorator';
 import { Action, State } from 'vuex-class';
 import { SocketState } from '@/types';
-import _  from 'underscore';
+import _ from 'underscore';
 import io from 'socket.io-client';
 import api from '@/api';
+import launchGame from './Game';
 
 interface Attack { 
-  title:       string;
+  title: string;
   description: string;
 }
 interface MasterObjectOption {
-  title:        string;
-  description:  string;
-  to:           null|string;
-  disabled:     boolean;
-  select:       {
-    id:   string;
+  title: string;
+  description: string;
+  to: null|string;
+  disabled: boolean;
+  select: {
+    id: string;
     type: string;
   } | null;
 }
 interface GuiMasterObject {
-  [root: string]: MasterObjectOption[],
-  potions: MasterObjectOption[],
-  attacks: MasterObjectOption[],
-  actions: MasterObjectOption[],
+  [root: string]: MasterObjectOption[];
+  potions: MasterObjectOption[];
+  attacks: MasterObjectOption[];
+  actions: MasterObjectOption[];
 }
+
+let gameInterface: any = false;
 
 @Component
 export default class CombatRoom extends Vue {
-  @State  public socket!:         SocketState;
-  @State  public combatRoom!:     CombatRoom;
-  @Action public socketJoinRoom:  any;
+  @State  public socket!: SocketState;
+  @State  public combatRoom!: CombatRoom;
+  @Action public socketJoinRoom: any;
   @Action public socketLeaveRoom: any;
 
   public initialized: boolean = false;
-  public display:     string|null = 'Joining room';
+  public display: string|null = 'Joining room';
   public description: string = '';
   
   public guiMasterObject: GuiMasterObject = {
@@ -91,7 +94,7 @@ export default class CombatRoom extends Vue {
 
   public selectionMode = 'ACTION';
   public currentScreen = 'root';
-  public currentTargetSide  = 0;
+  public currentTargetSide = 0;
   public currentTargetIndex = 0;
   public currentCursorIndex = 0;
   public cursorMoveDate = Date.now();
@@ -99,20 +102,26 @@ export default class CombatRoom extends Vue {
   public mounted() {
     const { roomID } = this.$route.params;
 
+    if (!this.socket.connected) {
+      return this.display = 'You dont appear to be connected to the server';
+    }
     if (typeof roomID !== 'string' || roomID.trim().length < 10) {
       return this.display = 'No room id provided';
     }
 
+    this.display = null;
     this.socketJoinRoom({ name: 'COMBAT_ROOM', parameter: roomID });
 
     document.addEventListener('keydown', (event) => {
-      if (this.selectionMode == 'HIDDEN') return;
+      if (this.selectionMode === 'HIDDEN') {
+        return;
+      }
       if (Date.now() - this.cursorMoveDate <= 100) {
         return;
       }
       this.cursorMoveDate = Date.now();
 
-      switch(event.key.toUpperCase()) {
+      switch (event.key.toUpperCase()) {
         case 'W':
           this.moveCursor('up');
           break;
@@ -132,6 +141,14 @@ export default class CombatRoom extends Vue {
       }
     });
   }
+  public updated() {
+    // please make sure that the gameState is ok
+    if (!gameInterface) {
+      gameInterface = launchGame(this.combatRoom);
+    } else {
+      // gameInterface.actions.updateState(this.combatRoom);
+    }
+  }
   public destroyed() {
     this.socketLeaveRoom('COMBAT_ROOM');
   }
@@ -141,7 +158,7 @@ export default class CombatRoom extends Vue {
       let h = null;
       let side = null;
 
-      switch(direction.toLowerCase()) {
+      switch (direction.toLowerCase()) {
         case 'up':
           h = 'up';
           break;
@@ -160,7 +177,7 @@ export default class CombatRoom extends Vue {
 
       if (h) {
         this.currentTargetIndex = this.nextTargetIndexInLine(h);
-      } else if (typeof side == 'number') {
+      } else if (typeof side === 'number') {
         this.currentTargetSide = side;
         this.currentTargetIndex = this.nextTargetIndexInLine();
       } else {
@@ -175,19 +192,19 @@ export default class CombatRoom extends Vue {
 
       // playScreen.moveTargetHandTo(settings);
     } else if (this.selectionMode === 'ACTION') {
-      let options = this.currentScreenObject();
-      let currentIndex = this.currentCursorIndex;
+      const options = this.currentScreenObject();
+      const currentIndex = this.currentCursorIndex;
       let nextIndex = currentIndex;
       let j = currentIndex;
 
-      if (direction == 'up') {
+      if (direction === 'up') {
         if (currentIndex > 0) {
           j--;
         } else {
           j = options.length - 1;
         }
-      } else if (direction == 'down') {
-        if (currentIndex < options.length-1) {
+      } else if (direction === 'down') {
+        if (currentIndex < options.length - 1) {
           j++;
         } else {
           j = 0;
@@ -197,15 +214,14 @@ export default class CombatRoom extends Vue {
       }
 
       // select the next option that is not disabled in the screen
-      for (let i = 0; i < options.length; i++) {
-        if (!options[j].disabled) {
+      for (const option of options) {
+        if (!option.disabled) {
           nextIndex = j;
           break;
         }
-    
-        if (!direction || direction == 'down') {
+        if (!direction || direction === 'down') {
           j++;
-        } else if (direction == 'up') {
+        } else if (direction === 'up') {
           j--;
         }
         if (j > options.length - 1) {
@@ -215,7 +231,7 @@ export default class CombatRoom extends Vue {
           j = options.length - 1;
         }
       }
-      if (nextIndex == currentIndex) {
+      if (nextIndex === currentIndex) {
         return;
       }
       // moveCursorSound.play();
@@ -223,13 +239,13 @@ export default class CombatRoom extends Vue {
     }
   }
   public generateObjectGui(currentPlayer: any) {
-    // var selectedTargetCharacter = this.currentTargetSide == 0
+    //  this.currentTargetSide === 0
     //   ? playScreen.playerPlacingLine[this.currentTargetIndex]
-    //   : this.currentTargetSide == 1
+    //   : this.currentTargetSide === 1
     //     ? playScreen.enemyPlacingLine[GuiManager.currentTargetIndex]
     //     : null
 
-    var selectedTargetCharacter = {
+    const selectedTargetCharacter = {
       character: {enemy: false},
       entity: {attacks: {}},
     };
@@ -238,7 +254,7 @@ export default class CombatRoom extends Vue {
     }
 
     // PARSE ROOT
-    var parsedRoot = [
+    const parsedRoot = [
       { title: 'Attacks', description: '', to: 'attacks', disabled: false, select: null },
       { title: 'Potions', description: '', to: 'potions', disabled: false, select: null },
     ];
@@ -251,7 +267,7 @@ export default class CombatRoom extends Vue {
 
     if (currentPlayer) {
       // PARSE ATTACKS
-      var attacks = currentPlayer.entity.attacks;
+      const attacks = currentPlayer.entity.attacks;
 
       this.guiMasterObject.attacks.push({
         title: 'Back',
@@ -262,8 +278,8 @@ export default class CombatRoom extends Vue {
       });
 
       _.pairs(attacks).forEach((pair: [string, Attack]) => {
-        let id = pair[0];
-        let attackInfo = pair[1];
+        const id = pair[0];
+        const attackInfo = pair[1];
 
         this.guiMasterObject.attacks.push({
           title: attackInfo.title,
@@ -345,7 +361,7 @@ export default class CombatRoom extends Vue {
   .GUI li.active {
     color: rgb(199, 199, 199);
     padding-left: 2px;
-    list-style-image: url('../../assets/img/icon/select-target-hand.png');
+    list-style-image: url('../../../assets/img/icon/select-target-hand.png');
   }
   .GUI .left {
     border-right: 2px solid white
@@ -366,7 +382,7 @@ export default class CombatRoom extends Vue {
   .GUI.disabled li.active {
     color: grey;
     padding-left: 2px;
-    list-style-image: url('../../assets/img/icon/select-target-hand.png');
+    list-style-image: url('../../../assets/img/icon/select-target-hand.png');
   }
 
   .GUI #health-bar-container {
