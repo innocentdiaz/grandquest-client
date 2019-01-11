@@ -71,6 +71,15 @@ import {ApiResponse} from 'apisauce';
 import ActivityIndicator from '@/components/ActivityIndicator.vue';
 import moment from 'moment';
 
+interface PostObj {
+    title: string;
+    body: string;
+    user: User;
+    created_at: string;
+    status: any;
+    board: any;
+}
+
 @Component({
   components: { ActivityIndicator },
 })
@@ -78,10 +87,10 @@ export default class Post extends Vue {
   @State public user!: User;
   @Getter public userJoinDate!: string;
 
-  public post = {
+  public post: PostObj = {
     title: '',
     body: '',
-    user: null,
+    user: this.user,
     created_at: '',
     status: null,
     board: { id: null },
@@ -104,7 +113,7 @@ export default class Post extends Vue {
     this.$router.replace({
         name: 'board', 
         params: {
-            board_id: this.post.board.id,
+            board_id: String(this.post.board.id),
         }
     });
   }

@@ -50,13 +50,18 @@
   import api from '@/api';
   import ActivityIndicator from '@/components/ActivityIndicator.vue';
 
+  interface Board {
+      id:     null|number;
+      title:  string;
+      status: null|number;
+  }
   @Component({
     components: {ActivityIndicator},
   })
   export default class Post extends Vue {
     @State public user!: User;
 
-    public board = {
+    public board: Board = {
       id: null,
       title: '',
       status: null,
