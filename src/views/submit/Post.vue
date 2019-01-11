@@ -1,5 +1,6 @@
 <template>
-    <div class="submit-container" v-if="!user.loading && !user.authenticated">
+    <ActivityIndicator v-if="user.loading"/>
+    <div class="submit-container" v-else-if="!user.loading && !user.authenticated">
         <h1>Just one second..</h1>
         <p>You need to be
             <router-link to="/login">logged in</router-link>
@@ -85,9 +86,14 @@
 
     // TODO: add requirements for posting fields like length
     public onSubmit() {
-      this.post.apiError = '';
-      this.post.loading = true;
+        
+        if (!this.user.authenticated) {
+            return this.post.apiError = 'You are not logged in';
+        }
+        this.post.apiError = '';
+        this.post.loading = true;
 
+      api.setHeader('Authorization', this.user.currentJWT);
       api.post(`/posts/${this.board.id}`, this.post)
         .then((res: ApiResponse<any>) => {
           const body = res.data;
