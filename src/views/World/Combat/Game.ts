@@ -180,16 +180,14 @@ function launch(gameState: CombatRoom) {
       /*
         Handy dimensions
       */
+      const canvasWidth = global.gameCanvas.offsetWidth;
       const canvasHeight = global.gameCanvas.offsetHeight;
 
       /*
         Country background
       */
-      // how many times the 67% of canvas height fits into the original image height
-      const exponential = (canvasHeight * 0.67) / 142;
-      // dimensions to fit this percentage
-      const countryWidth = 384 * exponential;
-      const countryHeight = 202 * exponential;
+      const imagePixelHeight = 210;
+      const exponential = canvasHeight / imagePixelHeight;
 
       // add each image in order
       _.each([
@@ -197,24 +195,20 @@ function launch(gameState: CombatRoom) {
         'country-clouds-bg',
         'country-trees-bg',
         'country-platform',
-      ], (name, i, l) => {
+      ], (name, i) => {
         // clouds are parallax
-        const img = this.add.tileSprite(0, 0, countryWidth, countryHeight, name)
-          .setDepth(i) // z coordinate
-          .setScale(canvasHeight/ 202)
+        const img = 
+          this.add.tileSprite(0, 0, canvasWidth, canvasHeight, name)
+          // z-axis
+          .setDepth(i)
+          // pixelHeight of each image in tileset
+          .setScale(exponential)
           .setOrigin(0);
         if (name === 'country-clouds-bg') {
           // set them to the game instance
           global.gameClouds = img
-        } else {
-          // // extraHeight because each layer goes 5% higher
-          // const r = l.length - (i + 1);
-          // const extraHeight = r * (canvasHeight * 0.05);
-
-          // this.add.image(0, canvasHeight - extraHeight, name)
-          // .setDepth(i) // z coordinate
-          // .setDisplaySize(countryWidth, countryHeight)
-          // .setOrigin(0, 1);
+        } else if (name === 'country-mountains-bg') {
+          img.setScale(exponential * .7);
         }
       });
     }
