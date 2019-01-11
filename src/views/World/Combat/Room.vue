@@ -1,15 +1,16 @@
 <template>
-  <div class="combat-root" v-if="socket.loading">
-    <h1>Loading connection</h1>
-  </div>
-  <div class="combat-root" id="combat" v-else-if="socket.connected">
+  <div class="combat-root" id="combat">
     <header>
       <h1 id="title">
         Combat - {{ combatRoom.title }}
       </h1>
     </header>
-    <div v-if="display" class="display">
-      <p>{{display}}</p>
+    <!-- Display -->
+    <div class="display" v-if="socket.loading">
+      <p>Connecting to server</p>
+    </div>
+    <div class="display" v-else-if="!socket.connected">
+      <p>You are not connected to the server</p>
     </div>
     <div :class="!initialized || selectionMode === 'HIDDEN' ? 'GUI hidden' : 'GUI'">
       <div>
@@ -34,9 +35,6 @@
         <p>{{description}}</p>
       </div>
     </div>
-  </div>
-  <div class="combat-root" v-else>
-    <h1>You are not connected to the server</h1>
   </div>
 </template>
 <script lang="ts">
@@ -79,7 +77,6 @@ export default class CombatRoom extends Vue {
   @Action public socketLeaveRoom: any;
 
   public initialized: boolean = false;
-  public display: string|null = 'Joining room';
   public description: string = '';
   
   public guiMasterObject: GuiMasterObject = {
@@ -102,14 +99,6 @@ export default class CombatRoom extends Vue {
   public mounted() {
     const { roomID } = this.$route.params;
 
-    if (!this.socket.connected) {
-      return this.display = 'You dont appear to be connected to the server';
-    }
-    if (typeof roomID !== 'string' || roomID.trim().length < 10) {
-      return this.display = 'No room id provided';
-    }
-
-    this.display = null;
     this.socketJoinRoom({ name: 'COMBAT_ROOM', parameter: roomID });
 
     document.addEventListener('keydown', (event) => {
