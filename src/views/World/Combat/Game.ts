@@ -1,28 +1,17 @@
 import Phaser from 'phaser';
 import _ from 'underscore';
+import { CombatRoom } from '@/types';
 
 /*
   Import images
 */
-
-/*
-  Landscapes
-*/
-// Country
 import countryPlatformImage from '@/assets/img/landscapes/country/platform.png';
 import countryTreesImage from '@/assets/img/landscapes/country/trees.png';
 import countryMountainsImage from '@/assets/img/landscapes/country/mountains.png';
 import countryCloudsImage from '@/assets/img/landscapes/country/clouds.png';
-
-/*
-  Spritesheets
-*/
 import  AdventurerSheet from '@/assets/img/spritesheets/adventurer-sheet.png';
-/*
-
-*/
 import SelectionHand from '@/assets/img/icon/select-target-hand.png';
-import { CombatRoom } from '@/types';
+
 
 /*
   Declare interfaces
