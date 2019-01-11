@@ -48,7 +48,7 @@ interface CombatRooms {
 @Component({
   components: { ActivityIndicator },
 })
-export default class Combat extends Vue {
+export default class Hub extends Vue {
   @State  public combatHub!: CombatHub;
   @State  public socket!: SocketState;
   @Action public socketJoinRoom: any;
@@ -61,10 +61,9 @@ export default class Combat extends Vue {
     this.socketLeaveRoom('COMBAT_HUB');
   }
   public joinRoom(roomID: string) {
-    let chosenRoom = this.combatHub.rooms[roomID];
-    
-    if (chosenRoom.playerCount + 1 > chosenRoom.maxPlayers) {
-      return console.log('the selected room is already full');
+    const chosenRoom = this.combatHub.rooms[roomID];
+    if (chosenRoom.playerCount === chosenRoom.maxPlayers) {
+      return;
     }
 
     this.$router.replace({
@@ -161,7 +160,7 @@ $mainLightGrey: #e0e0e0;
       padding: 25px;
       color: white;
       background: 
-        linear-gradient(black, rgba(0, 0, 0, 0), black), url('../../assets/img/combat.png');
+        linear-gradient(black, rgba(0, 0, 0, 0), black), url('../../../assets/img/combat.png');
     }
     hr {
       background: white;
