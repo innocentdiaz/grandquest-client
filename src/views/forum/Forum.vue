@@ -312,9 +312,6 @@
                             font-size: large;
                             font-weight: lighter;
                         }
-                        .description {
-
-                        }
                         .tags {
                             padding: 0;
                             margin: 0;
@@ -330,11 +327,6 @@
                         opacity: 0.7;
                         .title {
                             color: $mainBlue;
-                        }
-                    }
-                    .forum-showcase {
-                        .boards {
-
                         }
                     }
                 }

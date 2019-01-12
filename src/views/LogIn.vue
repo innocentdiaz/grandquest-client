@@ -93,7 +93,5 @@ export default class LogIn extends Vue {
     clear: right;
     min-height: 50vh;
   }
-  .content {
-  }
 }
 </style>
