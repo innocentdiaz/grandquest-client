@@ -148,4 +148,7 @@ form {
     color: rgb(255, 49, 49);
   }
 }
+// canvas {
+//   cursor: url('./assets/img/icon/select-target-hand.png'), auto;
+// }
 </style>
