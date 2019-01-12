@@ -44,7 +44,7 @@ import { SocketState } from '@/types';
 import _ from 'underscore';
 import io from 'socket.io-client';
 import api from '@/api';
-import launchGame from './Game';
+import launchGame from '@/game/places/combat';
 
 interface Attack { 
   title: string;
@@ -134,8 +134,8 @@ export default class CombatRoom extends Vue {
     // please make sure that the gameState is ok
     if (!gameInterface) {
       gameInterface = launchGame(this.combatRoom);
-    } else {
-      // gameInterface.actions.updateState(this.combatRoom);
+    } else if (gameInterface.global.gameCreated) {
+      gameInterface.actions.updateGameState(this.combatRoom);
     }
   }
   public destroyed() {
@@ -298,18 +298,22 @@ export default class CombatRoom extends Vue {
 </script>
 <style lang="scss" scoped>
 .combat-root {
-  height: 90vh;
+  min-height: 50vh;
   width: 100%;
   position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: black;
 
   header {
     position: absolute;
     top: 0;
     left: 0;
     right: 0;
-    background: linear-gradient(to bottom, rgb(22, 22, 22), rgba(24, 24, 24, 0.8), rgba(24, 24, 24, 0.7), rgba(0, 0, 0, 0));
+    background: linear-gradient(to bottom, rgb(22, 22, 22), rgba(24, 24, 24, 0.6), rgba(24, 24, 24, 0.4), rgba(0, 0, 0, 0));
     color: white;
-    padding: 10px;
+    padding: 15px;
   }
   .display {
     position: absolute;
