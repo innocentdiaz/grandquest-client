@@ -1,3 +1,5 @@
+import { Character } from '@/game/types';
+
 // Store
 export interface State {
     user: User;
@@ -37,6 +39,12 @@ export interface CombatRoom {
     title:       string;
     playerCount: number;
     maxPlayers:  number;
+    players: {
+        [id: string]: Character,
+    },
+    enemies: {
+        [id: string]: Character,
+    },
 }
 export interface SocketState {
     connected:  boolean;

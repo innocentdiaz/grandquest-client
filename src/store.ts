@@ -38,6 +38,8 @@ const state: State = {
     title: '',
     playerCount: 0,
     maxPlayers: 4,
+    players: {},
+    enemies: {},
   },
   socket: {
     connected: false,
