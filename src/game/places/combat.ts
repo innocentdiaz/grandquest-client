@@ -1,6 +1,11 @@
 import Phaser from 'phaser';
 import _ from 'underscore';
+
+/*
+  Import types
+*/
 import { CombatRoom } from '@/types';
+import { Character } from '@/game/types';
 
 /*
   Import images
@@ -9,11 +14,14 @@ import countryPlatformImage from '@/assets/img/landscapes/country/platform.png';
 import countryTreesImage from '@/assets/img/landscapes/country/trees.png';
 import countryMountainsImage from '@/assets/img/landscapes/country/mountains.png';
 import countryCloudsImage from '@/assets/img/landscapes/country/clouds.png';
-import  AdventurerSheet from '@/assets/img/spritesheets/adventurer-sheet.png';
+import AdventurerSheet from '@/assets/img/spritesheets/adventurer-sheet.png';
+import SlimeSheet from '@/assets/img/spritesheets/slime-sheet.png';
 import SelectionHand from '@/assets/img/icon/select-target-hand.png';
-import Entities from '@/game/data/entities';
-import { Character } from '../types';
 
+/*
+  Import data
+*/
+import Entities from '@/game/data/characters';
 
 /*
   Declare interfaces
@@ -37,7 +45,7 @@ interface GameInterface {
   // Used to manipulate the game
   actions:  GiActions;
   // Stores important game variables
-  global: GiGlobal
+  global: GiGlobal;
 }
 interface PlacingLine {
   [index: number]: {
@@ -133,6 +141,7 @@ function launch(gameState: CombatRoom) {
           { name: 'country-mountains-bg', src: countryMountainsImage, type: 'image' },
           { name: 'country-clouds-bg', src: countryCloudsImage, type: 'image' },
           { name: 'adventurer', src: AdventurerSheet, type: 'spritesheet', spriteDimensions: [ 50, 37 ] },
+          { name: 'slime', src: SlimeSheet, type: 'spritesheet', spriteDimensions: [32, 25] }
         ], (a, i, l) => {
           const { name, src, type, spriteDimensions } = a;
 
@@ -188,7 +197,13 @@ function launch(gameState: CombatRoom) {
         key: 'adventurer-idle',
         frames: this.anims.generateFrameNumbers('adventurer', { start: 0, end: 3 }),
         frameRate: 3,
-        repeat: -1
+        repeat: -1,
+      });
+      this.anims.create({
+        key: 'slime-idle',
+        frames: this.anims.generateFrameNumbers('slime', { start: 0, end: 7 }),
+        frameRate: 7,
+        repeat: -1,
       });
 
       console.log('game initialized');
@@ -255,7 +270,7 @@ function launch(gameState: CombatRoom) {
       // add / update players
       for (const id in allPlayersOnNetworkState) {
         const playerOnNetwork = allPlayersOnNetworkState[id];
-        let playerInLocal = allPlayersInGameState[id];
+        const playerInLocal = allPlayersInGameState[id];
 
         // spawn player
         if (!playerInLocal) {
@@ -275,6 +290,29 @@ function launch(gameState: CombatRoom) {
         //   GuiManager.setHP(playerInLocal);
         // }
       }
+
+      /*
+        Enemy updating section
+      */
+      const allEnemiesInNetworkState = networkGameState.enemies;
+      const allEnemiesInLocalState = global.gameState.enemies;
+      
+      // add / update enemies
+      for (const id in allEnemiesInNetworkState) {
+        var enemyOnNetwork = allEnemiesInNetworkState[id];
+        var enemyInLocal = allEnemiesInLocalState[id];
+
+        // spawn player
+        if (!enemyInLocal) {
+          allEnemiesInLocalState[id] = actions.spawnCharacter(enemyOnNetwork)//.updateHealthBar();
+        }
+
+        // var healthOnNetwork = enemyOnNetwork.entity.health;
+
+        // enemyInLocal
+        //   .setHealth(healthOnNetwork)
+        //   // .updateHealthBar();
+      }
     },
     spawnCharacter(character: Character) {
       let { entity } = character;
@@ -288,7 +326,7 @@ function launch(gameState: CombatRoom) {
       let gameStateCategory;
       let placingLine;
 
-      if (entity.enemy) {
+      if (character.enemy) {
         gameStateCategory = global.gameState.enemies;
         placingLine = global.enemyPlacingLine;
       } else {
@@ -313,12 +351,22 @@ function launch(gameState: CombatRoom) {
       // spawn the player and place them in the gameState (gameStateCategoryPlacing)
       let gameStateCategoryPlacing = gameStateCategory[character.id];
 
+      const canvasWidth = this.game.canvas.offsetWidth;
+      const canvasHeight = this.game.canvas.offsetHeight;
+
+      let coordinatesForEntity = character.enemy
+        ? {
+            x: canvasWidth * (0.7 + (0.08 * emptySpotInLine)), 
+            y: canvasHeight * (0.8 + (0.005 * emptySpotInLine)),
+          }
+        : {
+            x: this.game.canvas.offsetWidth * 0.25,
+            y: this.game.canvas.offsetHeight * 0.8,
+          };
+
       gameStateCategoryPlacing = selectedEntityGenerator(
         character,
-        { 
-          x: this.game.canvas.offsetWidth * 0.25,
-          y: this.game.canvas.offsetHeight * 0.8,
-        }, // helpers.coordinatesForEntity(entity, emptySpotInLine),
+        coordinatesForEntity,
       );
 
       // reference the spawned player in their placing line
