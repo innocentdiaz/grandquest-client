@@ -39,6 +39,8 @@ export interface CombatRoom {
     title:       string;
     playerCount: number;
     maxPlayers:  number;
+    turn: number;
+    level: number;
     players: {
         [id: string]: Character,
     },
