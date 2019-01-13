@@ -16,7 +16,7 @@ import countryMountainsImage from '@/assets/img/landscapes/country/mountains.png
 import countryCloudsImage from '@/assets/img/landscapes/country/clouds.png';
 import AdventurerSheet from '@/assets/img/spritesheets/adventurer-sheet.png';
 import SlimeSheet from '@/assets/img/spritesheets/slime-sheet.png';
-import SelectionHand from '@/assets/img/icon/select-target-hand.png';
+import SelectHandImage from '@/assets/img/icon/select-hand.png';
 
 /*
   Import data
@@ -30,7 +30,7 @@ interface GiActions {
   [actionName: string]: any,
 }
 interface GiGlobal {
-  gameState: any;
+  gameState: CombatRoom;
   gameInstance: {};
   gameCanvas: any;
   gameCreated: boolean;
@@ -49,9 +49,9 @@ interface GameInterface {
 }
 interface PlacingLine {
   [index: number]: {
-    character:  Character|boolean;
-    nextIndex:       number;
-    prevIndex:       number;
+    character: Character|null;
+    nextIndex: number;
+    prevIndex: number;
   }
 }
 /*
@@ -62,12 +62,10 @@ function launch(gameState: CombatRoom) {
   let global: GiGlobal = {
     // state from the server
     gameState: {
-      id: gameState.id,
-      title: gameState.title,
-      maxPlayers: gameState.maxPlayers,
-      playerCount: gameState.playerCount,
+      ...gameState,
       players: {},
       enemies: {},
+      turn: null, // so actions know we just joined
     },
     // new Phaser.Game
     gameInstance: {},
@@ -81,7 +79,7 @@ function launch(gameState: CombatRoom) {
       return {
         ...memo,
         [index]: {
-          character: false,
+          character: null,
           nextIndex: index >= gameState.maxPlayers ? 1 : index + 1,
           prevIndex: index === 1 ? gameState.maxPlayers : index - 1,
         },
@@ -92,8 +90,8 @@ function launch(gameState: CombatRoom) {
       return {
         ...memo,
         [index]: {
-          character: false,
-          nextIndex: index > 5 ? 1 : index + 1,
+          character: null,
+          nextIndex: index >= 4 ? 1 : index + 1,
           prevIndex: index === 1 ? 4 : index - 1,
         },
       };
@@ -136,6 +134,7 @@ function launch(gameState: CombatRoom) {
         */
         let assetsLoaded = 0;
         _.each([
+          { name: 'select-hand', src: SelectHandImage, type: 'image' },
           { name: 'country-platform', src: countryPlatformImage, type: 'image' },
           { name: 'country-trees-bg', src: countryTreesImage, type: 'image' },
           { name: 'country-mountains-bg', src: countryMountainsImage, type: 'image' },
@@ -226,7 +225,6 @@ function launch(gameState: CombatRoom) {
       const imagePixelHeight = 210;
       const exponential = canvasHeight / imagePixelHeight;
 
-      console.log('expo ', exponential);
       // add each image in order
       _.each([
         'country-mountains-bg',
@@ -274,7 +272,6 @@ function launch(gameState: CombatRoom) {
 
         // spawn player
         if (!playerInLocal) {
-          console.log('set at ', id);
           allPlayersInGameState[id] = actions.spawnCharacter(playerOnNetwork)
         }
 
@@ -313,6 +310,36 @@ function launch(gameState: CombatRoom) {
         //   .setHealth(healthOnNetwork)
         //   // .updateHealthBar();
       }
+      /*
+        EVENTS UPDATING
+      */
+
+      // the network is at another turn
+      if (global.gameState.turn != networkGameState.turn) {
+        // we have not JUST joined the match
+        if (global.gameState.turn != null) {
+          // show us the events of the last match
+          // var appliedEvents = networkGameState.turnEvents[localGameState.turn];
+
+          // actions.animateEvents(appliedEvents);
+        }
+
+        global.gameState.turn = networkGameState.turn;
+        
+        if (global.gameState.turn % 2) {
+          console.log('Enemy turn');
+        } else {
+          console.log('Player turn');
+          // GuiManager.setSelectionMode('TARGET');
+        }
+      }
+
+      /*
+        Add target hand
+      */
+      if (!global.targetHand && global.gameState.turn % 2 === 0) {
+        actions.addTargetHand()
+      }
     },
     spawnCharacter(character: Character) {
       let { entity } = character;
@@ -335,16 +362,10 @@ function launch(gameState: CombatRoom) {
       }
 
       // find empty spot in line
-      let emptySpotInLine: any = null;
+      let emptySpotInLine: any = _.findKey(placingLine, (spot) => !spot.character);
 
-      for (const i in placingLine) {
-        if (!placingLine[i].character) {
-          emptySpotInLine = i;
-          break;
-        }
-      }
-      if (emptySpotInLine === null) {
-        console.error('Attempted to spawn character in filled placing line');
+      if (!emptySpotInLine) {
+        console.error('Attempted to spawn character but there are not empty spaces in ', placingLine);
         return null;
       }
 
@@ -356,12 +377,12 @@ function launch(gameState: CombatRoom) {
 
       let coordinatesForEntity = character.enemy
         ? {
-            x: canvasWidth * (0.7 + (0.08 * emptySpotInLine)), 
-            y: canvasHeight * (0.8 + (0.005 * emptySpotInLine)),
+            x: canvasWidth * (0.6 + (0.08 * emptySpotInLine)), 
+            y: canvasHeight * ((0.9 - (0.02 * Object.keys(placingLine).length)) + (0.02 * emptySpotInLine)),
           }
         : {
             x: this.game.canvas.offsetWidth * 0.25,
-            y: this.game.canvas.offsetHeight * 0.8,
+            y: this.game.canvas.offsetHeight * 0.85,
           };
 
       gameStateCategoryPlacing = selectedEntityGenerator(
@@ -373,7 +394,47 @@ function launch(gameState: CombatRoom) {
       placingLine[emptySpotInLine].character = gameStateCategoryPlacing;
 
       return gameStateCategoryPlacing;
-    }
+    },
+    addTargetHand() {
+      if (global.targetHand) {
+        return console.warn('target hand already added')
+      };
+
+      let spot: null | { character: Character } = _.find(global.playerPlacingLine, (index) => !!index.character);
+
+      if (!spot) {
+        console.error('No player to add target hand to');
+        return
+      }
+      const character = spot.character;
+
+      global.targetHand = 
+        this.add.image(character.sprite.x, character.sprite.y, 'select-hand')
+        .setDepth(11); // z-coordinate above the player
+    },
+    moveTargetHandTo(settings: { index: number, side: number }) {
+      const { index, side } = settings;
+
+      const placingLine = side === 0
+        ? global.playerPlacingLine
+        : global.enemyPlacingLine;
+
+      const character = placingLine[index].character;
+
+      if(!character) {
+        throw new Error('No characters at index ' + index);
+      }
+
+      if (!global.targetHand) {
+        throw new Error('No target hand in game interface');
+      }
+
+      global.targetHand.x = character.sprite.x - character.sprite.width
+      global.targetHand.y = character.sprite.y
+    },
+    animateEvents() {
+      console.log('animating events');
+    },
   };
 
   let gameInterface: GameInterface = {

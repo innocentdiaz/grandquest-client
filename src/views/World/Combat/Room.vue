@@ -40,11 +40,16 @@
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator';
 import { Action, State } from 'vuex-class';
-import { SocketState } from '@/types';
+import { SocketState, User } from '@/types';
 import _ from 'underscore';
 import io from 'socket.io-client';
 import api from '@/api';
 import launchGame from '@/game/places/combat';
+
+// audio
+import { Howl } from 'howler';
+import cursorMoveSrc from '@/assets/audio/cursor-move.mp3';
+import cursorSelectSrc from '@/assets/audio/cursor-select.mp3';
 
 interface Attack { 
   title: string;
@@ -71,13 +76,21 @@ let gameInterface: any = false;
 
 @Component
 export default class CombatRoom extends Vue {
-  @State  public socket!: SocketState;
-  @State  public combatRoom!: CombatRoom;
+  @State public user!: User;
+  @State public socket!: SocketState;
+  @State public combatRoom!: CombatRoom;
   @Action public socketJoinRoom: any;
   @Action public socketLeaveRoom: any;
 
   public initialized: boolean = false;
   public description: string = '';
+
+  public cursorSelectAudio = new Howl({
+    src: [ cursorSelectSrc ],
+  });
+  public cursorMoveAudio = new Howl({
+    src: [ cursorMoveSrc ],
+  });
   
   public guiMasterObject: GuiMasterObject = {
     root: [],
@@ -89,10 +102,10 @@ export default class CombatRoom extends Vue {
     ],
   };
 
-  public selectionMode = 'ACTION';
+  public selectionMode = 'TARGET';
   public currentScreen = 'root';
   public currentTargetSide = 0;
-  public currentTargetIndex = 0;
+  public currentTargetIndex = 1;
   public currentCursorIndex = 0;
   public cursorMoveDate = Date.now();
 
@@ -102,6 +115,8 @@ export default class CombatRoom extends Vue {
     this.socketJoinRoom({ name: 'COMBAT_ROOM', parameter: roomID });
 
     document.addEventListener('keydown', (event) => {
+      event.preventDefault();
+
       if (this.selectionMode === 'HIDDEN') {
         return;
       }
@@ -137,6 +152,11 @@ export default class CombatRoom extends Vue {
     } else if (gameInterface.global.gameCreated) {
       gameInterface.actions.updateGameState(this.combatRoom);
     }
+    const currentUser = this.combatRoom.players[this.user.id];
+
+    // if (currentUser) {
+    //   this.generateObjectGui(currentUser);
+    // }
   }
   public destroyed() {
     this.socketLeaveRoom('COMBAT_ROOM');
@@ -167,19 +187,22 @@ export default class CombatRoom extends Vue {
       if (h) {
         this.currentTargetIndex = this.nextTargetIndexInLine(h);
       } else if (typeof side === 'number') {
+        if (side === this.currentTargetSide) {
+          return
+        }
         this.currentTargetSide = side;
         this.currentTargetIndex = this.nextTargetIndexInLine();
       } else {
         return;
       }
-      // moveCursorSound.play();
+      this.cursorMoveAudio.play();
 
       const settings = {
         index: this.currentTargetIndex,
         side: this.currentTargetSide,
       };
 
-      // playScreen.moveTargetHandTo(settings);
+      gameInterface.actions.moveTargetHandTo(settings);
     } else if (this.selectionMode === 'ACTION') {
       const options = this.currentScreenObject();
       const currentIndex = this.currentCursorIndex;
@@ -286,10 +309,38 @@ export default class CombatRoom extends Vue {
       // PARSE ACTIONS
     }
   }
-  public nextTargetIndexInLine(direction?: string) {
-    // find the next target here
+  public nextTargetIndexInLine(direction?: string): number {
+    const currentTargetSide = this.currentTargetSide;
+    let j = this.currentTargetIndex;
 
-    return this.currentTargetIndex;
+    const placingLine = currentTargetSide == 0 
+      ? gameInterface.global.playerPlacingLine // OK
+      : gameInterface.global.enemyPlacingLine;
+
+    for (const key in placingLine) {
+      let position = placingLine[j];
+
+      if (!position) {
+        j = _.findKey(placingLine, (p) => p.character);
+        if (!j) {
+          console.warn('Empty placing line ', );
+          return this.currentTargetIndex;
+        }
+        position = placingLine[j];
+      }
+
+      if (!direction || direction == 'down') {
+        j = position.nextIndex;
+      } else if (direction == 'up') {
+        j = position.prevIndex;
+      }
+
+      const nextPosition = placingLine[j];
+      if (nextPosition.character) {
+        return j;
+      }
+    }
+    return j;
   }
   public currentScreenObject() {
     return this.guiMasterObject[this.currentScreen];
@@ -354,7 +405,7 @@ export default class CombatRoom extends Vue {
   .GUI li.active {
     color: rgb(199, 199, 199);
     padding-left: 2px;
-    list-style-image: url('../../../assets/img/icon/select-target-hand.png');
+    list-style-image: url('../../../assets/img/icon/select-hand.png');
   }
   .GUI .left {
     border-right: 2px solid white
@@ -375,7 +426,7 @@ export default class CombatRoom extends Vue {
   .GUI.disabled li.active {
     color: grey;
     padding-left: 2px;
-    list-style-image: url('../../../assets/img/icon/select-target-hand.png');
+    list-style-image: url('../../../assets/img/icon/select-hand.png');
   }
 
   .GUI #health-bar-container {
