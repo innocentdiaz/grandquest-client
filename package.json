@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "apisauce": "^1.0.1",
+    "howler": "^2.1.1",
     "moment": "^2.23.0",
     "password-validator": "^4.1.1",
     "phaser": "^3.15.1",
