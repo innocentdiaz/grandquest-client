@@ -1,5 +1,7 @@
 import Phaser from 'phaser';
+import { Howl } from 'howler';
 import _ from 'underscore';
+import store from '@/store';
 
 /*
   Import types
@@ -19,6 +21,11 @@ import SlimeSheet from '@/assets/img/spritesheets/slime-sheet.png';
 import SelectHandImage from '@/assets/img/icon/select-hand.png';
 
 /*
+  Import audio
+*/
+import cursorMoveSrc from '@/assets/audio/cursor-move.mp3';
+
+/*
   Import data
 */
 import Entities from '@/game/data/characters';
@@ -29,59 +36,73 @@ import Entities from '@/game/data/characters';
 interface GiActions {
   [actionName: string]: any,
 }
-interface GiGlobal {
+export interface GiGlobal {
   gameState: CombatRoom;
-  gameInstance: {};
-  gameCanvas: any;
-  gameCreated: boolean;
+  gameInitialized: boolean;
+  currentTargetSide: number;
+  currentTargetIndex: number;
   gameClouds: any;
   targetHand: any;
   playerPlacingLine: PlacingLine;
   enemyPlacingLine:  PlacingLine;
 };
-interface GameInterface {
+export interface GameInterface {
+  // Stores important game variables
+  global: GiGlobal;
   // new Phaser.Game
   game: any;
   // Used to manipulate the game
   actions:  GiActions;
-  // Stores important game variables
-  global: GiGlobal;
 }
 interface PlacingLine {
-  [index: number]: {
-    character: Character|null;
-    nextIndex: number;
-    prevIndex: number;
-  }
+  [index: number]: PlacingLineSpot;
 }
+interface PlacingLineSpot {
+  character: Character|null;
+  nextIndex: number;
+  prevIndex: number;
+}
+
+const cursorMoveAudio = new Howl({
+  src: [ cursorMoveSrc ],
+});
 /*
   Launch function
   Will return a GameInterface object
 */
-function launch(gameState: CombatRoom) {
+function launch(): GiGlobal {
+  /*
+    GameInterface.Global
+  */
+  store.subscribe((m, s) => {
+    actions.updateGameState(s.combatGame.gameState);
+  });
   let global: GiGlobal = {
     // state from the server
     gameState: {
-      ...gameState,
+      id: '',
+      title: '',
       players: {},
       enemies: {},
-      turn: null, // so actions know we just joined
+      playerCount: 0,
+      maxPlayers: 4,
+      turn: -1,
+      level: 0,
     },
-    // new Phaser.Game
-    gameInstance: {},
-    // when game.created() is called
-    gameCreated: false,
-    gameCanvas: null,
+    // called startGame();
+    gameInitialized: false,
+    currentTargetSide: 0,
+    currentTargetIndex: 1,
     gameClouds: null,
     targetHand: null,
-    // generate the placing line object using the range of players allowed
-    playerPlacingLine: _.reduce(_.range(1, gameState.maxPlayers + 1), (memo, index) => {
+    // this will be generated using the game state with `gameInterface.actions.startGame()
+    playerPlacingLine: _.reduce(_.range(1, 5), (memo, index) => {
       return {
         ...memo,
         [index]: {
           character: null,
-          nextIndex: index >= gameState.maxPlayers ? 1 : index + 1,
-          prevIndex: index === 1 ? gameState.maxPlayers : index - 1,
+          nextIndex: index >= store.state.combatGame.gameState.maxPlayers ? 1 : index + 1,
+          prevIndex: index === 1 ? store.state.combatGame.gameState.maxPlayers : index - 1,
         },
       };
     }, {}),
@@ -98,6 +119,9 @@ function launch(gameState: CombatRoom) {
     }, {}),
   };
 
+  /*
+    GameInterface.Game
+  */
   let game: any = new Phaser.Game({
     type: Phaser.AUTO,
     width: window.innerWidth * .98,
@@ -111,27 +135,34 @@ function launch(gameState: CombatRoom) {
       }
     },
     scene: {
+      /*
+        Game.preload();
+        Responsible for binding functions
+        to the game instance. Functions to bind
+        are gameInterface.actions and entity
+        generators found in the `Entities` object
+      */
       preload: function() {
-        // set game instance globally
-        global.gameInstance = this;
-        global.gameCanvas = document.querySelector('#combat canvas');
-
-        // BIND GiActions to game instance
+        /*
+          Bind gameInterface.actions to `this`
+        */
         _.each(actions, (func: any, action: string) => {
           actions[action] = func.bind(this);
         });
-      },
-      create() {
         /*
-          Bind entity generators to game instance
+          Bind entity generators to `this`
         */
         for(const id in Entities) {
           Entities[id] = Entities[id].bind(this);
         }
-
-        /*
-          Load images asyncronously
-        */
+      },
+      /*
+        Game.create();
+        Responsibe for loading assets asynchronously
+        and adding animation for sprites
+      */
+      create() {
+        // Load images asyncronously
         let assetsLoaded = 0;
         _.each([
           { name: 'select-hand', src: SelectHandImage, type: 'image' },
@@ -144,73 +175,205 @@ function launch(gameState: CombatRoom) {
         ], (a, i, l) => {
           const { name, src, type, spriteDimensions } = a;
 
-          if (type === 'image') {
-            const img = new Image();
-            img.src = src;
+          const img = new Image();
+          img.src = src;
 
-            // when image loads
-            img.onload = () => {
+          // method to add texture `onload` according to type
+          const method = type === 'image'
+          ? () => {
               this.textures.addImage(name, img);
-              assetsLoaded++;
-  
-              // when all images are done loading
-              if (assetsLoaded === l.length) {
-                actions.initGame();
-              }
             }
-          } else if (type === 'spritesheet') {
-            const img = new Image();
-            img.src = src;
-            img.onload = () => {
+          : type === 'spritesheet'
+          ? () => {
               this.textures.addSpriteSheet(
                 name,
                 img,
                 { frameWidth: spriteDimensions[0], frameHeight: spriteDimensions[1] }
               );
-
-              assetsLoaded++;
-  
-              // when all images are done loading
-              if (assetsLoaded === l.length) {
-                actions.initGame();
-              }
             }
-          }
+          : () => {};
+
+          // image onload event
+          img.onload = () => {
+            method(); // add texture according to type
+            assetsLoaded++;
+
+            // IF all assets have loaded
+            if (assetsLoaded === l.length) {
+              /*
+                Add animations
+              */
+              this.anims.create({
+                key: 'adventurer-idle',
+                frames: this.anims.generateFrameNumbers('adventurer', { start: 0, end: 3 }),
+                frameRate: 3,
+                repeat: -1,
+              });
+              this.anims.create({
+                key: 'slime-idle',
+                frames: this.anims.generateFrameNumbers('slime', { start: 0, end: 7 }),
+                frameRate: 7,
+                repeat: -1,
+              });
+
+              actions.startGame();
+            }
+          };
         });
-        
-        // this.textures.addBase64('selection-hand', SelectionHand);
       },
       update() {
         // move the clouds around
         if (global.gameClouds) {
           global.gameClouds.tilePositionX += 0.072;
         }
+
+        if (!global.gameInitialized) {
+          return;
+        }
+        /*
+          Selection hand
+        */
+        // only while selecting a target
+        if (store.state.combatGame.selectionMode === 'TARGET') {
+          // if there are players
+          if (Object.keys(global.gameState.players).length) {
+            if (!global.targetHand) { // if there are players and there is no target hand
+              actions.addTargetHand();
+            } else {
+              // update selection hand coordinates
+              const placingLine = global.currentTargetSide === 0
+              ? global.playerPlacingLine
+              : global.enemyPlacingLine;
+
+              const { character } = placingLine[global.currentTargetIndex];
+
+              if (character) {
+                global.targetHand.x = character.sprite.x;
+                global.targetHand.y = character.sprite.y;
+              }
+            }
+          } else if (global.targetHand) { // there are no players but there is a target hand
+            actions.removeTargetHand();
+          }
+        }
       },
     },
   });
 
+  /*
+    GameInterface.Actions
+  */
   const actions: GiActions = {
-    initGame() {
-      // add animations
-      this.anims.create({
-        key: 'adventurer-idle',
-        frames: this.anims.generateFrameNumbers('adventurer', { start: 0, end: 3 }),
-        frameRate: 3,
-        repeat: -1,
-      });
-      this.anims.create({
-        key: 'slime-idle',
-        frames: this.anims.generateFrameNumbers('slime', { start: 0, end: 7 }),
-        frameRate: 7,
-        repeat: -1,
-      });
+    startGame() {
+      console.log('game started');
 
-      console.log('game initialized');
-      
       // make background;
       actions.addBackground();
 
-      global.gameCreated = true
+      // add events
+      document.addEventListener('keydown', (event) => {
+        if (Date.now() - this.cursorMoveDate <= 100) {
+          return;
+        }
+        this.cursorMoveDate = Date.now();
+
+        // Move the cursor only when selecting a target
+        if (store.state.combatGame.selectionMode === 'TARGET') {
+          switch (event.key.toUpperCase()) {
+            case 'W':
+              actions.moveCursor('up');
+              break;
+            case 'A':
+              actions.moveCursor('left');
+              break;
+            case 'S':
+              actions.moveCursor('down');
+              break;
+            case 'D':
+              actions.moveCursor('right');
+              break;
+            case 'ENTER':
+              actions.removeTargetHand();
+              store.commit('SET_COMBAT_GAME_SELECTION_MODE', 'ACTION');
+              break;
+          }
+        }
+      });
+
+      global.gameInitialized = true;
+    },
+    moveCursor(direction: string) {
+      let indexDirection = null;
+      let side = null;
+
+      switch (direction.toLowerCase()) {
+        case 'up':
+          indexDirection = 'up';
+          break;
+        case 'down':
+          indexDirection = 'down';
+          break;
+        case 'left':
+          side = 0;
+          break;
+        case 'right':
+          side = 1;
+          break;
+        default:
+          return;
+      }
+
+      if (indexDirection) {
+        let j: any = global.currentTargetIndex;
+
+        const placingLine = global.currentTargetSide == 0
+          ? global.playerPlacingLine
+          : global.enemyPlacingLine;
+
+        for (const key in placingLine) {
+          let position = placingLine[j];
+
+          if (!position) {
+            j = _.findKey({...placingLine}, (p: PlacingLineSpot) => !!p.character);
+            if (!j) {
+              console.warn('Empty placing line ');
+              return actions.removeTargetHand();
+            }
+            position = placingLine[j];
+          }
+
+          if (!direction || direction == 'down') {
+            j = position.nextIndex;
+          } else if (direction == 'up') {
+            j = position.prevIndex;
+          }
+
+          const nextPosition = placingLine[j];
+          if (nextPosition.character) {
+            global.currentTargetIndex = j;
+            break;
+          }
+        }
+      } else if (typeof side === 'number') {
+        if (side === global.currentTargetSide) {
+          return;
+        }
+        // HERE WE USE IT FOR THE SIDE WE WANT TO MOVE OUR CURSOR TO
+        const newPlacingLine = side == 0
+        ? global.playerPlacingLine
+        : global.enemyPlacingLine;
+
+        const newIndex: any = _.findKey({...newPlacingLine}, (p: PlacingLineSpot) => !!p.character);
+
+        if (newIndex) {
+          global.currentTargetSide = side;
+          global.currentTargetIndex = newIndex;
+        }
+      } else {
+        return;
+      }
+      
+      cursorMoveAudio.play();
     },
     addBackground() {
       /*
@@ -249,6 +412,9 @@ function launch(gameState: CombatRoom) {
       });
     },
     updateGameState(networkGameState: CombatRoom) {
+      if (!global.gameInitialized) {
+        return;
+      }
       /*
         Player updating section
       */
@@ -272,7 +438,7 @@ function launch(gameState: CombatRoom) {
 
         // spawn player
         if (!playerInLocal) {
-          allPlayersInGameState[id] = actions.spawnCharacter(playerOnNetwork)
+          actions.spawnCharacter(playerOnNetwork)
         }
 
         // // set the player's health
@@ -301,7 +467,7 @@ function launch(gameState: CombatRoom) {
 
         // spawn player
         if (!enemyInLocal) {
-          allEnemiesInLocalState[id] = actions.spawnCharacter(enemyOnNetwork)//.updateHealthBar();
+          actions.spawnCharacter(enemyOnNetwork)//.updateHealthBar();
         }
 
         // var healthOnNetwork = enemyOnNetwork.entity.health;
@@ -327,18 +493,10 @@ function launch(gameState: CombatRoom) {
         global.gameState.turn = networkGameState.turn;
         
         if (global.gameState.turn % 2) {
-          console.log('Enemy turn');
+          // enemy turn
         } else {
-          console.log('Player turn');
-          // GuiManager.setSelectionMode('TARGET');
+          // player turn
         }
-      }
-
-      /*
-        Add target hand
-      */
-      if (!global.targetHand && global.gameState.turn % 2 === 0) {
-        actions.addTargetHand()
       }
     },
     spawnCharacter(character: Character) {
@@ -357,20 +515,17 @@ function launch(gameState: CombatRoom) {
         gameStateCategory = global.gameState.enemies;
         placingLine = global.enemyPlacingLine;
       } else {
-        gameStateCategory = global.gameState.players
+        gameStateCategory = global.gameState.players;
         placingLine = global.playerPlacingLine;
       }
 
       // find empty spot in line
-      let emptySpotInLine: any = _.findKey(placingLine, (spot) => !spot.character);
+      let emptySpotInLine: any = _.findKey({...placingLine}, (spot: PlacingLineSpot) => !spot.character);
 
       if (!emptySpotInLine) {
-        console.error('Attempted to spawn character but there are not empty spaces in ', placingLine);
+        console.error('Attempted to spawn character but there are not empty spaces in ', {...placingLine});
         return null;
       }
-
-      // spawn the player and place them in the gameState (gameStateCategoryPlacing)
-      let gameStateCategoryPlacing = gameStateCategory[character.id];
 
       const canvasWidth = this.game.canvas.offsetWidth;
       const canvasHeight = this.game.canvas.offsetHeight;
@@ -385,32 +540,40 @@ function launch(gameState: CombatRoom) {
             y: this.game.canvas.offsetHeight * 0.85,
           };
 
-      gameStateCategoryPlacing = selectedEntityGenerator(
+      gameStateCategory[character.id] = selectedEntityGenerator(
         character,
         coordinatesForEntity,
       );
 
       // reference the spawned player in their placing line
-      placingLine[emptySpotInLine].character = gameStateCategoryPlacing;
+      placingLine[emptySpotInLine].character = gameStateCategory[character.id];
 
-      return gameStateCategoryPlacing;
+      return gameStateCategory[character.id];
     },
     addTargetHand() {
       if (global.targetHand) {
         return console.warn('target hand already added')
       };
 
-      let spot: null | { character: Character } = _.find(global.playerPlacingLine, (index) => !!index.character);
+      let spot: PlacingLineSpot|undefined = _.find({...global.playerPlacingLine}, (index: PlacingLineSpot) => !!index.character);
 
-      if (!spot) {
+      if (!spot || !spot.character) {
         console.error('No player to add target hand to');
         return
       }
-      const character = spot.character;
+
+      const { character } = spot;
 
       global.targetHand = 
         this.add.image(character.sprite.x, character.sprite.y, 'select-hand')
         .setDepth(11); // z-coordinate above the player
+    },
+    removeTargetHand() {
+      if (!global.targetHand) {
+        return console.warn('attempted to remove target hand which does not exist');
+      }
+      global.targetHand.destroy()
+      global.targetHand = null;
     },
     moveTargetHandTo(settings: { index: number, side: number }) {
       const { index, side } = settings;
@@ -433,17 +596,11 @@ function launch(gameState: CombatRoom) {
       global.targetHand.y = character.sprite.y
     },
     animateEvents() {
-      console.log('animating events');
+      // console.log('animating events');
     },
   };
 
-  let gameInterface: GameInterface = {
-    game,
-    global,
-    actions,
-  }
-
-  return gameInterface;
+  return global;
 }
 
 export default launch;
