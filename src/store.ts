@@ -33,13 +33,18 @@ const state: State = {
   combatHub: {
     rooms: {},
   },
-  combatRoom: {
-    id: '',
-    title: '',
-    playerCount: 0,
-    maxPlayers: 4,
-    players: {},
-    enemies: {},
+  combatGame: {
+    gameState: {
+      id: '',
+      title: '',
+      playerCount: 0,
+      maxPlayers: 4,
+      players: {},
+      enemies: {},
+      turn: -1,
+      level: 0,
+    },
+    selectionMode: 'TARGET',
   },
   socket: {
     connected: false,
@@ -80,8 +85,11 @@ const mutations = {
     s.combatHub = { ...s.combatHub, ...combatHubState };
   },
   SET_COMBAT_ROOM_STATE (s: State, combatRoomState: CombatRoom) {
-    s.combatRoom = { ...s.combatRoom, ...combatRoomState };
+    s.combatGame.gameState = { ...s.combatGame.gameState, ...combatRoomState };
   },
+  SET_COMBAT_GAME_SELECTION_MODE(s: State, selectionMode: string) {
+    s.combatGame.selectionMode = selectionMode;
+  }
 };
 
 let socket = io(`${api.getBaseURL()}/game`, { autoConnect: false });
@@ -112,8 +120,6 @@ const actions = {
   },
   OPEN_SOCKET({ commit, dispatch }: ActionContext) {
     socket.open();
-    console.log('vuex - OPEN_SOCKET');
-    
     /*
       Socket events
     */
@@ -153,14 +159,11 @@ const actions = {
     });
   },
   INIT_SOCKET({ state, dispatch }: ActionContext) {
-    console.log('vuex > initializeSocket');
-
     /*
       Authenticate socket
     */
     if (state.user.authenticated) {
       console.log(`vuex > initializeSocket > "attempting authentication of socket"`);
-
       socket.emit('AUTHENTICATE_SOCKET', state.user.currentJWT, (err: any) => {
         if (err) {
           return console.log(`vuex > initializeSocket > "socket auth error = '${err}'"`);

@@ -5,7 +5,7 @@ export interface State {
     user: User;
     world: World;
     combatHub: CombatHub;
-    combatRoom: CombatRoom;
+    combatGame: CombatGame;
     socket: SocketState;
 }
 // Action Context
@@ -47,6 +47,10 @@ export interface CombatRoom {
     enemies: {
         [id: string]: Character,
     },
+}
+export interface CombatGame {
+    gameState: CombatRoom;
+    selectionMode: string;
 }
 export interface SocketState {
     connected:  boolean;
