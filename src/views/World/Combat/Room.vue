@@ -1,31 +1,36 @@
 <template>
-  <div class="combat-root" id="combat">
-    <header>
-      <h1 id="title">
-        Combat - {{ combatRoom.title }}
-      </h1>
-    </header>
-    <!-- Display -->
-    <div class="display" v-if="socket.loading">
-      <p>Connecting to server</p>
+  <div class="combat-root">
+    <!-- Main screen -->
+    <div id="combat">
+      <ActivityIndicator v-if="!gameInterface.gameInitialized"/>
+      <header>
+        <h1 id="title">
+          Combat - {{ combatGame.gameState.title }}
+        </h1>
+      </header>
+      <!-- Display -->
+      <div class="display" v-if="socket.loading">
+        <p>Connecting to server</p>
+      </div>
+      <div class="display" v-else-if="!socket.connected">
+        <p>You are not connected to the server</p>
+      </div>
     </div>
-    <div class="display" v-else-if="!socket.connected">
-      <p>You are not connected to the server</p>
-    </div>
-    <div :class="!initialized || selectionMode === 'HIDDEN' ? 'GUI hidden' : 'GUI'">
+    <!-- GUI -->
+    <div :class="combatGame.selectionMode === 'TARGET' || combatGame.selectionMode === 'HIDDEN' ? 'GUI hidden' : 'GUI'">
       <div>
         <h1 class="health">HP ...</h1>
         <div id="health-bar-container">
           <div id="health-bar"></div>
         </div>
-        <h2>Players: {{ combatRoom.playerCount }} / {{ combatRoom.maxPlayers }}</h2>
+        <h3>Players: {{ combatGame.gameState.playerCount }} / {{ combatGame.gameState.maxPlayers }}</h3>
       </div>
       <div>
         <ul id="gui-selection-list">
           <li
-            v-for="(option, index) in currentScreenObject()"
+            v-for="(option, index) in currentScreenObject"
             :key="option.title"
-            :class="option.disabled ? 'disabled' : currentCursorIndex === index ? 'active' : ''"
+            :class="`${option.disabled ? 'disabled' : ''} ${currentCursorIndex == index ? 'active' : ''}`"
           >
             {{ option.title }}
           </li>
@@ -39,12 +44,14 @@
 </template>
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator';
-import { Action, State } from 'vuex-class';
-import { SocketState, User } from '@/types';
+import { Action, State, Mutation } from 'vuex-class';
+import ActivityIndicator from '@/components/ActivityIndicator.vue';
+import { SocketState, User, CombatGame } from '@/types';
+import { Character } from '@/game/types';
 import _ from 'underscore';
 import io from 'socket.io-client';
 import api from '@/api';
-import launchGame from '@/game/places/combat';
+import launchGame,{ GameInterface, GiGlobal } from '@/game/places/combat';
 
 // audio
 import { Howl } from 'howler';
@@ -72,17 +79,17 @@ interface GuiMasterObject {
   actions: MasterObjectOption[];
 }
 
-let gameInterface: any = false;
-
-@Component
+@Component({
+  components: { ActivityIndicator },
+})
 export default class CombatRoom extends Vue {
   @State public user!: User;
   @State public socket!: SocketState;
-  @State public combatRoom!: CombatRoom;
+  @State public combatGame!: CombatGame;
   @Action public socketJoinRoom: any;
   @Action public socketLeaveRoom: any;
+  @Mutation public SET_COMBAT_GAME_SELECTION_MODE: any;
 
-  public initialized: boolean = false;
   public description: string = '';
 
   public cursorSelectAudio = new Howl({
@@ -91,124 +98,66 @@ export default class CombatRoom extends Vue {
   public cursorMoveAudio = new Howl({
     src: [ cursorMoveSrc ],
   });
-  
-  public guiMasterObject: GuiMasterObject = {
-    root: [],
-    potions: [
-    ],
-    attacks: [
-    ],
-    actions: [
-    ],
-  };
 
-  public selectionMode = 'TARGET';
+  public gameInterface: GiGlobal = {};
   public currentScreen = 'root';
-  public currentTargetSide = 0;
-  public currentTargetIndex = 1;
   public currentCursorIndex = 0;
   public cursorMoveDate = Date.now();
 
   public mounted() {
     const { roomID } = this.$route.params;
+    this.gameInterface = launchGame();
 
     this.socketJoinRoom({ name: 'COMBAT_ROOM', parameter: roomID });
 
     document.addEventListener('keydown', (event) => {
       event.preventDefault();
 
-      if (this.selectionMode === 'HIDDEN') {
-        return;
-      }
       if (Date.now() - this.cursorMoveDate <= 100) {
         return;
       }
       this.cursorMoveDate = Date.now();
 
-      switch (event.key.toUpperCase()) {
-        case 'W':
-          this.moveCursor('up');
-          break;
-        case 'A':
-          this.moveCursor('left');
-          break;
-        case 'S':
-          this.moveCursor('down');
-          break;
-        case 'D':
-          this.moveCursor('right');
-          break;
-        // case 'ENTER':
-        //   break;
-        // case 'ESCAPE':
-        //   break;
+      if (this.combatGame.selectionMode === 'ACTION') {
+        switch (event.key.toUpperCase()) {
+          case 'W':
+            this.moveCursor('up');
+            break;
+          case 'A':
+            this.moveCursor('left');
+            break;
+          case 'S':
+            this.moveCursor('down');
+            break;
+          case 'D':
+            this.moveCursor('right');
+            break;
+          case 'ENTER':
+            this.selectOption();
+            break;
+          case 'ESCAPE':
+            if (this.combatGame.selectionMode === 'ACTION') {
+              this.SET_COMBAT_GAME_SELECTION_MODE('TARGET');
+            }
+            break;
+        }
       }
     });
   }
   public updated() {
-    // please make sure that the gameState is ok
-    if (!gameInterface) {
-      gameInterface = launchGame(this.combatRoom);
-    } else if (gameInterface.global.gameCreated) {
-      gameInterface.actions.updateGameState(this.combatRoom);
-    }
-    const currentUser = this.combatRoom.players[this.user.id];
-
-    // if (currentUser) {
-    //   this.generateObjectGui(currentUser);
-    // }
   }
   public destroyed() {
     this.socketLeaveRoom('COMBAT_ROOM');
   }
 
   public moveCursor(direction: string) {
-    if (this.selectionMode === 'TARGET') {
-      let h = null;
-      let side = null;
-
-      switch (direction.toLowerCase()) {
-        case 'up':
-          h = 'up';
-          break;
-        case 'down':
-          h = 'down';
-          break;
-        case 'left':
-          side = 0;
-          break;
-        case 'right':
-          side = 1;
-          break;
-        default:
-          return;
-      }
-
-      if (h) {
-        this.currentTargetIndex = this.nextTargetIndexInLine(h);
-      } else if (typeof side === 'number') {
-        if (side === this.currentTargetSide) {
-          return
-        }
-        this.currentTargetSide = side;
-        this.currentTargetIndex = this.nextTargetIndexInLine();
-      } else {
-        return;
-      }
-      this.cursorMoveAudio.play();
-
-      const settings = {
-        index: this.currentTargetIndex,
-        side: this.currentTargetSide,
-      };
-
-      gameInterface.actions.moveTargetHandTo(settings);
-    } else if (this.selectionMode === 'ACTION') {
-      const options = this.currentScreenObject();
+    if (this.combatGame.selectionMode === 'ACTION') {
+      const options = this.currentScreenObject;
       const currentIndex = this.currentCursorIndex;
       let nextIndex = currentIndex;
       let j = currentIndex;
 
+      // Move the cursor index
       if (direction === 'up') {
         if (currentIndex > 0) {
           j--;
@@ -226,123 +175,138 @@ export default class CombatRoom extends Vue {
       }
 
       // select the next option that is not disabled in the screen
-      for (const option of options) {
-        if (!option.disabled) {
-          nextIndex = j;
-          break;
-        }
-        if (!direction || direction === 'down') {
-          j++;
-        } else if (direction === 'up') {
-          j--;
-        }
-        if (j > options.length - 1) {
-          j = 0;
-        }
-        if (j < 0) {
-          j = options.length - 1;
-        }
-      }
-      if (nextIndex === currentIndex) {
-        return;
-      }
-      // moveCursorSound.play();
-      this.currentCursorIndex = nextIndex;
+      // for (const option of options) {
+      //   if (!option.disabled) {
+      //     nextIndex = j;
+      //     break;
+      //   }
+      //   if (!direction || direction === 'down') {
+      //     j++;
+      //   } else if (direction === 'up') {
+      //     j--;
+      //   }
+      //   if (j > options.length - 1) {
+      //     j = 0;
+      //   }
+      //   if (j < 0) {
+      //     j = options.length - 1;
+      //   }
+      // }
+
+      this.cursorMoveAudio.play();
+      this.currentCursorIndex = j;
     }
   }
-  public generateObjectGui(currentPlayer: any) {
-    //  this.currentTargetSide === 0
-    //   ? playScreen.playerPlacingLine[this.currentTargetIndex]
-    //   : this.currentTargetSide === 1
-    //     ? playScreen.enemyPlacingLine[GuiManager.currentTargetIndex]
-    //     : null
+  public selectOption() {
+    this.cursorSelectAudio.play();
 
-    const selectedTargetCharacter = {
-      character: {enemy: false},
-      entity: {attacks: {}},
+    if (this.combatGame.selectionMode == 'ACTION') {
+      const currentScreenObj = this.guiMasterObject[this.currentScreen];
+      const currentIndex = this.currentCursorIndex;
+      const selectedOption: MasterObjectOption = currentScreenObj[currentIndex];
+
+      if (selectedOption.disabled) {
+        return;
+      }
+
+      // this is a route
+      if(selectedOption.to) {
+        this.currentScreen = selectedOption.to;
+      } else if (selectedOption.select) {
+        // remove and update index if player is removed / changed
+        const placingLine = this.gameInterface.currentTargetSide == 0
+          ? this.gameInterface.playerPlacingLine
+          : this.gameInterface.enemyPlacingLine;
+
+        const target = placingLine[this.gameInterface.currentTargetIndex].character;
+
+        // TODO: player.onDisconnect => IF player is target THEN setSelectionMode('TARGET');
+        if (!target) {
+          return console.error('No target available');
+        }
+
+        // socket.emit('ACTION', {
+        //   receiverId: target.id,
+        //   action: selectedOption.select
+        // });
+
+        // this.SET_COMBAT_GAME_SELECTION_MODE('HIDDEN');
+      }
+    }
+  }
+  get guiMasterObject(): GuiMasterObject {
+    let guiMasterObject: GuiMasterObject = {
+      root: [],
+      potions: [
+        ],
+      attacks: [
+        ],
+      actions: [
+        ],
     };
-    if (!selectedTargetCharacter) {
-      throw new Error('unknown selected target!');
+    if (!this.gameInterface.gameInitialized) {
+      return guiMasterObject
+    }
+
+    const selectedTarget = this.gameInterface.currentTargetSide === 0
+    ? this.gameInterface.playerPlacingLine[this.gameInterface.currentTargetIndex]
+    : this.gameInterface.enemyPlacingLine[this.gameInterface.currentTargetIndex];
+
+    const currentPlayer: Character = this.combatGame.gameState.players[this.user.id];
+
+    if (!currentPlayer) {
+      console.warn('No current player');
+      return guiMasterObject;
+    }
+    if (!selectedTarget || !selectedTarget.character) {
+      return guiMasterObject;
     }
 
     // PARSE ROOT
-    const parsedRoot = [
+    const parsedRoot: MasterObjectOption[] = [
       { title: 'Attacks', description: '', to: 'attacks', disabled: false, select: null },
       { title: 'Potions', description: '', to: 'potions', disabled: false, select: null },
     ];
+
     // enable options based on external conditions
-    if (selectedTargetCharacter.character.enemy) {
+    if (!selectedTarget.character.enemy) {
       parsedRoot[0].disabled = true;
     }
     // push them to the guiMasterObject
-    this.guiMasterObject.root = parsedRoot;
+    guiMasterObject.root = parsedRoot;
 
-    if (currentPlayer) {
-      // PARSE ATTACKS
-      const attacks = currentPlayer.entity.attacks;
+    // PARSE ATTACKS
+    const attacks = currentPlayer.entity.attacks;
 
-      this.guiMasterObject.attacks.push({
-        title: 'Back',
-        to: 'root',
-        description: '',
+    guiMasterObject.attacks.push({
+      title: 'Back',
+      to: 'root',
+      description: '',
+      disabled: false,
+      select: null,
+    });
+
+    _.pairs(attacks).forEach((pair: [string, Attack]) => {
+      const id = pair[0];
+      const attackInfo = pair[1];
+
+      guiMasterObject.attacks.push({
+        title: attackInfo.title,
+        description: attackInfo.description,
+        to: null,
         disabled: false,
-        select: null,
+        select: {
+          type: 'attack',
+          id,
+        },
       });
+    });
+    // PARSE POTIONS
 
-      _.pairs(attacks).forEach((pair: [string, Attack]) => {
-        const id = pair[0];
-        const attackInfo = pair[1];
-
-        this.guiMasterObject.attacks.push({
-          title: attackInfo.title,
-          description: attackInfo.description,
-          to: null,
-          disabled: false,
-          select: {
-            type: 'attack',
-            id,
-          },
-        });
-      });
-      // PARSE POTIONS
-
-      // PARSE ACTIONS
-    }
+    // PARSE ACTIONS
+    return guiMasterObject;
   }
-  public nextTargetIndexInLine(direction?: string): number {
-    const currentTargetSide = this.currentTargetSide;
-    let j = this.currentTargetIndex;
-
-    const placingLine = currentTargetSide == 0 
-      ? gameInterface.global.playerPlacingLine // OK
-      : gameInterface.global.enemyPlacingLine;
-
-    for (const key in placingLine) {
-      let position = placingLine[j];
-
-      if (!position) {
-        j = _.findKey(placingLine, (p) => p.character);
-        if (!j) {
-          console.warn('Empty placing line ', );
-          return this.currentTargetIndex;
-        }
-        position = placingLine[j];
-      }
-
-      if (!direction || direction == 'down') {
-        j = position.nextIndex;
-      } else if (direction == 'up') {
-        j = position.prevIndex;
-      }
-
-      const nextPosition = placingLine[j];
-      if (nextPosition.character) {
-        return j;
-      }
-    }
-    return j;
-  }
-  public currentScreenObject() {
+  get currentScreenObject() {
     return this.guiMasterObject[this.currentScreen];
   }
 }
@@ -354,7 +318,7 @@ export default class CombatRoom extends Vue {
   position: relative;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: stretch;
   background: black;
 
   header {
@@ -382,10 +346,6 @@ export default class CombatRoom extends Vue {
     display: inline-flex;
     align-items: stretch;
     justify-content: space-between;
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
     height: 30vh;
     overflow: hidden;
     font-family: 'Press Start 2P', monospace;
