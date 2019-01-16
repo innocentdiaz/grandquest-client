@@ -47,7 +47,7 @@ import { Component, Vue } from 'vue-property-decorator';
 import { Action, State, Mutation } from 'vuex-class';
 import ActivityIndicator from '@/components/ActivityIndicator.vue';
 import { SocketState, User, CombatGame } from '@/types';
-import { Character } from '@/game/types';
+import { Character, Attack } from '@/game/types';
 import _ from 'underscore';
 import io from 'socket.io-client';
 import api from '@/api';
@@ -58,10 +58,6 @@ import { Howl } from 'howler';
 import cursorMoveSrc from '@/assets/audio/cursor-move.mp3';
 import cursorSelectSrc from '@/assets/audio/cursor-select.mp3';
 
-interface Attack { 
-  title: string;
-  description: string;
-}
 interface MasterObjectOption {
   title: string;
   description: string;
@@ -104,6 +100,9 @@ export default class CombatRoom extends Vue {
   public currentCursorIndex = 0;
   public cursorMoveDate = Date.now();
 
+  public beforeMount() {
+    // reset the combatGame state
+  }
   public mounted() {
     const { roomID } = this.$route.params;
     this.gameInterface = launchGame();
@@ -195,6 +194,9 @@ export default class CombatRoom extends Vue {
       // }
 
       this.cursorMoveAudio.play();
+
+      this.description = options[j].description;
+
       this.currentCursorIndex = j;
     }
   }
@@ -292,7 +294,7 @@ export default class CombatRoom extends Vue {
       const attackInfo = pair[1];
 
       guiMasterObject.attacks.push({
-        title: attackInfo.title,
+        title: attackInfo.name,
         description: attackInfo.description,
         to: null,
         disabled: false,
