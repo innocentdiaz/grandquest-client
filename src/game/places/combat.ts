@@ -24,6 +24,7 @@ import SelectHandImage from '@/assets/img/icon/select-hand.png';
   Import audio
 */
 import cursorMoveSrc from '@/assets/audio/cursor-move.mp3';
+import cursorSelectSrc from '@/assets/audio/cursor-select.mp3';
 
 /*
   Import data
@@ -65,6 +66,9 @@ interface PlacingLineSpot {
 
 const cursorMoveAudio = new Howl({
   src: [ cursorMoveSrc ],
+});
+const cursorSelectAudio = new Howl({
+  src: [ cursorSelectSrc ],
 });
 /*
   Launch function
@@ -277,7 +281,6 @@ function launch(): GiGlobal {
         }
         this.cursorMoveDate = Date.now();
 
-        // Move the cursor only when selecting a target
         if (store.state.combatGame.selectionMode === 'TARGET') {
           switch (event.key.toUpperCase()) {
             case 'W':
@@ -293,7 +296,7 @@ function launch(): GiGlobal {
               actions.moveCursor('right');
               break;
             case 'ENTER':
-              actions.removeTargetHand();
+              cursorSelectAudio.play();
               store.commit('SET_COMBAT_GAME_SELECTION_MODE', 'ACTION');
               break;
           }

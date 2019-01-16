@@ -30,7 +30,7 @@
           <li
             v-for="(option, index) in currentScreenObject"
             :key="option.title"
-            :class="`${option.disabled ? 'disabled' : ''} ${currentCursorIndex == index ? 'active' : ''}`"
+            :class="`${option.disabled ? 'disabled' : ''} ${combatGame.selectionMode !== 'TARGET' && combatGame.selectionMode !== 'HIDDEN' && currentCursorIndex == index ? 'active' : ''}`"
           >
             {{ option.title }}
           </li>
@@ -137,6 +137,7 @@ export default class CombatRoom extends Vue {
             break;
           case 'ESCAPE':
             if (this.combatGame.selectionMode === 'ACTION') {
+              this.currentScreen = 'root';
               this.SET_COMBAT_GAME_SELECTION_MODE('TARGET');
             }
             break;
@@ -401,9 +402,7 @@ export default class CombatRoom extends Vue {
     height: 10px;
   }
   .GUI.hidden {
-    height: 0 !important;
-    padding: 0;
-    margin: 0;
+    opacity: 0.5;
   }
 }
 </style>
