@@ -152,7 +152,7 @@ export default class CombatRoom extends Vue {
   }
 
   public moveCursor(direction: string) {
-    if (this.combatGame.selectionMode === 'ACTION' || this.currentPlayerSelectionStatus === 0) {
+    if (this.combatGame.selectionMode === 'ACTION' && this.currentPlayerSelectionStatus === 0) {
       const options = this.currentScreenObject;
       const currentIndex = this.currentCursorIndex;
       let nextIndex = currentIndex;
