@@ -84,7 +84,7 @@ const mutations = {
   SET_COMBAT_HUB_STATE (s: State, combatHubState: CombatHub) {
     s.combatHub = { ...s.combatHub, ...combatHubState };
   },
-  SET_COMBAT_ROOM_STATE (s: State, combatRoomState: CombatRoom) {
+  SET_COMBAT_GAME_STATE (s: State, combatRoomState: CombatRoom) {
     s.combatGame.gameState = { ...s.combatGame.gameState, ...combatRoomState };
   },
   SET_COMBAT_GAME_SELECTION_MODE(s: State, selectionMode: string) {
@@ -155,7 +155,7 @@ const actions = {
       commit('SET_COMBAT_HUB_STATE', combatHubState);
     });
     socket.on('COMBAT_ROOM_STATE', (combatRoomState: CombatRoom) => {
-      commit('SET_COMBAT_ROOM_STATE', combatRoomState);
+      commit('SET_COMBAT_GAME_STATE', combatRoomState);
     });
   },
   INIT_SOCKET({ state, dispatch }: ActionContext) {
@@ -198,8 +198,11 @@ const actions = {
   socketLeaveRoom({ commit }: ActionContext, room: string) {
     if (!socket.connected) console.warn('vuex > socketLeaveRoom > "Attempted to leave room before socket connected"');
 
-    socket.emit(`${room.toUpperCase()}_DISCONNECT`);
+    socket.emit(`${room.toUpperCase()}_LEAVE`);
     commit(`SET_SOCKET_ROOM`, null);
+  },
+  EMIT_COMBAT_GAME_ACTION ({ state }: ActionContext, action: {}) {
+    socket.emit('COMBAT_ROOM_ACTION', action);
   },
 };
 

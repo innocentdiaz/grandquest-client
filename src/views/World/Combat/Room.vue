@@ -17,7 +17,7 @@
       </div>
     </div>
     <!-- GUI -->
-    <div :class="combatGame.selectionMode === 'TARGET' || combatGame.selectionMode === 'HIDDEN' ? 'GUI hidden' : 'GUI'">
+    <div :class="combatGame.selectionMode === 'TARGET' || currentPlayerSelectionStatus === 1 ? 'GUI hidden' : 'GUI'">
       <div>
         <h1 class="health">HP ...</h1>
         <div id="health-bar-container">
@@ -84,6 +84,7 @@ export default class CombatRoom extends Vue {
   @State public combatGame!: CombatGame;
   @Action public socketJoinRoom: any;
   @Action public socketLeaveRoom: any;
+  @Action public EMIT_COMBAT_GAME_ACTION: any;
   @Mutation public SET_COMBAT_GAME_SELECTION_MODE: any;
 
   public description: string = '';
@@ -151,7 +152,7 @@ export default class CombatRoom extends Vue {
   }
 
   public moveCursor(direction: string) {
-    if (this.combatGame.selectionMode === 'ACTION') {
+    if (this.combatGame.selectionMode === 'ACTION' || this.currentPlayerSelectionStatus === 0) {
       const options = this.currentScreenObject;
       const currentIndex = this.currentCursorIndex;
       let nextIndex = currentIndex;
@@ -228,12 +229,10 @@ export default class CombatRoom extends Vue {
           return console.error('No target available');
         }
 
-        // socket.emit('ACTION', {
-        //   receiverId: target.id,
-        //   action: selectedOption.select
-        // });
-
-        // this.SET_COMBAT_GAME_SELECTION_MODE('HIDDEN');
+        this.EMIT_COMBAT_GAME_ACTION({
+          receiverId: target.id,
+          action: selectedOption.select
+        });
       }
     }
   }
@@ -308,6 +307,20 @@ export default class CombatRoom extends Vue {
 
     // PARSE ACTIONS
     return guiMasterObject;
+  }
+  get currentPlayerSelectionStatus():number {
+    if (!this.user.id) {
+      return 0;
+    }
+    if (!this.gameInterface.gameInitialized) {
+      return 0;
+    }
+    if (!this.combatGame.gameState.players[this.user.id]) {
+      return 0;
+    }
+
+console.log(this.combatGame.gameState.players[this.user.id]);
+    return this.combatGame.gameState.players[this.user.id].selectionStatus;
   }
   get currentScreenObject() {
     return this.guiMasterObject[this.currentScreen];

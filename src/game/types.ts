@@ -2,6 +2,7 @@ export interface Character {
   id: number;
   username: string;
   enemy: boolean;
+  selectionStatus: number;
   entity: {
     name: string;
     energyRate: number;
