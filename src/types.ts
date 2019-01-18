@@ -1,4 +1,4 @@
-import { Character } from '@/game/types';
+import { Character, CombatEvent } from '@/game/types';
 
 // Store
 export interface State {
@@ -47,6 +47,9 @@ export interface CombatRoom {
     enemies: {
         [id: string]: Character,
     },
+    turnEvents: { // TODO: probably should make an interface for ``
+        [turnIndex: number]: [CombatEvent]
+    }
 }
 export interface CombatGame {
     gameState: CombatRoom;

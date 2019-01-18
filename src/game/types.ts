@@ -21,3 +21,11 @@ export interface Attack {
     energy: number;
   };
 }
+export interface CombatEvent {
+  characterId: string;
+  receiverId: string;
+  action: {
+      type: string;
+      id: string;
+  }
+}
