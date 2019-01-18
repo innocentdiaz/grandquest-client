@@ -1,3 +1,13 @@
+/*
+  TODO:
+  - Add icons for selection status
+  - Add health bars
+  - Add potions
+  - Work on level scenery
+  - Reset Vuex store on mount/destruction of component
+  - Add music
+*/
+
 import Phaser from 'phaser';
 import { Howl } from 'howler';
 import _ from 'underscore';
@@ -7,7 +17,7 @@ import store from '@/store';
   Import types
 */
 import { CombatRoom } from '@/types';
-import { Character } from '@/game/types';
+import { Character, CombatEvent } from '@/game/types';
 
 /*
   Import images
@@ -214,10 +224,46 @@ function launch(): GiGlobal {
                 repeat: -1,
               });
               this.anims.create({
+                key: 'adventurer-walk',
+                frames: this.anims.generateFrameNumbers('adventurer', { start: 8, end: 14 }),
+                frameRate: 10,
+                repeat: -1,
+              });
+              this.anims.create({
+                key: 'adventurer-swing',
+                frames: this.anims.generateFrameNumbers('adventurer', { frames:[38, 39, 40, 41, 42, 43, 47, 48, 49, 50, 51, 52] }),
+                frameRate: 12,
+                repeat: 0,
+              });
+              this.anims.create({
+                key: 'adventurer-up-swing',
+                frames: this.anims.generateFrameNumbers('adventurer', { start: 38, end: 49 }),
+                frameRate: 11,
+                repeat: 0,
+              });
+              this.anims.create({
+                key: 'adventurer-back-swing',
+                frames: this.anims.generateFrameNumbers('adventurer', { start: 53, end: 59 }),
+                frameRate: 8,
+                repeat: 0,
+              });
+              this.anims.create({
+                key: 'adventurer-spin-swing',
+                frames: this.anims.generateFrameNumbers('adventurer', { start: 45, end: 59 }),
+                frameRate: 16,
+                repeat: 0,
+              });
+              this.anims.create({
                 key: 'slime-idle',
                 frames: this.anims.generateFrameNumbers('slime', { start: 0, end: 7 }),
                 frameRate: 7,
                 repeat: -1,
+              });
+              this.anims.create({
+                key: 'slime-hurt',
+                frames: this.anims.generateFrameNumbers('slime', { start: 12, end: 16 }),
+                frameRate: 6,
+                repeat: 0,
               });
 
               actions.startGame();
@@ -441,7 +487,11 @@ function launch(): GiGlobal {
 
         // spawn player
         if (!playerInLocal) {
-          actions.spawnCharacter(playerOnNetwork)
+          let c: Character = actions.spawnCharacter(playerOnNetwork);
+          if (c.entity.name === 'adventurer') {
+            c.sprite.play('adventurer-swing');
+            setTimeout(() => c.sprite.play('adventurer-idle'), 1200);
+          }
         }
 
         // // set the player's health
@@ -483,18 +533,16 @@ function launch(): GiGlobal {
         EVENTS UPDATING
       */
 
-      // the network is at another turn
-      if (global.gameState.turn != networkGameState.turn) {
-        // we have not JUST joined the match
-        if (global.gameState.turn != null) {
-          // show us the events of the last match
-          // var appliedEvents = networkGameState.turnEvents[localGameState.turn];
-
-          // actions.animateEvents(appliedEvents);
+      // IF the network is at a different turn
+      if (global.gameState.turn !== networkGameState.turn) {
+        // IF we have NOT just joined the match
+        if (global.gameState.turn !== -1) {
+          let appliedEvents = networkGameState.turnEvents[global.gameState.turn];
+          actions.animateEvents(appliedEvents);
         }
 
         global.gameState.turn = networkGameState.turn;
-        
+
         if (global.gameState.turn % 2) {
           // enemy turn
         } else {
@@ -598,9 +646,75 @@ function launch(): GiGlobal {
       global.targetHand.x = character.sprite.x - character.sprite.width
       global.targetHand.y = character.sprite.y
     },
-    animateEvents() {
+    animateEvents(events: [], i = 0) {
+      let event = events[i];
+      let next = events[i + 1];
+
       // console.log('animating events');
+      for (let event of events) {
+        actions.animateEvent(event).then(() => {
+          if (!!next) {
+            actions.animateEvent(event);
+          } else {
+            console.log('done animating');
+          }
+        })
+      }
     },
+    animateEvent(event: CombatEvent) {
+      return new Promise((ok) => {
+        let timeline = this.tweens.createTimeline();
+        const character = {...global.gameState.players, ...global.gameState.enemies}[event.characterId];
+        const receiver = {...global.gameState.players, ...global.gameState.enemies}[event.receiverId];
+
+        // attack animation
+        const originalPosition = character.sprite.x;
+        const atkPosition = character.sprite.x + (this.game.canvas.offsetWidth * .1);
+
+        if (character && receiver) {
+          /*
+            Parallel anims:
+            - Timeline anims
+            - Sprite anims
+          */
+
+          timeline.add({ // move closer to enemy
+            targets: [character.sprite],
+            duration: 800,
+            x: atkPosition,
+            onStart() {
+              character.sprite.play(`${character.entity.name}-walk`);
+            },
+          });
+          timeline.add({ // stay there shortly
+            targets: [character.sprite],
+            duration: 1000,
+            x: atkPosition,
+            onStart() {
+              character.sprite.play(event.action.id);
+              setTimeout(() => receiver.sprite.play(`${receiver.entity.name}-hurt`));
+            },
+          });
+          timeline.add({ // walk back
+            targets: [character.sprite],
+            duration: 800,
+            x: originalPosition,
+            onStart() {
+              character.sprite.scaleX *= -1;
+              character.sprite.play(`${character.entity.name}-walk`);
+              setTimeout(() => receiver.sprite.play(`${receiver.entity.name}-idle`));
+            },
+            onComplete() {
+              character.sprite.scaleX *= -1;
+              character.sprite.play(`${character.entity.name}-idle`);
+            },
+          });
+
+          timeline.play();
+          timeline.onComplete = ok;
+        }
+      });
+    }
   };
 
   return global;
