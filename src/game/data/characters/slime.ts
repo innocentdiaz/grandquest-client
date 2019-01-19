@@ -7,20 +7,10 @@ function Slime(character: Character, { x, y, z, }: { x: number, y: number, z?:nu
     .setDepth(z || 10)
     .setOrigin(0.5)
     .play('slime-idle', false, Math.floor(Math.random() * 3));
-  // let nameTag = this.add.text(
-  //   x,
-  //   y,
-  //   character.username,
-  //   { fontSize: '17px', fill: '#fff', backgroundColor: '#0008' }
-  // );
-  const state: Character = {
-    ...character,
-    sprite,
-    // nameTag,
-  }
 
   return {
-    ...state
+    ...character,
+    sprite,
   }
 }
 

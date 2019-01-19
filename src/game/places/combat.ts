@@ -280,6 +280,65 @@ function launch(): GiGlobal {
         if (!global.gameInitialized) {
           return;
         }
+
+        console.clear();
+        _.forEach({...global.gameState.players, ...global.gameState.enemies}, (character) => {
+          if (!character) {
+            return;
+          }
+
+          /*
+            Graphics updating
+          */
+          // name tag
+          if(character._nameTag) {
+            character._nameTag.destroy();
+          }
+          character._nameTag = this.add.text(
+            character.sprite.x,
+            character.sprite.y - (character.sprite.height * 1.25),
+            character.username,
+            {
+              fontSize: '17px',
+              fill: '#fff',
+              backgroundColor: '#0008',
+              align: 'center',
+            },
+          )
+          .setOrigin(0.5, 0)
+          .setDepth(character.sprite.depth);
+
+          let graphics: any = this.add.graphics(character._nameTag.x, character._nameTag.y);
+
+          // health bar background
+          if (character._healthBarBackground) {
+            character._healthBarBackground.destroy();
+          }
+          character._healthBarBackground = graphics
+          .fillStyle(0xBEBEBE)
+          .fillRect(
+            character._nameTag.x - (character._nameTag.width / 2),
+            character._nameTag.y + character._nameTag.height,
+            character._nameTag.width,
+            5,
+          )
+          .setDepth(character.sprite.depth);
+
+          // health bar
+          if (character._healthBar) {
+            character._healthBar.destroy();
+          }
+          character._healthBar = graphics
+          .fillStyle(0x56F33E)
+          .fillRect(
+            character._nameTag.x - (character._nameTag.width / 2),
+            character._nameTag.y + character._nameTag.height,
+            (character.entity.health / character.entity.maxHealth) * character._nameTag.width,
+            6,
+          )
+          .setDepth(character.sprite.depth + 1);
+        });
+
         /*
           Selection hand
         */
@@ -587,8 +646,8 @@ function launch(): GiGlobal {
             y: canvasHeight * ((0.9 - (0.02 * Object.keys(placingLine).length)) + (0.02 * emptySpotInLine)),
           }
         : {
-            x: this.game.canvas.offsetWidth * 0.25,
-            y: this.game.canvas.offsetHeight * 0.85,
+            x: canvasWidth * (0.25 - (0.08 * emptySpotInLine)),
+            y: canvasHeight * ((0.9 - (0.02 * Object.keys(placingLine).length)) + (0.02 * emptySpotInLine)),
           };
 
       gameStateCategory[character.id] = selectedEntityGenerator(
@@ -647,19 +706,16 @@ function launch(): GiGlobal {
       global.targetHand.y = character.sprite.y
     },
     animateEvents(events: [], i = 0) {
-      let event = events[i];
-      let next = events[i + 1];
+      const event = events[i];
+      const next = events[i + 1];
 
-      // console.log('animating events');
-      for (let event of events) {
-        actions.animateEvent(event).then(() => {
-          if (!!next) {
-            actions.animateEvent(event);
-          } else {
-            console.log('done animating');
-          }
-        })
-      }
+      actions.animateEvent(event).then(() => {
+        if (!!next) {
+          actions.animateEvents(events, i + 1);
+        } else {
+          console.log('done animating');
+        }
+      });
     },
     animateEvent(event: CombatEvent) {
       return new Promise((ok) => {
@@ -707,11 +763,11 @@ function launch(): GiGlobal {
             onComplete() {
               character.sprite.scaleX *= -1;
               character.sprite.play(`${character.entity.name}-idle`);
+              ok();
             },
           });
 
           timeline.play();
-          timeline.onComplete = ok;
         }
       });
     }

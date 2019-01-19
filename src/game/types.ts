@@ -12,6 +12,9 @@ export interface Character {
   };
   sprite: any;
   defense: number;
+  _nameTag: any;
+  _healthBar: any;
+  _healthBarBackground: any;
 }
 export interface Attack {
   name: string;
