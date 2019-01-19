@@ -281,7 +281,6 @@ function launch(): GiGlobal {
           return;
         }
 
-        console.clear();
         _.forEach({...global.gameState.players, ...global.gameState.enemies}, (character) => {
           if (!character) {
             return;
@@ -527,17 +526,16 @@ function launch(): GiGlobal {
         Player updating section
       */
       const allPlayersOnNetworkState = networkGameState.players;
-      const allPlayersInGameState = global.gameState.players;
+      let allPlayersInGameState = global.gameState.players;
 
       // despawn players
-      // for (id in allPlayersInGameState) {
-      //   var playerInNetwork = allPlayersOnNetworkState[id];
+      for (const id in allPlayersInGameState) {
+        let playerIsOnNetwork = !!allPlayersOnNetworkState[id];
 
-      //   if(!playerInNetwork) {
-      //     // ORIGINAL GAME STATE IS MANIPULATED HERE
-      //     playScreen.despawnCharacter(id);
-      //   }
-      // }
+        if (!playerIsOnNetwork) {
+          actions.despawnCharacter(id);
+        }
+      }
 
       // add / update players
       for (const id in allPlayersOnNetworkState) {
@@ -659,6 +657,28 @@ function launch(): GiGlobal {
       placingLine[emptySpotInLine].character = gameStateCategory[character.id];
 
       return gameStateCategory[character.id];
+    },
+    despawnCharacter(id: string) {
+      let character = global.gameState.players[id] || global.gameState.enemies || [id];
+
+      if (!character) {
+        return console.error('Attempted to despawn a character that does not exist in the game state');
+      }
+
+      let gameStateCategory = character.enemy
+        ? global.gameState.enemies
+        : global.gameState.players;
+      let p = character.enemy
+        ? global.enemyPlacingLine
+        : global.playerPlacingLine;
+
+      delete gameStateCategory[id];
+
+      _.forEach(['sprite', '_nameTag', '_healthBar', '_healthBarBackground'], (graphic) => {
+        if (character.hasOwnProperty(graphic)) {
+          character[graphic].destroy();
+        }
+      });
     },
     addTargetHand() {
       if (global.targetHand) {
