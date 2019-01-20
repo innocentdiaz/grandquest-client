@@ -56,6 +56,7 @@ export interface GiGlobal {
   targetHand: any;
   playerPlacingLine: PlacingLine;
   enemyPlacingLine:  PlacingLine;
+  destroyGame: () => void;
 };
 export interface GameInterface {
   // Stores important game variables
@@ -88,9 +89,6 @@ function launch(): GiGlobal {
   /*
     GameInterface.Global
   */
-  store.subscribe((m, s) => {
-    actions.updateGameState(s.combatGame.gameState);
-  });
   let global: GiGlobal = {
     // state from the server
     gameState: {
@@ -102,6 +100,7 @@ function launch(): GiGlobal {
       maxPlayers: 4,
       turn: -1,
       level: 0,
+      turnEvents: {},
     },
     // called startGame();
     gameInitialized: false,
@@ -131,6 +130,11 @@ function launch(): GiGlobal {
         },
       };
     }, {}),
+    destroyGame: () => {
+      if (game) {
+        game.destroy();
+      }
+    },
   };
 
   /*
@@ -157,6 +161,14 @@ function launch(): GiGlobal {
         generators found in the `Entities` object
       */
       preload: function() {
+        
+      },
+      /*
+        Game.create();
+        Responsibe for loading assets asynchronously
+        and adding animation for sprites
+      */
+      create() {
         /*
           Bind gameInterface.actions to `this`
         */
@@ -169,13 +181,6 @@ function launch(): GiGlobal {
         for(const id in Entities) {
           Entities[id] = Entities[id].bind(this);
         }
-      },
-      /*
-        Game.create();
-        Responsibe for loading assets asynchronously
-        and adding animation for sprites
-      */
-      create() {
         // Load images asyncronously
         let assetsLoaded = 0;
         _.each([
@@ -272,31 +277,51 @@ function launch(): GiGlobal {
         });
       },
       update() {
-        // move the clouds around
-        if (global.gameClouds) {
-          global.gameClouds.tilePositionX += 0.072;
-        }
-
         if (!global.gameInitialized) {
           return;
         }
+        
+        // Cloud animation
+        if (global.gameClouds) {
+          global.gameClouds.tilePositionX += 0.072;
+        }
+        
+        const networkGameState = store.state.combatGame.gameState;
+        
+        /*
+        CHARACTER UPDATING
+        */
+       
+       // Despawn Characters
+       let charactersOnLocal = {...global.gameState.players, ...global.gameState.enemies};
+       _.forEach(charactersOnLocal, ({ id }) => {
+         const characterOnNetwork = networkGameState.enemies.hasOwnProperty(id) || networkGameState.players.hasOwnProperty(id);
+         if (!characterOnNetwork) {
+           actions.despawnCharacter(id);
+          }
+        });
 
-        _.forEach({...global.gameState.players, ...global.gameState.enemies}, (character) => {
-          if (!character) {
-            return;
+        // Spawn & Update Characters
+        let charactersOnNetwork = {...networkGameState.players, ...networkGameState.enemies};
+        _.forEach(charactersOnNetwork, (characterOnNetwork) => {
+          let characterOnLocal = charactersOnLocal[characterOnNetwork.id];
+
+          // spawn player if not yet added locally
+          if (!characterOnLocal) {
+            characterOnLocal = actions.spawnCharacter(characterOnNetwork);
           }
 
           /*
             Graphics updating
           */
           // name tag
-          if(character._nameTag) {
-            character._nameTag.destroy();
+          if(characterOnLocal._nameTag) {
+            characterOnLocal._nameTag.destroy();
           }
-          character._nameTag = this.add.text(
-            character.sprite.x,
-            character.sprite.y - (character.sprite.height * 1.25),
-            character.username,
+          characterOnLocal._nameTag = this.add.text(
+            characterOnLocal.sprite.x,
+            characterOnLocal.sprite.y - (characterOnLocal.sprite.height * 1.25),
+            characterOnLocal.username,
             {
               fontSize: '17px',
               fill: '#fff',
@@ -305,41 +330,41 @@ function launch(): GiGlobal {
             },
           )
           .setOrigin(0.5, 0)
-          .setDepth(character.sprite.depth);
+          .setDepth(characterOnLocal.sprite.depth);
 
-          let graphics: any = this.add.graphics(character._nameTag.x, character._nameTag.y);
+          let graphics: any = this.add.graphics(characterOnLocal._nameTag.x, characterOnLocal._nameTag.y);
 
           // health bar background
-          if (character._healthBarBackground) {
-            character._healthBarBackground.destroy();
+          if (characterOnLocal._healthBarBackground) {
+            characterOnLocal._healthBarBackground.destroy();
           }
-          character._healthBarBackground = graphics
+          characterOnLocal._healthBarBackground = graphics
           .fillStyle(0xBEBEBE)
           .fillRect(
-            character._nameTag.x - (character._nameTag.width / 2),
-            character._nameTag.y + character._nameTag.height,
-            character._nameTag.width,
+            characterOnLocal._nameTag.x - (characterOnLocal._nameTag.width / 2),
+            characterOnLocal._nameTag.y + characterOnLocal._nameTag.height,
+            characterOnLocal._nameTag.width,
             5,
           )
-          .setDepth(character.sprite.depth);
+          .setDepth(characterOnLocal.sprite.depth);
 
           // health bar
-          if (character._healthBar) {
-            character._healthBar.destroy();
+          if (characterOnLocal._healthBar) {
+            characterOnLocal._healthBar.destroy();
           }
-          character._healthBar = graphics
+          characterOnLocal._healthBar = graphics
           .fillStyle(0x56F33E)
           .fillRect(
-            character._nameTag.x - (character._nameTag.width / 2),
-            character._nameTag.y + character._nameTag.height,
-            (character.entity.health / character.entity.maxHealth) * character._nameTag.width,
+            characterOnLocal._nameTag.x - (characterOnLocal._nameTag.width / 2),
+            characterOnLocal._nameTag.y + characterOnLocal._nameTag.height,
+            (characterOnLocal.entity.health / characterOnLocal.entity.maxHealth) * characterOnLocal._nameTag.width,
             6,
           )
-          .setDepth(character.sprite.depth + 1);
+          .setDepth(characterOnLocal.sprite.depth + 1);
         });
 
         /*
-          Selection hand
+          UPDATE SELECTION HAND
         */
         // only while selecting a target
         if (store.state.combatGame.selectionMode === 'TARGET') {
@@ -362,6 +387,27 @@ function launch(): GiGlobal {
             }
           } else if (global.targetHand) { // there are no players but there is a target hand
             actions.removeTargetHand();
+          }
+        }
+
+        /*
+          EVENTS UPDATING
+        */
+
+        // IF the network is at a different turn
+        if (global.gameState.turn !== networkGameState.turn) {
+          // IF we have NOT just joined the match
+          if (global.gameState.turn !== -1) {
+            let appliedEvents = networkGameState.turnEvents[global.gameState.turn];
+            actions.animateEvents(appliedEvents);
+          }
+
+          global.gameState.turn = networkGameState.turn;
+
+          if (global.gameState.turn % 2) {
+            // enemy turn
+          } else {
+            // player turn
           }
         }
       },
@@ -518,96 +564,7 @@ function launch(): GiGlobal {
         }
       });
     },
-    updateGameState(networkGameState: CombatRoom) {
-      if (!global.gameInitialized) {
-        return;
-      }
-      /*
-        Player updating section
-      */
-      const allPlayersOnNetworkState = networkGameState.players;
-      let allPlayersInGameState = global.gameState.players;
-
-      // despawn players
-      for (const id in allPlayersInGameState) {
-        let playerIsOnNetwork = !!allPlayersOnNetworkState[id];
-
-        if (!playerIsOnNetwork) {
-          actions.despawnCharacter(id);
-        }
-      }
-
-      // add / update players
-      for (const id in allPlayersOnNetworkState) {
-        const playerOnNetwork = allPlayersOnNetworkState[id];
-        const playerInLocal = allPlayersInGameState[id];
-
-        // spawn player
-        if (!playerInLocal) {
-          let c: Character = actions.spawnCharacter(playerOnNetwork);
-          if (c.entity.name === 'adventurer') {
-            c.sprite.play('adventurer-swing');
-            setTimeout(() => c.sprite.play('adventurer-idle'), 1200);
-          }
-        }
-
-        // // set the player's health
-        // playerInLocal.setHealth(playerOnNetwork.entity.health);
-
-        // // set the player's selectionStatus
-        // playerInLocal.setStatusIcon(playerOnNetwork.entity.selectionStatus);
-        // playerInLocal.entity.selectionStatus = status
-
-        // set the current player's HP bar
-        // if (playerInLocal.id === socket.id) {
-        //   GuiManager.setHP(playerInLocal);
-        // }
-      }
-
-      /*
-        Enemy updating section
-      */
-      const allEnemiesInNetworkState = networkGameState.enemies;
-      const allEnemiesInLocalState = global.gameState.enemies;
-      
-      // add / update enemies
-      for (const id in allEnemiesInNetworkState) {
-        var enemyOnNetwork = allEnemiesInNetworkState[id];
-        var enemyInLocal = allEnemiesInLocalState[id];
-
-        // spawn player
-        if (!enemyInLocal) {
-          actions.spawnCharacter(enemyOnNetwork)//.updateHealthBar();
-        }
-
-        // var healthOnNetwork = enemyOnNetwork.entity.health;
-
-        // enemyInLocal
-        //   .setHealth(healthOnNetwork)
-        //   // .updateHealthBar();
-      }
-      /*
-        EVENTS UPDATING
-      */
-
-      // IF the network is at a different turn
-      if (global.gameState.turn !== networkGameState.turn) {
-        // IF we have NOT just joined the match
-        if (global.gameState.turn !== -1) {
-          let appliedEvents = networkGameState.turnEvents[global.gameState.turn];
-          actions.animateEvents(appliedEvents);
-        }
-
-        global.gameState.turn = networkGameState.turn;
-
-        if (global.gameState.turn % 2) {
-          // enemy turn
-        } else {
-          // player turn
-        }
-      }
-    },
-    spawnCharacter(character: Character) {
+    spawnCharacter(character: Character): Character {
       let { entity } = character;
 
       let selectedEntityGenerator = Entities[entity.name];
@@ -631,8 +588,7 @@ function launch(): GiGlobal {
       let emptySpotInLine: any = _.findKey({...placingLine}, (spot: PlacingLineSpot) => !spot.character);
 
       if (!emptySpotInLine) {
-        console.error('Attempted to spawn character but there are not empty spaces in ', {...placingLine});
-        return null;
+        throw new Error('Attempted to spawn character but there are not empty spaces in the placing line');
       }
 
       const canvasWidth = this.game.canvas.offsetWidth;
@@ -647,12 +603,11 @@ function launch(): GiGlobal {
             x: canvasWidth * (0.25 - (0.08 * emptySpotInLine)),
             y: canvasHeight * ((0.9 - (0.02 * Object.keys(placingLine).length)) + (0.02 * emptySpotInLine)),
           };
-
+          
       gameStateCategory[character.id] = selectedEntityGenerator(
         character,
         coordinatesForEntity,
       );
-
       // reference the spawned player in their placing line
       placingLine[emptySpotInLine].character = gameStateCategory[character.id];
 

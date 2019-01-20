@@ -16,7 +16,7 @@ import moment from 'moment';
 
 Vue.use(Vuex);
 
-const state: State = {
+const initialState = {
   user: {
     id: null,
     username: '',
@@ -43,6 +43,7 @@ const state: State = {
       enemies: {},
       turn: -1,
       level: 0,
+      turnEvents: {},
     },
     selectionMode: 'TARGET',
   },
@@ -52,6 +53,9 @@ const state: State = {
     room: null,
   }
 };
+
+const state: State = {...initialState};
+
 const getters = {
   userJoinDate: (s: State) => {
     if (!s.user.authenticated) {
@@ -83,6 +87,16 @@ const mutations = {
   },
   SET_COMBAT_HUB_STATE (s: State, combatHubState: CombatHub) {
     s.combatHub = { ...s.combatHub, ...combatHubState };
+  },
+  RESET_GAME_STATE(s: State, name: string) {
+    switch(name) {
+      case 'COMBAT_ROOM':
+        alert('reset combat game');
+        s.combatGame = { ...initialState.combatGame };
+        break;
+      default:
+        return;
+    }
   },
   SET_COMBAT_GAME_STATE (s: State, combatRoomState: CombatRoom) {
     s.combatGame.gameState = { ...s.combatGame.gameState, ...combatRoomState };
