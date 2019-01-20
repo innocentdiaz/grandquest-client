@@ -82,7 +82,7 @@ const cursorSelectAudio = new Howl({
 });
 /*
   Launch function
-  Will return a GameInterface object
+  Will return a GameInterface.Global object
 */
 function launch(): GiGlobal {
   /*
