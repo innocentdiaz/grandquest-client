@@ -110,27 +110,23 @@ function launch(): GiGlobal {
     gameClouds: null,
     targetHand: null,
     // this will be generated using the game state with `gameInterface.actions.startGame()
-    playerPlacingLine: _.reduce(_.range(1, 5), (memo, index) => {
-      return {
-        ...memo,
-        [index]: {
-          character: null,
-          nextIndex: index >= store.state.combatGame.gameState.maxPlayers ? 1 : index + 1,
-          prevIndex: index === 1 ? store.state.combatGame.gameState.maxPlayers : index - 1,
-        },
-      };
-    }, {}),
+    playerPlacingLine: _.reduce(_.range(1, 5), (memo, index) => ({
+      ...memo,
+      [index]: {
+        character: null,
+        nextIndex: index >= store.state.combatGame.gameState.maxPlayers ? 1 : index + 1,
+        prevIndex: index === 1 ? store.state.combatGame.gameState.maxPlayers : index - 1,
+      },
+    }), {}),
     // generate placing line object for enemies in a range from 1-4
-    enemyPlacingLine: _.reduce(_.range(1, 5), (memo, index) => {
-      return {
-        ...memo,
-        [index]: {
-          character: null,
-          nextIndex: index >= 4 ? 1 : index + 1,
-          prevIndex: index === 1 ? 4 : index - 1,
-        },
-      };
-    }, {}),
+    enemyPlacingLine: _.reduce(_.range(1, 5), (memo, index) => ({
+      ...memo,
+      [index]: {
+        character: null,
+        nextIndex: index >= 4 ? 1 : index + 1,
+        prevIndex: index === 1 ? 4 : index - 1,
+      },
+    }), {}),
     destroyGame: () => {
       if (game) {
         game.destroy();
