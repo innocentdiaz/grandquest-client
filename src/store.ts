@@ -95,7 +95,6 @@ const mutations = {
   RESET_GAME_STATE(s: State, name: string) {
     switch(name) {
       case 'COMBAT_ROOM':
-        alert('reset combat game');
         s.combatGame = { ...initialState.combatGame };
         break;
       default:
