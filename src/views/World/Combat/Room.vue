@@ -86,6 +86,7 @@ export default class CombatRoom extends Vue {
   @Action public socketLeaveRoom: any;
   @Action public EMIT_COMBAT_GAME_ACTION: any;
   @Mutation public SET_COMBAT_GAME_SELECTION_MODE: any;
+  @Mutation public RESET_GAME_STATE: any;
 
   public description: string = '';
 
@@ -102,7 +103,7 @@ export default class CombatRoom extends Vue {
   public cursorMoveDate = Date.now();
 
   public beforeMount() {
-    // reset the combatGame state
+    this.RESET_GAME_STATE('COMBAT_ROOM');
   }
   public mounted() {
     const { roomID } = this.$route.params;
@@ -145,10 +146,12 @@ export default class CombatRoom extends Vue {
       }
     });
   }
-  public updated() {
-  }
   public destroyed() {
+    if (this.gameInterface) {
+      this.gameInterface.destroyGame();
+    }
     this.socketLeaveRoom('COMBAT_ROOM');
+    this.RESET_GAME_STATE('COMBAT_ROOM')
   }
 
   public moveCursor(direction: string) {
@@ -174,25 +177,6 @@ export default class CombatRoom extends Vue {
       } else {
         return;
       }
-
-      // select the next option that is not disabled in the screen
-      // for (const option of options) {
-      //   if (!option.disabled) {
-      //     nextIndex = j;
-      //     break;
-      //   }
-      //   if (!direction || direction === 'down') {
-      //     j++;
-      //   } else if (direction === 'up') {
-      //     j--;
-      //   }
-      //   if (j > options.length - 1) {
-      //     j = 0;
-      //   }
-      //   if (j < 0) {
-      //     j = options.length - 1;
-      //   }
-      // }
 
       this.cursorMoveAudio.play();
 
@@ -319,7 +303,6 @@ export default class CombatRoom extends Vue {
       return 0;
     }
 
-console.log(this.combatGame.gameState.players[this.user.id]);
     return this.combatGame.gameState.players[this.user.id].selectionStatus;
   }
   get currentScreenObject() {
