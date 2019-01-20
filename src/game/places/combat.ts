@@ -1,11 +1,10 @@
 /*
   TODO:
   - Add icons for selection status
-  - Add health bars
   - Add potions
   - Work on level scenery
-  - Reset Vuex store on mount/destruction of component
   - Add music
+  - Fix bug on game destruction/mounting
 */
 
 import Phaser from 'phaser';
