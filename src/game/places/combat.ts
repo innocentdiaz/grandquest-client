@@ -41,8 +41,10 @@ import cursorSelectSrc from '@/assets/audio/cursor-select.mp3';
 import Entities from '@/game/data/characters';
 
 /*
-  Declare interfaces
+  Declare definitions
 */
+type GameInstance = any;
+
 interface GiActions {
   [actionName: string]: any,
 }
@@ -66,7 +68,7 @@ export interface GameInterface {
   actions:  GiActions;
 }
 interface PlacingLine {
-  [index: number]: PlacingLineSpot;
+  [index: string]: PlacingLineSpot;
 }
 interface PlacingLineSpot {
   character: Character|null;
@@ -160,7 +162,7 @@ function launch(): GiGlobal {
         generators found in the `Entities` object
       */
       preload: function() {
-        
+
       },
       /*
         Game.create();
@@ -168,17 +170,18 @@ function launch(): GiGlobal {
         and adding animation for sprites
       */
       create() {
+        let self: GameInstance = this;
         /*
-          Bind gameInterface.actions to `this`
+          Bind gameInterface.actions to `self`
         */
         _.each(actions, (func: any, action: string) => {
-          actions[action] = func.bind(this);
+          actions[action] = func.bind(self);
         });
         /*
-          Bind entity generators to `this`
+          Bind entity generators to `self`
         */
         for(const id in Entities) {
-          Entities[id] = Entities[id].bind(this);
+          Entities[id] = Entities[id].bind(self);
         }
         // Load images asyncronously
         let assetsLoaded = 0;
@@ -199,11 +202,11 @@ function launch(): GiGlobal {
           // method to add texture `onload` according to type
           const method = type === 'image'
           ? () => {
-              this.textures.addImage(name, img);
+              self.textures.addImage(name, img);
             }
-          : type === 'spritesheet'
+          : type === 'spritesheet' && spriteDimensions
           ? () => {
-              this.textures.addSpriteSheet(
+              self.textures.addSpriteSheet(
                 name,
                 img,
                 { frameWidth: spriteDimensions[0], frameHeight: spriteDimensions[1] }
@@ -221,51 +224,51 @@ function launch(): GiGlobal {
               /*
                 Add animations
               */
-              this.anims.create({
+              self.anims.create({
                 key: 'adventurer-idle',
-                frames: this.anims.generateFrameNumbers('adventurer', { start: 0, end: 3 }),
+                frames: self.anims.generateFrameNumbers('adventurer', { start: 0, end: 3 }),
                 frameRate: 3,
                 repeat: -1,
               });
-              this.anims.create({
+              self.anims.create({
                 key: 'adventurer-walk',
-                frames: this.anims.generateFrameNumbers('adventurer', { start: 8, end: 14 }),
+                frames: self.anims.generateFrameNumbers('adventurer', { start: 8, end: 14 }),
                 frameRate: 10,
                 repeat: -1,
               });
-              this.anims.create({
+              self.anims.create({
                 key: 'adventurer-swing',
-                frames: this.anims.generateFrameNumbers('adventurer', { frames:[38, 39, 40, 41, 42, 43, 47, 48, 49, 50, 51, 52] }),
+                frames: self.anims.generateFrameNumbers('adventurer', { frames:[38, 39, 40, 41, 42, 43, 47, 48, 49, 50, 51, 52] }),
                 frameRate: 12,
                 repeat: 0,
               });
-              this.anims.create({
+              self.anims.create({
                 key: 'adventurer-up-swing',
-                frames: this.anims.generateFrameNumbers('adventurer', { start: 38, end: 49 }),
+                frames: self.anims.generateFrameNumbers('adventurer', { start: 38, end: 49 }),
                 frameRate: 11,
                 repeat: 0,
               });
-              this.anims.create({
+              self.anims.create({
                 key: 'adventurer-back-swing',
-                frames: this.anims.generateFrameNumbers('adventurer', { start: 53, end: 59 }),
+                frames: self.anims.generateFrameNumbers('adventurer', { start: 53, end: 59 }),
                 frameRate: 8,
                 repeat: 0,
               });
-              this.anims.create({
+              self.anims.create({
                 key: 'adventurer-spin-swing',
-                frames: this.anims.generateFrameNumbers('adventurer', { start: 45, end: 59 }),
+                frames: self.anims.generateFrameNumbers('adventurer', { start: 45, end: 59 }),
                 frameRate: 16,
                 repeat: 0,
               });
-              this.anims.create({
+              self.anims.create({
                 key: 'slime-idle',
-                frames: this.anims.generateFrameNumbers('slime', { start: 0, end: 7 }),
+                frames: self.anims.generateFrameNumbers('slime', { start: 0, end: 7 }),
                 frameRate: 7,
                 repeat: -1,
               });
-              this.anims.create({
+              self.anims.create({
                 key: 'slime-hurt',
-                frames: this.anims.generateFrameNumbers('slime', { start: 12, end: 16 }),
+                frames: self.anims.generateFrameNumbers('slime', { start: 12, end: 16 }),
                 frameRate: 6,
                 repeat: 0,
               });
@@ -276,21 +279,22 @@ function launch(): GiGlobal {
         });
       },
       update() {
+        let self: GameInstance = this;
         if (!global.gameInitialized) {
           return;
         }
-        
+
         // Cloud animation
         if (global.gameClouds) {
           global.gameClouds.tilePositionX += 0.072;
         }
-        
+
         const networkGameState = store.state.combatGame.gameState;
-        
+
         /*
         CHARACTER UPDATING
         */
-       
+
        // Despawn Characters
        let charactersOnLocal = {...global.gameState.players, ...global.gameState.enemies};
        _.forEach(charactersOnLocal, ({ id }) => {
@@ -317,7 +321,7 @@ function launch(): GiGlobal {
           if(characterOnLocal._nameTag) {
             characterOnLocal._nameTag.destroy();
           }
-          characterOnLocal._nameTag = this.add.text(
+          characterOnLocal._nameTag = self.add.text(
             characterOnLocal.sprite.x,
             characterOnLocal.sprite.y - (characterOnLocal.sprite.height * 1.25),
             characterOnLocal.username,
@@ -331,7 +335,7 @@ function launch(): GiGlobal {
           .setOrigin(0.5, 0)
           .setDepth(characterOnLocal.sprite.depth);
 
-          let graphics: any = this.add.graphics(characterOnLocal._nameTag.x, characterOnLocal._nameTag.y);
+          let graphics: any = self.add.graphics(characterOnLocal._nameTag.x, characterOnLocal._nameTag.y);
 
           // health bar background
           if (characterOnLocal._healthBarBackground) {
@@ -418,6 +422,7 @@ function launch(): GiGlobal {
   */
   const actions: GiActions = {
     startGame() {
+      let self: GameInstance = this;
       console.log('game started');
 
       // make background;
@@ -425,10 +430,10 @@ function launch(): GiGlobal {
 
       // add events
       document.addEventListener('keydown', (event) => {
-        if (Date.now() - this.cursorMoveDate <= 100) {
+        if (Date.now() - self.cursorMoveDate <= 100) {
           return;
         }
-        this.cursorMoveDate = Date.now();
+        self.cursorMoveDate = Date.now();
 
         if (store.state.combatGame.selectionMode === 'TARGET') {
           switch (event.key.toUpperCase()) {
@@ -524,15 +529,16 @@ function launch(): GiGlobal {
       } else {
         return;
       }
-      
+
       cursorMoveAudio.play();
     },
     addBackground() {
+      let self: any = this;
       /*
         Handy dimensions
       */
-      const canvasWidth = this.game.canvas.offsetWidth;
-      const canvasHeight = this.game.canvas.offsetHeight;
+      const canvasWidth = self.game.canvas.offsetWidth;
+      const canvasHeight = self.game.canvas.offsetHeight;
 
       /*
         Country background
@@ -548,8 +554,8 @@ function launch(): GiGlobal {
         'country-platform',
       ], (name, i) => {
         // clouds are parallax
-        const img = 
-          this.add.tileSprite(0, 0, canvasWidth, canvasHeight, name)
+        const img =
+          self.add.tileSprite(0, 0, canvasWidth, canvasHeight, name)
           // z-axis
           .setDepth(i)
           // pixelHeight of each image in tileset
@@ -564,6 +570,8 @@ function launch(): GiGlobal {
       });
     },
     spawnCharacter(character: Character): Character {
+      let self: GameInstance = this;
+
       let { entity } = character;
 
       let selectedEntityGenerator = Entities[entity.name];
@@ -590,19 +598,19 @@ function launch(): GiGlobal {
         throw new Error('Attempted to spawn character but there are not empty spaces in the placing line');
       }
 
-      const canvasWidth = this.game.canvas.offsetWidth;
-      const canvasHeight = this.game.canvas.offsetHeight;
+      const canvasWidth = self.game.canvas.offsetWidth;
+      const canvasHeight = self.game.canvas.offsetHeight;
 
       let coordinatesForEntity = character.enemy
         ? {
-            x: canvasWidth * (0.6 + (0.08 * emptySpotInLine)), 
+            x: canvasWidth * (0.6 + (0.08 * emptySpotInLine)),
             y: canvasHeight * ((0.9 - (0.02 * Object.keys(placingLine).length)) + (0.02 * emptySpotInLine)),
           }
         : {
             x: canvasWidth * (0.25 - (0.08 * emptySpotInLine)),
             y: canvasHeight * ((0.9 - (0.02 * Object.keys(placingLine).length)) + (0.02 * emptySpotInLine)),
           };
-          
+
       gameStateCategory[character.id] = selectedEntityGenerator(
         character,
         coordinatesForEntity,
@@ -635,6 +643,8 @@ function launch(): GiGlobal {
       });
     },
     addTargetHand() {
+      let self: GameInstance = this;
+
       if (global.targetHand) {
         return console.warn('target hand already added')
       };
@@ -648,8 +658,8 @@ function launch(): GiGlobal {
 
       const { character } = spot;
 
-      global.targetHand = 
-        this.add.image(character.sprite.x, character.sprite.y, 'select-hand')
+      global.targetHand =
+        self.add.image(character.sprite.x, character.sprite.y, 'select-hand')
         .setDepth(11); // z-coordinate above the player
     },
     removeTargetHand() {
@@ -692,14 +702,16 @@ function launch(): GiGlobal {
       });
     },
     animateEvent(event: CombatEvent) {
+      let self: GameInstance = this;
+
       return new Promise((ok) => {
-        let timeline = this.tweens.createTimeline();
+        let timeline = self.tweens.createTimeline();
         const character = {...global.gameState.players, ...global.gameState.enemies}[event.characterId];
         const receiver = {...global.gameState.players, ...global.gameState.enemies}[event.receiverId];
 
         // attack animation
         const originalPosition = character.sprite.x;
-        const atkPosition = character.sprite.x + (this.game.canvas.offsetWidth * .1);
+        const atkPosition = character.sprite.x + (self.game.canvas.offsetWidth * .1);
 
         if (character && receiver) {
           /*
