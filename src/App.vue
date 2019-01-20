@@ -1,6 +1,6 @@
 <template>
   <div class="root">
-    <Header />
+    <Header v-if="headerVisibility"/>
     <router-view/>
   </div>
 </template>
@@ -19,6 +19,7 @@ import store from '@/store.ts';
   },
 })
 export default class App extends Vue {
+  @State public headerVisibility: boolean;
   @Action public INIT_AUTH: any;
 
   private async mounted() {

@@ -17,6 +17,7 @@ import moment from 'moment';
 Vue.use(Vuex);
 
 const initialState = {
+  headerVisibility: true,
   user: {
     id: null,
     username: '',
@@ -68,6 +69,9 @@ const getters = {
 const mutations = {
   SET_USER(s: State, user: User) {
     s.user = { ...s.user, ...user };
+  },
+  SET_HEADER_VISIBILITY(s: State, b: boolean) {
+    s.headerVisibility = b;
   },
   /*
     Socket events

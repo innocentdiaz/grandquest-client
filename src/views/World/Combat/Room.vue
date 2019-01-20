@@ -4,6 +4,9 @@
     <div id="combat">
       <ActivityIndicator v-if="!gameInterface.gameInitialized"/>
       <header>
+        <ul>
+          <router-link to="/combat">Exit</router-link>
+        </ul>
         <h1 id="title">
           Combat - {{ combatGame.gameState.title }}
         </h1>
@@ -85,6 +88,7 @@ export default class CombatRoom extends Vue {
   @Action public socketJoinRoom: any;
   @Action public socketLeaveRoom: any;
   @Action public EMIT_COMBAT_GAME_ACTION: any;
+  @Mutation public SET_HEADER_VISIBILITY: any;
   @Mutation public SET_COMBAT_GAME_SELECTION_MODE: any;
   @Mutation public RESET_GAME_STATE: any;
 
@@ -110,6 +114,7 @@ export default class CombatRoom extends Vue {
     this.gameInterface = launchGame();
 
     this.socketJoinRoom({ name: 'COMBAT_ROOM', parameter: roomID });
+    this.SET_HEADER_VISIBILITY(false);
 
     document.addEventListener('keydown', (event) => {
       event.preventDefault();
@@ -150,6 +155,7 @@ export default class CombatRoom extends Vue {
     if (this.gameInterface) {
       this.gameInterface.destroyGame();
     }
+    this.SET_HEADER_VISIBILITY(true);
     this.socketLeaveRoom('COMBAT_ROOM');
     this.RESET_GAME_STATE('COMBAT_ROOM')
   }
@@ -327,7 +333,15 @@ export default class CombatRoom extends Vue {
     right: 0;
     background: linear-gradient(to bottom, rgb(22, 22, 22), rgba(24, 24, 24, 0.6), rgba(24, 24, 24, 0.4), rgba(0, 0, 0, 0));
     color: white;
-    padding: 15px;
+    #title {
+      margin-left: 10px;
+    }
+    ul {
+      display: block;
+      margin: 0;
+      padding: 10px;
+      background: black;
+    }
   }
   .display {
     position: absolute;

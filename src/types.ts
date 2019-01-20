@@ -2,6 +2,7 @@ import { Character, CombatEvent } from '@/game/types';
 
 // Store
 export interface State {
+    headerVisibility: boolean;
     user: User;
     world: World;
     combatHub: CombatHub;
