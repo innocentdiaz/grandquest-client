@@ -6,12 +6,14 @@ export interface Character {
   entity: {
     name: string;
     energyRate: number;
+    health: number;
+    maxHealth: number;
+    defense: number;
     attacks: {
       [attackId: string]: Attack;
     };
   };
   sprite: any;
-  defense: number;
   _nameTag: any;
   _healthBar: any;
   _healthBarBackground: any;
