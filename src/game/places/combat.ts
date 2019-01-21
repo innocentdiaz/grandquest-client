@@ -5,6 +5,8 @@
   - Work on level scenery
   - Add music
   - Fix bug on game destruction/mounting
+  - Optimize game loop updating
+  - Add window.on resize events
 */
 
 import Phaser from 'phaser';
@@ -55,6 +57,7 @@ export interface GiGlobal {
   currentTargetIndex: number;
   gameClouds: any;
   targetHand: any;
+  isAnimating: boolean;
   playerPlacingLine: PlacingLine;
   enemyPlacingLine:  PlacingLine;
   destroyGame: () => void;
@@ -109,6 +112,7 @@ function launch(): GiGlobal {
     currentTargetIndex: 1,
     gameClouds: null,
     targetHand: null,
+    isAnimating: false,
     // this will be generated using the game state with `gameInterface.actions.startGame()
     playerPlacingLine: _.reduce(_.range(1, 5), (memo, index) => ({
       ...memo,
@@ -288,78 +292,79 @@ function launch(): GiGlobal {
         const networkGameState = store.state.combatGame.gameState;
 
         /*
-        CHARACTER UPDATING
+          CHARACTER UPDATING
         */
 
-       // Despawn Characters
-       let charactersOnLocal = {...global.gameState.players, ...global.gameState.enemies};
-       _.forEach(charactersOnLocal, ({ id }) => {
-         const characterOnNetwork = networkGameState.enemies.hasOwnProperty(id) || networkGameState.players.hasOwnProperty(id);
-         if (!characterOnNetwork) {
-           actions.despawnCharacter(id);
+        // Despawn Characters
+        let charactersOnLocal = {...global.gameState.players, ...global.gameState.enemies};
+        _.forEach(charactersOnLocal, ({ id }) => {
+          const characterOnNetwork = networkGameState.enemies.hasOwnProperty(id) || networkGameState.players.hasOwnProperty(id);
+          if (!characterOnNetwork) {
+            actions.despawnCharacter(id);
           }
         });
 
         // Spawn & Update Characters
-        let charactersOnNetwork = {...networkGameState.players, ...networkGameState.enemies};
-        _.forEach(charactersOnNetwork, (characterOnNetwork) => {
-          let characterOnLocal = charactersOnLocal[characterOnNetwork.id];
+        _.forEach({...networkGameState.players, ...networkGameState.enemies}, (characterOnNetwork) => {
+          let category = characterOnNetwork.enemy
+            ? global.gameState.enemies
+            : global.gameState.players;
+          let characterOnLocal = category[characterOnNetwork.id];
 
           // spawn player if not yet added locally
-          if (!characterOnLocal) {
+          if (characterOnLocal) {
+            category[characterOnNetwork.id] = {...characterOnLocal, ...characterOnNetwork};
+          } else {
             characterOnLocal = actions.spawnCharacter(characterOnNetwork);
           }
-
           /*
             Graphics updating
           */
           // name tag
-          if(characterOnLocal._nameTag) {
-            characterOnLocal._nameTag.destroy();
+          if(!characterOnLocal._nameTag) {
+            characterOnLocal._nameTag = self.add.text(
+              0, 0,
+              characterOnLocal.username,
+              {
+                fontSize: '17px',
+                fill: '#fff',
+                backgroundColor: '#0008',
+                align: 'center',
+              },
+            )
+            .setOrigin(0.5, 0)
+            .setDepth(characterOnLocal.sprite.depth);
           }
-          characterOnLocal._nameTag = self.add.text(
-            characterOnLocal.sprite.x,
-            characterOnLocal.sprite.y - (characterOnLocal.sprite.height * 1.25),
-            characterOnLocal.username,
-            {
-              fontSize: '17px',
-              fill: '#fff',
-              backgroundColor: '#0008',
-              align: 'center',
-            },
-          )
-          .setOrigin(0.5, 0)
-          .setDepth(characterOnLocal.sprite.depth);
+          characterOnLocal._nameTag.x = characterOnLocal.sprite.x;
+          characterOnLocal._nameTag.y = characterOnLocal.sprite.y - (characterOnLocal.sprite.height * 1.25);
 
           let graphics: any = self.add.graphics(characterOnLocal._nameTag.x, characterOnLocal._nameTag.y);
 
           // health bar background
-          if (characterOnLocal._healthBarBackground) {
-            characterOnLocal._healthBarBackground.destroy();
+          if (!characterOnLocal._healthBarBackground) {
+            characterOnLocal._healthBarBackground = self
+            .add.rectangle(0, 0, 0, 5, 0xBEBEBE)
+            .setDepth(characterOnLocal.sprite.depth)
+            .setOrigin(0, 0);
           }
-          characterOnLocal._healthBarBackground = graphics
-          .fillStyle(0xBEBEBE)
-          .fillRect(
-            characterOnLocal._nameTag.x - (characterOnLocal._nameTag.width / 2),
-            characterOnLocal._nameTag.y + characterOnLocal._nameTag.height,
-            characterOnLocal._nameTag.width,
-            5,
-          )
-          .setDepth(characterOnLocal.sprite.depth);
+          characterOnLocal._healthBarBackground.setSize(characterOnLocal._nameTag.width, 5);
+          characterOnLocal._healthBarBackground.x = characterOnLocal._nameTag.x - (characterOnLocal._nameTag.width / 2);
+          characterOnLocal._healthBarBackground.y = characterOnLocal._nameTag.y + characterOnLocal._nameTag.height;
 
           // health bar
-          if (characterOnLocal._healthBar) {
-            characterOnLocal._healthBar.destroy();
+          if (!characterOnLocal._healthBar) {
+            const width = characterOnLocal.entity.health / characterOnLocal.entity.maxHealth * (characterOnLocal._nameTag.displayWidth);
+
+            characterOnLocal._healthBar = self
+            .add.rectangle(0, 0, width, 6, 0x56F33E)
+            .setDepth(characterOnLocal.sprite.depth + 1)
+            .setOrigin(0, 0);
+          } else if (!global.isAnimating) {
+            const width = characterOnLocal.entity.health / characterOnLocal.entity.maxHealth * (characterOnLocal._nameTag.displayWidth);
+            characterOnLocal._healthBar.setSize(width, 6);
           }
-          characterOnLocal._healthBar = graphics
-          .fillStyle(0x56F33E)
-          .fillRect(
-            characterOnLocal._nameTag.x - (characterOnLocal._nameTag.width / 2),
-            characterOnLocal._nameTag.y + characterOnLocal._nameTag.height,
-            (characterOnLocal.entity.health / characterOnLocal.entity.maxHealth) * characterOnLocal._nameTag.width,
-            6,
-          )
-          .setDepth(characterOnLocal.sprite.depth + 1);
+          characterOnLocal._healthBar.x = characterOnLocal._nameTag.x - (characterOnLocal._nameTag.width / 2);
+          characterOnLocal._healthBar.y = characterOnLocal._nameTag.y + characterOnLocal._nameTag.height;
         });
 
         /*
@@ -394,7 +399,7 @@ function launch(): GiGlobal {
         */
 
         // IF the network is at a different turn
-        if (global.gameState.turn !== networkGameState.turn) {
+        if (global.gameState.turn !== networkGameState.turn && !global.isAnimating) {
           // IF we have NOT just joined the match
           if (global.gameState.turn !== -1) {
             let appliedEvents = networkGameState.turnEvents[global.gameState.turn];
@@ -402,12 +407,6 @@ function launch(): GiGlobal {
           }
 
           global.gameState.turn = networkGameState.turn;
-
-          if (global.gameState.turn % 2) {
-            // enemy turn
-          } else {
-            // player turn
-          }
         }
       },
     },
@@ -686,6 +685,7 @@ function launch(): GiGlobal {
       global.targetHand.y = character.sprite.y
     },
     animateEvents(events: [], i = 0) {
+      global.isAnimating = true;
       const event = events[i];
       const next = events[i + 1];
 
@@ -693,7 +693,7 @@ function launch(): GiGlobal {
         if (!!next) {
           actions.animateEvents(events, i + 1);
         } else {
-          console.log('done animating');
+          global.isAnimating = false;
         }
       });
     },
@@ -707,7 +707,9 @@ function launch(): GiGlobal {
 
         // attack animation
         const originalPosition = character.sprite.x;
-        const atkPosition = character.sprite.x + (self.game.canvas.offsetWidth * .1);
+        const atkPosition = character.enemy
+          ? character.sprite.x - (self.game.canvas.offsetWidth * 0.1)
+          : character.sprite.x + (self.game.canvas.offsetWidth * 0.1);
 
         if (character && receiver) {
           /*
@@ -730,7 +732,17 @@ function launch(): GiGlobal {
             x: atkPosition,
             onStart() {
               character.sprite.play(event.action.id);
-              setTimeout(() => receiver.sprite.play(`${receiver.entity.name}-hurt`));
+              receiver.sprite.play(`${receiver.entity.name}-hurt`);
+              // update sprite health bar
+              const damagePercentage = (event.outcome.damage / receiver.entity.maxHealth);
+              const totalWidth = receiver._nameTag.displayWidth;
+              const currentWidth = receiver._healthBar.width;
+
+              self.tweens.add({
+                targets: receiver._healthBar,
+                width: currentWidth - (totalWidth * damagePercentage),
+                duration: 250,
+              });
             },
           });
           timeline.add({ // walk back
