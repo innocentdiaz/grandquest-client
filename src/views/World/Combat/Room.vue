@@ -22,9 +22,12 @@
     <!-- GUI -->
     <div :class="combatGame.selectionMode === 'TARGET' || currentPlayerSelectionStatus === 1 ? 'GUI hidden' : 'GUI'">
       <div>
-        <h1 class="health">HP ...</h1>
-        <div id="health-bar-container">
-          <div id="health-bar"></div>
+        <h1 class="health" v-if="currentPlayer">
+          HP {{currentPlayer.entity.health}}/{{currentPlayer.entity.maxHealth}}
+        </h1>
+        <h1 class="health" v-else>HP ...</h1>
+        <div id="health-bar-container" v-if="currentPlayer">
+          <div id="health-bar" v-bind:style="{ width: `${currentPlayer.entity.health / currentPlayer.entity.maxHealth * 100}%` }"></div>
         </div>
         <h3>Players: {{ combatGame.gameState.playerCount }} / {{ combatGame.gameState.maxPlayers }}</h3>
       </div>
@@ -298,18 +301,26 @@ export default class CombatRoom extends Vue {
     // PARSE ACTIONS
     return guiMasterObject;
   }
-  get currentPlayerSelectionStatus():number {
+  get currentPlayer(): Character | null {
+    // if not authenticated
     if (!this.user.id) {
-      return 0;
+      return null;
     }
+    // if no game intialized
     if (!this.gameInterface.gameInitialized) {
-      return 0;
+      return null;
     }
+    // if no player matching this user id
     if (!this.combatGame.gameState.players[this.user.id]) {
+      return null;
+    }
+    return this.combatGame.gameState.players[this.user.id];
+  }
+  get currentPlayerSelectionStatus(): number {
+    if (!this.currentPlayer) {
       return 0;
     }
-
-    return this.combatGame.gameState.players[this.user.id].selectionStatus;
+    return this.currentPlayer.selectionStatus;
   }
   get currentScreenObject() {
     return this.guiMasterObject[this.currentScreen];
@@ -410,7 +421,6 @@ export default class CombatRoom extends Vue {
   }
   .GUI #health-bar {
     background: #56f33e;
-    width: 0;
     height: 10px;
   }
   .GUI.hidden {
