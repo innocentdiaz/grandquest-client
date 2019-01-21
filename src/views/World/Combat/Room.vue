@@ -2,7 +2,6 @@
   <div class="combat-root">
     <!-- Main screen -->
     <div id="combat">
-      <ActivityIndicator v-if="!gameInterface.gameInitialized"/>
       <header>
         <ul>
           <router-link to="/combat">Exit</router-link>
@@ -20,7 +19,8 @@
       </div>
     </div>
     <!-- GUI -->
-    <div :class="combatGame.selectionMode === 'TARGET' || currentPlayerSelectionStatus === 1 ? 'GUI hidden' : 'GUI'">
+    <ActivityIndicator v-if="!gameInterface"/>
+    <div v-else :class="gameInterface.isAnimating || combatGame.selectionMode === 'TARGET' || currentPlayerSelectionStatus !== 0 ? 'GUI hidden' : 'GUI'">
       <div>
         <h1 class="health" v-if="currentPlayer">
           HP {{currentPlayer.entity.health}}/{{currentPlayer.entity.maxHealth}}
@@ -104,7 +104,7 @@ export default class CombatRoom extends Vue {
     src: [ cursorMoveSrc ],
   });
 
-  public gameInterface: GiGlobal = {};
+  public gameInterface: GiGlobal | null = null;
   public currentScreen = 'root';
   public currentCursorIndex = 0;
   public cursorMoveDate = Date.now();
@@ -239,7 +239,7 @@ export default class CombatRoom extends Vue {
       actions: [
         ],
     };
-    if (!this.gameInterface.gameInitialized) {
+    if (!this.gameInterface || !this.gameInterface.gameInitialized) {
       return guiMasterObject
     }
 
@@ -303,18 +303,19 @@ export default class CombatRoom extends Vue {
   }
   get currentPlayer(): Character | null {
     // if not authenticated
-    if (!this.user.id) {
+    const { id } = this.user;
+    if (!id) {
       return null;
     }
     // if no game intialized
-    if (!this.gameInterface.gameInitialized) {
+    if (!this.gameInterface || !this.gameInterface.gameInitialized) {
       return null;
     }
     // if no player matching this user id
-    if (!this.combatGame.gameState.players[this.user.id]) {
+    if (!this.gameInterface.gameState.players.hasOwnProperty(id)) {
       return null;
     }
-    return this.combatGame.gameState.players[this.user.id];
+    return this.gameInterface.gameState.players[id];
   }
   get currentPlayerSelectionStatus(): number {
     if (!this.currentPlayer) {
