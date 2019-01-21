@@ -7,6 +7,7 @@
   - Fix bug on game destruction/mounting
   - Optimize game loop updating
   - Add window.on resize events
+  - Add low framerate setting
 */
 
 import Phaser from 'phaser';
@@ -338,16 +339,14 @@ function launch(): GiGlobal {
           characterOnLocal._nameTag.x = characterOnLocal.sprite.x;
           characterOnLocal._nameTag.y = characterOnLocal.sprite.y - (characterOnLocal.sprite.height * 1.25);
 
-          let graphics: any = self.add.graphics(characterOnLocal._nameTag.x, characterOnLocal._nameTag.y);
-
           // health bar background
           if (!characterOnLocal._healthBarBackground) {
             characterOnLocal._healthBarBackground = self
-            .add.rectangle(0, 0, 0, 5, 0xBEBEBE)
+            .add.rectangle(0, 0, 0, 0, 0xBEBEBE)
             .setDepth(characterOnLocal.sprite.depth)
             .setOrigin(0, 0);
           }
-          characterOnLocal._healthBarBackground.setSize(characterOnLocal._nameTag.width, 5);
+          characterOnLocal._healthBarBackground.setSize(characterOnLocal._nameTag.width, 9);
           characterOnLocal._healthBarBackground.x = characterOnLocal._nameTag.x - (characterOnLocal._nameTag.width / 2);
           characterOnLocal._healthBarBackground.y = characterOnLocal._nameTag.y + characterOnLocal._nameTag.height;
 
@@ -356,15 +355,35 @@ function launch(): GiGlobal {
             const width = characterOnLocal.entity.health / characterOnLocal.entity.maxHealth * (characterOnLocal._nameTag.displayWidth);
 
             characterOnLocal._healthBar = self
-            .add.rectangle(0, 0, width, 6, 0x56F33E)
+            .add.rectangle(0, 0, width, 0, 0x56F33E)
             .setDepth(characterOnLocal.sprite.depth + 1)
             .setOrigin(0, 0);
           } else if (!global.isAnimating) {
             const width = characterOnLocal.entity.health / characterOnLocal.entity.maxHealth * (characterOnLocal._nameTag.displayWidth);
-            characterOnLocal._healthBar.setSize(width, 6);
+            characterOnLocal._healthBar.setSize(width, 10);
           }
           characterOnLocal._healthBar.x = characterOnLocal._nameTag.x - (characterOnLocal._nameTag.width / 2);
           characterOnLocal._healthBar.y = characterOnLocal._nameTag.y + characterOnLocal._nameTag.height;
+
+          // health text
+          if (!characterOnLocal._healthText) {
+            characterOnLocal._healthText = self.add.text(
+              0, 0, '',
+              {
+                fontSize: '8px',
+                fill: '#fff',
+                backgroundColor: '#0000',
+                align: 'center',
+                baselineY: 0.5,
+              },
+            )
+            .setOrigin(0.5, 0.5)
+            .setDepth(characterOnLocal._healthBar.depth + 1);
+          }
+          let currentDisplayedHealth = Math.round(characterOnLocal.entity.maxHealth * (characterOnLocal._healthBar.width/characterOnLocal._nameTag.displayWidth));
+          characterOnLocal._healthText.text = `${currentDisplayedHealth}/${characterOnLocal.entity.maxHealth}`;
+          characterOnLocal._healthText.x = characterOnLocal._healthBarBackground.getCenter().x;
+          characterOnLocal._healthText.y = characterOnLocal._healthBarBackground.getCenter().y;
         });
 
         /*

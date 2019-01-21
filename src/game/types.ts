@@ -17,6 +17,7 @@ export interface Character {
   _nameTag: any;
   _healthBar: any;
   _healthBarBackground: any;
+  _healthText: any;
 }
 export interface Attack {
   name: string;
