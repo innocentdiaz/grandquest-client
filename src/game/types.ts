@@ -33,4 +33,7 @@ export interface CombatEvent {
       type: string;
       id: string;
   }
+  outcome: {
+    damage: any;
+  }
 }
