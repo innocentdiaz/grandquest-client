@@ -635,7 +635,7 @@ function launch(): GiGlobal {
       return gameStateCategory[character.id];
     },
     despawnCharacter(id: string) {
-      let character = global.gameState.players[id] || global.gameState.enemies || [id];
+      let character: Character | undefined = global.gameState.players[id] || global.gameState.enemies[id];
 
       if (!character) {
         return console.error('Attempted to despawn a character that does not exist in the game state');
