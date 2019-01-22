@@ -650,7 +650,7 @@ function launch(): GiGlobal {
 
       delete gameStateCategory[id];
 
-      _.forEach(['sprite', '_nameTag', '_healthBar', '_healthBarBackground'], (graphic) => {
+      _.forEach(['sprite', '_nameTag', '_healthBar', '_healthBarBackground', '_healthText'], (graphic) => {
         if (character.hasOwnProperty(graphic)) {
           character[graphic].destroy();
         }
