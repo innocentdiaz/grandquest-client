@@ -5,6 +5,8 @@ export interface Character {
   selectionStatus: number;
   entity: {
     name: string;
+    energy: number;
+    maxEnergy: number;
     energyRate: number;
     health: number;
     maxHealth: number;
