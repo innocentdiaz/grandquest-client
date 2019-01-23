@@ -343,7 +343,7 @@ export default class CombatRoom extends Vue {
 </script>
 <style lang="scss" scoped>
 .combat-root {
-  min-height: 50vh;
+  height: 100vh;
   width: 100%;
   position: relative;
   display: flex;
@@ -384,7 +384,7 @@ export default class CombatRoom extends Vue {
     display: inline-flex;
     align-items: stretch;
     justify-content: space-between;
-    height: 30vh;
+    height: 27vh;
     overflow: hidden;
     font-family: 'Press Start 2P', monospace;
     padding: 10px;

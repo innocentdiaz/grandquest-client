@@ -65,7 +65,7 @@ const newGame = (global: GameInterface): PhaserGame => {
   let game: any = new Phaser.Game({
     type: Phaser.AUTO,
     width: window.innerWidth * .98,
-    height: window.innerHeight * .75,
+    height: window.innerHeight * .68,
     backgroundColor: '#7fb8f9',
     parent: 'combat',
     physics: {
