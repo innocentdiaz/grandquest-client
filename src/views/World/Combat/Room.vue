@@ -46,7 +46,7 @@
         </ul>
       </div>
       <div id="gui-description-container">
-        <p>{{description}}</p>
+        <p v-html="description"></p>
       </div>
     </div>
   </div>
@@ -290,9 +290,15 @@ export default class CombatRoom extends Vue {
 
       guiMasterObject.attacks.push({
         title: attackInfo.name,
-        description: attackInfo.description,
+        description: `
+          Description - <br/>
+          ${attackInfo.description} <br/>
+          Stats - <br/>
+          Energy: ${attackInfo.stats.energy} <br/>
+          Base dmg: ${attackInfo.stats.baseDamage}
+        `,
         to: null,
-        disabled: false,
+        disabled: attackInfo.stats.energy > currentPlayer.entity.energy,
         select: {
           type: 'attack',
           id,
