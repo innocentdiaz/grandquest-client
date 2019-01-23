@@ -225,16 +225,17 @@ const newGame = (global: GameInterface): PhaserGame => {
         // Spawn & Update Characters
         _.forEach({...networkGameState.players, ...networkGameState.enemies}, (characterOnNetwork) => {
           let category = characterOnNetwork.enemy
-            ? global.gameState.enemies
-            : global.gameState.players;
-          let characterOnLocal = category[characterOnNetwork.id];
+            ? 'enemies'
+            : 'players';
+          let characterOnLocal = global.gameState[category][characterOnNetwork.id];
 
           // spawn player if not yet added locally
           if (characterOnLocal) {
-            category = {
-              ...category,
+            global.gameState[category] = {
+              ...global.gameState[category],
               [characterOnNetwork.id]: {...characterOnLocal, ...characterOnNetwork},
             }
+            if (!characterOnLocal.enemy) console.log(characterOnNetwork.entity.health);
           } else {
             characterOnLocal = actions.spawnCharacter(characterOnNetwork);
           }
@@ -279,7 +280,7 @@ const newGame = (global: GameInterface): PhaserGame => {
             .setDepth(characterOnLocal.sprite.depth + 1)
             .setOrigin(0, 0);
           } else if (!global.isAnimating) {
-            const width = characterOnLocal.entity.health / characterOnLocal.entity.maxHealth * (characterOnLocal._nameTag.displayWidth);
+            const width = characterOnLocal.entity.health / characterOnLocal.entity.maxHealth * (characterOnLocal._nameTag.width);
             characterOnLocal._healthBar.setSize(width, 10);
           }
           characterOnLocal._healthBar.x = characterOnLocal._nameTag.x - (characterOnLocal._nameTag.width / 2);
@@ -630,6 +631,7 @@ const newGame = (global: GameInterface): PhaserGame => {
       global.targetHand.y = character.sprite.y
     },
     animateEvents(events: [], i = 0) {
+      if(i === 0) console.log(events);
       global.isAnimating = true;
       const event = events[i];
       const next = events[i + 1];
