@@ -19,15 +19,18 @@
       </div>
     </div>
     <!-- GUI -->
-    <ActivityIndicator v-if="!gameInterface"/>
+    <ActivityIndicator v-if="!gameInterface.gameInitialized"/>
     <div v-else :class="gameInterface.isAnimating || combatGame.selectionMode === 'TARGET' || currentPlayerSelectionStatus !== 0 ? 'GUI hidden' : 'GUI'">
       <div>
         <h1 class="health" v-if="currentPlayer">
           HP {{currentPlayer.entity.health}}/{{currentPlayer.entity.maxHealth}}
         </h1>
         <h1 class="health" v-else>HP ...</h1>
-        <div id="health-bar-container" v-if="currentPlayer">
+        <div class="bar-container" v-if="currentPlayer">
           <div id="health-bar" v-bind:style="{ width: `${currentPlayer.entity.health / currentPlayer.entity.maxHealth * 100}%` }"></div>
+        </div>
+        <div class="bar-container" v-if="currentPlayer">
+          <div id="energy-bar" v-bind:style="{ width: `${currentPlayer.entity.energy / currentPlayer.entity.maxEnergy * 100}%` }"></div>
         </div>
         <h3>Players: {{ combatGame.gameState.playerCount }} / {{ combatGame.gameState.maxPlayers }}</h3>
       </div>
@@ -57,7 +60,7 @@ import { Character, Attack } from '@/game/types';
 import _ from 'underscore';
 import io from 'socket.io-client';
 import api from '@/api';
-import launchGame,{ GameInterface, GiGlobal } from '@/game/places/combat';
+import CombatInterface, { GameInterface } from '@/game/places/combat';
 
 // audio
 import { Howl } from 'howler';
@@ -104,7 +107,7 @@ export default class CombatRoom extends Vue {
     src: [ cursorMoveSrc ],
   });
 
-  public gameInterface: GiGlobal | null = null;
+  public gameInterface: GameInterface = CombatInterface();
   public currentScreen = 'root';
   public currentCursorIndex = 0;
   public cursorMoveDate = Date.now();
@@ -114,7 +117,7 @@ export default class CombatRoom extends Vue {
   }
   public mounted() {
     const { roomID } = this.$route.params;
-    this.gameInterface = launchGame();
+    this.gameInterface.launch();
 
     this.socketJoinRoom({ name: 'COMBAT_ROOM', parameter: roomID });
     this.SET_HEADER_VISIBILITY(false);
@@ -239,7 +242,7 @@ export default class CombatRoom extends Vue {
       actions: [
         ],
     };
-    if (!this.gameInterface || !this.gameInterface.gameInitialized) {
+    if (!this.gameInterface.gameInitialized) {
       return guiMasterObject
     }
 
@@ -308,7 +311,7 @@ export default class CombatRoom extends Vue {
       return null;
     }
     // if no game intialized
-    if (!this.gameInterface || !this.gameInterface.gameInitialized) {
+    if (!this.gameInterface.gameInitialized) {
       return null;
     }
     // if no player matching this user id
@@ -414,7 +417,7 @@ export default class CombatRoom extends Vue {
     list-style-image: url('../../../assets/img/icon/select-hand.png');
   }
 
-  .GUI #health-bar-container {
+  .GUI .bar-container {
     height: 10px;
     width: 100%;
     max-width: 200px;
@@ -422,6 +425,10 @@ export default class CombatRoom extends Vue {
   }
   .GUI #health-bar {
     background: #56f33e;
+    height: 10px;
+  }
+  .GUI #energy-bar {
+    background: rgb(0, 218, 218);
     height: 10px;
   }
   .GUI.hidden {

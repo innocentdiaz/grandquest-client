@@ -231,7 +231,10 @@ const newGame = (global: GameInterface): PhaserGame => {
 
           // spawn player if not yet added locally
           if (characterOnLocal) {
-            category[characterOnNetwork.id] = {...characterOnLocal, ...characterOnNetwork};
+            category = {
+              ...category,
+              [characterOnNetwork.id]: {...characterOnLocal, ...characterOnNetwork},
+            }
           } else {
             characterOnLocal = actions.spawnCharacter(characterOnNetwork);
           }
@@ -511,16 +514,9 @@ const newGame = (global: GameInterface): PhaserGame => {
       }
 
       // place them in our game state
-      let gameStateCategory;
-      let placingLine;
-
-      if (character.enemy) {
-        gameStateCategory = global.gameState.enemies;
-        placingLine = global.enemyPlacingLine;
-      } else {
-        gameStateCategory = global.gameState.players;
-        placingLine = global.playerPlacingLine;
-      }
+      let placingLine = character.enemy
+        ? global.enemyPlacingLine
+        : global.playerPlacingLine;
 
       // find empty spot in line
       let emptySpotInLine: any = _.findKey({...placingLine}, (spot: PlacingLineSpot) => !spot.character);
@@ -542,14 +538,27 @@ const newGame = (global: GameInterface): PhaserGame => {
             y: canvasHeight * ((0.9 - (0.02 * Object.keys(placingLine).length)) + (0.02 * emptySpotInLine)),
           };
 
-      gameStateCategory[character.id] = selectedEntityGenerator(
-        character,
-        coordinatesForEntity,
-      );
-      // reference the spawned player in their placing line
-      placingLine[emptySpotInLine].character = gameStateCategory[character.id];
+      const cat = character.enemy
+          ? 'enemies'
+          : 'players';
+      const p = character.enemy
+          ? 'enemyPlacingLine'
+          : 'playerPlacingLine';
+      global.gameState[cat] = {
+        ...global.gameState[cat],
+        [character.id]: selectedEntityGenerator(character, coordinatesForEntity),
+      };
 
-      return gameStateCategory[character.id];
+      // reference the spawned player in their placing line
+      global[p] = {
+        ...global[p],
+        [emptySpotInLine]: {
+          ...global[p][emptySpotInLine],
+          character: global.gameState[cat][character.id],
+        },
+      };
+
+      return global.gameState[cat][character.id];
     },
     despawnCharacter(id: string) {
       let character: Character | undefined = global.gameState.players[id] || global.gameState.enemies[id];
