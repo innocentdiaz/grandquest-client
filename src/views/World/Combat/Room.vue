@@ -22,13 +22,17 @@
     <ActivityIndicator v-if="!gameInterface.gameInitialized"/>
     <div v-else :class="gameInterface.isAnimating || combatGame.selectionMode === 'TARGET' || currentPlayerSelectionStatus !== 0 ? 'GUI hidden' : 'GUI'">
       <div>
-        <h1 class="health" v-if="currentPlayer">
+        <h2 class="health" v-if="currentPlayer">
           HP {{currentPlayer.entity.health}}/{{currentPlayer.entity.maxHealth}}
-        </h1>
-        <h1 class="health" v-else>HP ...</h1>
+        </h2>
+        <h2 class="health" v-else>HP ...</h2>
         <div class="bar-container" v-if="currentPlayer">
           <div id="health-bar" v-bind:style="{ width: `${currentPlayer.entity.health / currentPlayer.entity.maxHealth * 100}%` }"></div>
         </div>
+        <h2 class="energy" v-if="currentPlayer">
+          EP {{currentPlayer.entity.energy}}/{{currentPlayer.entity.maxHealth}}
+        </h2>
+        <h2 v-else>EP ...</h2>
         <div class="bar-container" v-if="currentPlayer">
           <div id="energy-bar" v-bind:style="{ width: `${currentPlayer.entity.energy / currentPlayer.entity.maxEnergy * 100}%` }"></div>
         </div>
