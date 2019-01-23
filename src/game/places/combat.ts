@@ -46,99 +46,19 @@ import Entities from '@/game/data/characters';
 /*
   Declare definitions
 */
+type PhaserGame = any;
 type GameInstance = any;
 
 interface GiActions {
   [actionName: string]: any,
 }
-export interface GiGlobal {
-  gameState: CombatRoom;
-  gameInitialized: boolean;
-  currentTargetSide: number;
-  currentTargetIndex: number;
-  gameClouds: any;
-  targetHand: any;
-  isAnimating: boolean;
-  playerPlacingLine: PlacingLine;
-  enemyPlacingLine:  PlacingLine;
-  destroyGame: () => void;
-};
-export interface GameInterface {
-  // Stores important game variables
-  global: GiGlobal;
-  // new Phaser.Game
-  game: any;
-  // Used to manipulate the game
-  actions:  GiActions;
-}
-interface PlacingLine {
-  [index: string]: PlacingLineSpot;
-}
-interface PlacingLineSpot {
-  character: Character|null;
-  nextIndex: number;
-  prevIndex: number;
-}
 
-const cursorMoveAudio = new Howl({
-  src: [ cursorMoveSrc ],
-});
-const cursorSelectAudio = new Howl({
-  src: [ cursorSelectSrc ],
-});
 /*
-  Launch function
-  Will return a GameInterface.Global object
+  newGame method:
+  Return a new Phaser.Game that makes use of a `global` game interface.
+  This method is called by the GameInterface object (GameInterface.launch())
 */
-function launch(): GiGlobal {
-  /*
-    GameInterface.Global
-  */
-  let global: GiGlobal = {
-    // state from the server
-    gameState: {
-      id: '',
-      title: '',
-      players: {},
-      enemies: {},
-      playerCount: 0,
-      maxPlayers: 4,
-      turn: -1,
-      level: 0,
-      turnEvents: {},
-    },
-    // called startGame();
-    gameInitialized: false,
-    currentTargetSide: 0,
-    currentTargetIndex: 1,
-    gameClouds: null,
-    targetHand: null,
-    isAnimating: false,
-    // this will be generated using the game state with `gameInterface.actions.startGame()
-    playerPlacingLine: _.reduce(_.range(1, 5), (memo, index) => ({
-      ...memo,
-      [index]: {
-        character: null,
-        nextIndex: index >= store.state.combatGame.gameState.maxPlayers ? 1 : index + 1,
-        prevIndex: index === 1 ? store.state.combatGame.gameState.maxPlayers : index - 1,
-      },
-    }), {}),
-    // generate placing line object for enemies in a range from 1-4
-    enemyPlacingLine: _.reduce(_.range(1, 5), (memo, index) => ({
-      ...memo,
-      [index]: {
-        character: null,
-        nextIndex: index >= 4 ? 1 : index + 1,
-        prevIndex: index === 1 ? 4 : index - 1,
-      },
-    }), {}),
-    destroyGame: () => {
-      if (game) {
-        game.destroy();
-      }
-    },
-  };
-
+const newGame = (global: GameInterface): PhaserGame => {
   /*
     GameInterface.Game
   */
@@ -155,15 +75,11 @@ function launch(): GiGlobal {
       }
     },
     scene: {
-      /*
-        Game.preload();
-        Responsible for binding functions
-        to the game instance. Functions to bind
-        are gameInterface.actions and entity
-        generators found in the `Entities` object
-      */
       preload: function() {
-
+        let canvasParent = document.getElementById('combat');
+        if (!canvasParent) {
+          throw new Error('Phaser.js expected a parent element for the canvas, but at time of creating got none');
+        }
       },
       /*
         Game.create();
@@ -171,6 +87,7 @@ function launch(): GiGlobal {
         and adding animation for sprites
       */
       create() {
+        console.log('game create');
         let self: GameInstance = this;
         /*
           Bind gameInterface.actions to `self`
@@ -786,7 +703,97 @@ function launch(): GiGlobal {
     }
   };
 
+  return game;
+}
+export interface GameInterface {
+  gameState: CombatRoom;
+  gameInitialized: boolean;
+  currentTargetSide: number;
+  currentTargetIndex: number;
+  gameClouds: any;
+  targetHand: any;
+  isAnimating: boolean;
+  playerPlacingLine: PlacingLine;
+  enemyPlacingLine:  PlacingLine;
+  launch: () => void;
+  destroyGame: () => void;
+};
+interface PlacingLine {
+  [index: string]: PlacingLineSpot;
+}
+interface PlacingLineSpot {
+  character: Character|null;
+  nextIndex: number;
+  prevIndex: number;
+}
+
+const cursorMoveAudio = new Howl({
+  src: [ cursorMoveSrc ],
+});
+const cursorSelectAudio = new Howl({
+  src: [ cursorSelectSrc ],
+});
+/*
+  Launch function
+  Will return a GameInterface.Global object
+*/
+function CombatInterface(): GameInterface {
+  let game: any = null;
+  /*
+    GameInterface.Global
+  */
+  let global: GameInterface = {
+    // state from the server
+    gameState: {
+      id: '',
+      title: '',
+      players: {},
+      enemies: {},
+      playerCount: 0,
+      maxPlayers: 4,
+      turn: -1,
+      level: 0,
+      turnEvents: {},
+    },
+    // called startGame();
+    gameInitialized: false,
+    currentTargetSide: 0,
+    currentTargetIndex: 1,
+    gameClouds: null,
+    targetHand: null,
+    isAnimating: false,
+    // this will be generated using the game state with `gameInterface.actions.startGame()
+    playerPlacingLine: _.reduce(_.range(1, 5), (memo, index) => ({
+      ...memo,
+      [index]: {
+        character: null,
+        nextIndex: index >= store.state.combatGame.gameState.maxPlayers ? 1 : index + 1,
+        prevIndex: index === 1 ? store.state.combatGame.gameState.maxPlayers : index - 1,
+      },
+    }), {}),
+    // generate placing line object for enemies in a range from 1-4
+    enemyPlacingLine: _.reduce(_.range(1, 5), (memo, index) => ({
+      ...memo,
+      [index]: {
+        character: null,
+        nextIndex: index >= 4 ? 1 : index + 1,
+        prevIndex: index === 1 ? 4 : index - 1,
+      },
+    }), {}),
+    launch: () => {
+      if (!game) {
+        game = newGame(global);
+      }
+    },
+    destroyGame: () => {
+      if (game) {
+        game = game.destroy();
+      }
+    },
+  };
+
+  console.log('new global');
   return global;
 }
 
-export default launch;
+export default CombatInterface;
