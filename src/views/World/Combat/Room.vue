@@ -20,7 +20,16 @@
     </div>
     <!-- GUI -->
     <ActivityIndicator v-if="!gameInterface.gameInitialized"/>
-    <div v-else :class="gameInterface.isAnimating || combatGame.selectionMode === 'TARGET' || currentPlayerSelectionStatus !== 0 ? 'GUI hidden' : 'GUI'">
+    <div 
+      v-else 
+      :class="
+        gameInterface.isAnimating || currentPlayer.selectionStatus === -1
+          ? 'GUI hidden'
+          : combatGame.selectionMode === 'TARGET' && currentPlayerSelectionStatus === 0
+          ? 'GUI faded'
+          : 'GUI'
+      "
+    >
       <div>
         <h2 class="health" v-if="currentPlayer">
           HP {{currentPlayer.entity.health}}/{{currentPlayer.entity.maxHealth}}
@@ -441,8 +450,11 @@ export default class CombatRoom extends Vue {
     background: rgb(0, 218, 218);
     height: 10px;
   }
-  .GUI.hidden {
+  .GUI.faded {
     opacity: 0.5;
+  }
+  .GUI.hidden {
+    opacity: 0;
   }
 }
 </style>
