@@ -247,7 +247,6 @@ const newGame = (global: GameInterface): PhaserGame => {
               ...global.gameState[category],
               [characterOnNetwork.id]: {...characterOnLocal, ...characterOnNetwork},
             }
-            if (!characterOnLocal.enemy) console.log(characterOnNetwork.entity.health);
           } else {
             characterOnLocal = actions.spawnCharacter(characterOnNetwork);
           }
@@ -370,7 +369,6 @@ const newGame = (global: GameInterface): PhaserGame => {
   const actions: GiActions = {
     startGame() {
       let self: GameInstance = this;
-      console.log('game started');
 
       // make background;
       actions.addBackground();
