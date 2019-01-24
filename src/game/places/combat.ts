@@ -149,6 +149,12 @@ const newGame = (global: GameInterface): PhaserGame => {
                 repeat: -1,
               });
               self.anims.create({
+                key: 'adventurer-hurt',
+                frames: self.anims.generateFrameNumbers('adventurer', { start: 60, end: 64 }),
+                frameRate: 8,
+                repeat: 0,
+              });
+              self.anims.create({
                 key: 'adventurer-walk',
                 frames: self.anims.generateFrameNumbers('adventurer', { start: 8, end: 14 }),
                 frameRate: 10,
@@ -183,6 +189,12 @@ const newGame = (global: GameInterface): PhaserGame => {
                 frames: self.anims.generateFrameNumbers('slime', { start: 0, end: 7 }),
                 frameRate: 7,
                 repeat: -1,
+              });
+              self.anims.create({
+                key: 'slime-bite',
+                frames: self.anims.generateFrameNumbers('slime', { start: 9, end: 16 }),
+                frameRate: 8,
+                repeat: 0,
               });
               self.anims.create({
                 key: 'slime-hurt',
