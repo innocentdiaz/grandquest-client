@@ -694,10 +694,10 @@ const newGame = (global: GameInterface): PhaserGame => {
               const damagePercentage = (event.outcome.damage / receiver.entity.maxHealth);
               const totalWidth = receiver._nameTag.displayWidth;
               const currentWidth = receiver._healthBar.width;
-
+              const newWidth = currentWidth - (totalWidth * damagePercentage);
               self.tweens.add({
                 targets: receiver._healthBar,
-                width: currentWidth - (totalWidth * damagePercentage),
+                width: newWidth <= 0 ? 0 : newWidth, // avoid negative health bar
                 duration: 250,
               });
             },
