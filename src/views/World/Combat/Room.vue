@@ -30,7 +30,7 @@
           <div id="health-bar" v-bind:style="{ width: `${currentPlayer.entity.health / currentPlayer.entity.maxHealth * 100}%` }"></div>
         </div>
         <h2 class="energy" v-if="currentPlayer">
-          EP {{currentPlayer.entity.energy}}/{{currentPlayer.entity.maxHealth}}
+          EP {{currentPlayer.entity.energy}}/{{currentPlayer.entity.maxEnergy}}
         </h2>
         <h2 v-else>EP ...</h2>
         <div class="bar-container" v-if="currentPlayer">
