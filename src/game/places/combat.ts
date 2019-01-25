@@ -31,7 +31,7 @@ import countryCloudsImage from '@/assets/img/landscapes/country/clouds.png';
 import AdventurerSheet from '@/assets/img/spritesheets/adventurer-sheet.png';
 import SlimeSheet from '@/assets/img/spritesheets/slime-sheet.png';
 import SelectHandImage from '@/assets/img/icon/select-hand.png';
-
+import healPotionImage from '@/assets/img/items/heal-potion.png';
 /*
   Import audio
 */
@@ -109,6 +109,7 @@ const newGame = (global: GameInterface): PhaserGame => {
           { name: 'country-trees-bg', src: countryTreesImage, type: 'image' },
           { name: 'country-mountains-bg', src: countryMountainsImage, type: 'image' },
           { name: 'country-clouds-bg', src: countryCloudsImage, type: 'image' },
+          { name: 'item-heal-potion', src: healPotionImage, type: 'image' },
           { name: 'adventurer', src: AdventurerSheet, type: 'spritesheet', spriteDimensions: [ 50, 37 ] },
           { name: 'slime', src: SlimeSheet, type: 'spritesheet', spriteDimensions: [32, 25] }
         ], (a, i, l) => {
@@ -343,6 +344,9 @@ const newGame = (global: GameInterface): PhaserGame => {
           } else if (global.targetHand) { // there are no players but there is a target hand
             actions.removeTargetHand();
           }
+        }
+        if (global.targetHand && store.state.combatGame.gameState.turn % 2) {
+          actions.removeTargetHand();
         }
 
         /*
@@ -641,7 +645,6 @@ const newGame = (global: GameInterface): PhaserGame => {
       global.targetHand.y = character.sprite.y
     },
     animateEvents(events: [], i = 0) {
-      if(i === 0) console.log(events);
       global.isAnimating = true;
       const event = events[i];
       const next = events[i + 1];
@@ -674,51 +677,91 @@ const newGame = (global: GameInterface): PhaserGame => {
             - Timeline anims
             - Sprite anims
           */
-
-          timeline.add({ // move closer to enemy
-            targets: [character.sprite],
-            duration: 800,
-            x: atkPosition,
-            onStart() {
-              character.sprite.play(`${character.entity.name}-walk`);
-            },
-          });
-          timeline.add({ // stay there shortly
-            targets: [character.sprite],
-            duration: 1000,
-            x: atkPosition,
-            onStart() {
-              character.sprite.play(event.action.id);
-              receiver.sprite.play(`${receiver.entity.name}-hurt`);
-              // update sprite health bar
-              const damagePercentage = (event.outcome.damage / receiver.entity.maxHealth);
-              const totalWidth = receiver._nameTag.displayWidth;
-              const currentWidth = receiver._healthBar.width;
-              const newWidth = currentWidth - (totalWidth * damagePercentage);
-              self.tweens.add({
-                targets: receiver._healthBar,
-                width: newWidth <= 0 ? 0 : newWidth, // avoid negative health bar
-                duration: 250,
-              });
-            },
-          });
-          timeline.add({ // walk back
-            targets: [character.sprite],
-            duration: 800,
-            x: originalPosition,
-            onStart() {
-              character.sprite.scaleX *= -1;
-              character.sprite.play(`${character.entity.name}-walk`);
-              setTimeout(() => receiver.sprite.play(`${receiver.entity.name}-idle`));
-            },
-            onComplete() {
-              character.sprite.scaleX *= -1;
-              character.sprite.play(`${character.entity.name}-idle`);
-              ok();
-            },
-          });
-
-          timeline.play();
+         if (event.action.type === 'attack') {
+            timeline.add({ // move closer to enemy
+              targets: [character.sprite],
+              duration: 800,
+              x: atkPosition,
+              onStart() {
+                character.sprite.play(`${character.entity.name}-walk`);
+              },
+            });
+            timeline.add({ // stay there shortly
+              targets: [character.sprite],
+              duration: 1000,
+              x: atkPosition,
+              onStart() {
+                character.sprite.play(event.action.id);
+                receiver.sprite.play(`${receiver.entity.name}-hurt`);
+                // update sprite health bar
+                const damagePercentage = (event.outcome.damage / receiver.entity.maxHealth);
+                const totalWidth = receiver._nameTag.displayWidth;
+                const currentWidth = receiver._healthBar.width;
+                const newWidth = currentWidth - (totalWidth * damagePercentage);
+                self.tweens.add({
+                  targets: receiver._healthBar,
+                  width: newWidth <= 0 ? 0 : newWidth, // avoid negative health bar
+                  duration: 250,
+                });
+              },
+            });
+            timeline.add({ // walk back
+              targets: [character.sprite],
+              duration: 800,
+              x: originalPosition,
+              onStart() {
+                character.sprite.scaleX *= -1;
+                character.sprite.play(`${character.entity.name}-walk`);
+                setTimeout(() => receiver.sprite.play(`${receiver.entity.name}-idle`));
+              },
+              onComplete() {
+                character.sprite.scaleX *= -1;
+                character.sprite.play(`${character.entity.name}-idle`);
+                ok();
+              },
+            });
+            timeline.play();
+          } else if (event.action.type === 'item') {
+            switch(event.action.id) {
+              case 'heal-potion':
+                let itemImg = self.add.image(character.sprite.x, character.sprite.y, `item-${event.action.id}`);
+                itemImg.setDepth(character.sprite.depth + 1);
+                timeline.add({
+                  targets: itemImg,
+                  y: character.sprite.y,
+                  duration: 250,
+                  onStart() {
+                    // update sprite health bar
+                    const healPercentage = (event.outcome.heal / receiver.entity.maxHealth);
+                    const totalWidth = receiver._nameTag.displayWidth;
+                    const currentWidth = receiver._healthBar.width;
+                    const newWidth = currentWidth + (totalWidth * healPercentage);
+                    console.log('before', currentWidth);
+                    console.log('after', newWidth);
+                    self.tweens.add({
+                      targets: receiver._healthBar,
+                      width: newWidth,
+                      duration: 250,
+                    });
+                  },
+                });
+                timeline.add({
+                  targets: itemImg,
+                  y: character.sprite.y - 50,
+                  alpha: { value: 0, duration: 500 },
+                  ease: 'Power1',
+                  duration: 500,
+                  onComplete() {
+                    itemImg.destroy();
+                    ok();
+                  },
+                });
+                timeline.play();
+                break;
+              default:
+                console.error('unknown item', event.action.id);
+            }
+          }
         }
       });
     }
