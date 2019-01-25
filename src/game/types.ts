@@ -14,6 +14,9 @@ export interface Character {
     attacks: {
       [attackId: string]: Attack;
     };
+    inventory: {
+      [itemId: string]: InventoryItem;
+    };
   };
   sprite: any;
   _nameTag: any;
@@ -29,6 +32,12 @@ export interface Attack {
     energy: number;
   };
 }
+export interface InventoryItem {
+  name: string;
+  id: string;
+  type: string;
+  amount: number;
+}
 export interface CombatEvent {
   characterId: string;
   receiverId: string;
@@ -38,5 +47,6 @@ export interface CombatEvent {
   }
   outcome: {
     damage: any;
+    heal: any;
   }
 }
