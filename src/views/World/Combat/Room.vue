@@ -21,7 +21,7 @@
     <!-- GUI -->
     <ActivityIndicator v-if="!gameInterface.gameInitialized"/>
     <div 
-      v-else 
+      v-else-if="currentPlayer" 
       :class="
         gameInterface.isAnimating || currentPlayer.selectionStatus === -1
           ? 'GUI hidden'
@@ -69,7 +69,7 @@ import { Component, Vue } from 'vue-property-decorator';
 import { Action, State, Mutation } from 'vuex-class';
 import ActivityIndicator from '@/components/ActivityIndicator.vue';
 import { SocketState, User, CombatGame } from '@/types';
-import { Character, Attack } from '@/game/types';
+import { Character, Attack, InventoryItem } from '@/game/types';
 import _ from 'underscore';
 import io from 'socket.io-client';
 import api from '@/api';
@@ -225,6 +225,7 @@ export default class CombatRoom extends Vue {
       // this is a route
       if(selectedOption.to) {
         this.currentScreen = selectedOption.to;
+        this.currentCursorIndex = 0;
       } else if (selectedOption.select) {
         // remove and update index if player is removed / changed
         const placingLine = this.gameInterface.currentTargetSide == 0
@@ -263,7 +264,7 @@ export default class CombatRoom extends Vue {
     ? this.gameInterface.playerPlacingLine[this.gameInterface.currentTargetIndex]
     : this.gameInterface.enemyPlacingLine[this.gameInterface.currentTargetIndex];
 
-    const currentPlayer: Character = this.combatGame.gameState.players[this.user.id];
+    const currentPlayer: Character | null = this.currentPlayer;
 
     if (!currentPlayer) {
       console.warn('No current player');
@@ -319,7 +320,30 @@ export default class CombatRoom extends Vue {
       });
     });
     // PARSE POTIONS
+    guiMasterObject.potions.push({
+      title: 'Back',
+      to: 'root',
+      description: '',
+      disabled: false,
+      select: null,
+    });
+    const potions = _.filter(currentPlayer.entity.inventory, (i: InventoryItem) => i.type === 'potion');
 
+    potions.forEach((item: InventoryItem) => {
+      guiMasterObject.potions.push({
+        title: item.amount > 1 ? `${item.name} x${item.amount}` : item.name,
+        description: `
+          Name: ${item.name} <br/>
+          Quantity: ${item.amount}
+        `,
+        to: null,
+        disabled: item.amount === 0,
+        select: {
+          type: 'item',
+          id: item.id,
+        },
+      });
+    });
     // PARSE ACTIONS
     return guiMasterObject;
   }
