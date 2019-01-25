@@ -403,8 +403,8 @@ export default class CombatRoom extends Vue {
   }
   .display {
     position: absolute;
-    top: 0;
-    bottom: 0;
+    top: 1em;
+    bottom: 1em;
     left: 0;
     right: 0;
     display: flex;
