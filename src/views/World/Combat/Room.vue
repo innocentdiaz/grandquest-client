@@ -370,6 +370,9 @@ export default class CombatRoom extends Vue {
     return this.currentPlayer.selectionStatus;
   }
   get currentScreenObject() {
+    if (this.combatGame.selectionMode === 'TARGET') {
+      this.currentScreen = 'root';
+    }
     return this.guiMasterObject[this.currentScreen];
   }
 }

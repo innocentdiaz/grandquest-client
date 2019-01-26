@@ -344,7 +344,7 @@ const newGame = (global: GameInterface): PhaserGame => {
           UPDATE SELECTION HAND
         */
         // only while selecting a target
-        if (store.state.combatGame.selectionMode === 'TARGET') {
+        if (store.state.combatGame.selectionMode === 'TARGET' && !global.isAnimating) {
           // if there are players
           if (Object.keys(global.gameState.players).length) {
             if (!global.targetHand) { // if there are players and there is no target hand
@@ -368,6 +368,7 @@ const newGame = (global: GameInterface): PhaserGame => {
         }
         if (global.targetHand && store.state.combatGame.gameState.turn % 2) {
           actions.removeTargetHand();
+          store.commit('SET_COMBAT_GAME_SELECTION_MODE', 'TARGET');
         }
 
         /*
