@@ -30,6 +30,7 @@ import countryMountainsImage from '@/assets/img/landscapes/country/mountains.png
 import countryCloudsImage from '@/assets/img/landscapes/country/clouds.png';
 import AdventurerSheet from '@/assets/img/spritesheets/adventurer-sheet.png';
 import SlimeSheet from '@/assets/img/spritesheets/slime-sheet.png';
+import graveMarkerImage from'@/assets/img/misc/grave-marker.png';
 import SelectHandImage from '@/assets/img/icon/select-hand.png';
 import healPotionImage from '@/assets/img/items/heal-potion.png';
 /*
@@ -111,7 +112,8 @@ const newGame = (global: GameInterface): PhaserGame => {
           { name: 'country-clouds-bg', src: countryCloudsImage, type: 'image' },
           { name: 'item-heal-potion', src: healPotionImage, type: 'image' },
           { name: 'adventurer', src: AdventurerSheet, type: 'spritesheet', spriteDimensions: [ 50, 37 ] },
-          { name: 'slime', src: SlimeSheet, type: 'spritesheet', spriteDimensions: [32, 25] }
+          { name: 'slime', src: SlimeSheet, type: 'spritesheet', spriteDimensions: [32, 25] },
+          { name: 'grave-marker', src: graveMarkerImage, type: 'spritesheet', spriteDimensions: [29, 20] },
         ], (a, i, l) => {
           const { name, src, type, spriteDimensions } = a;
 
@@ -203,6 +205,12 @@ const newGame = (global: GameInterface): PhaserGame => {
                 frameRate: 6,
                 repeat: 0,
               });
+              self.anims.create({
+                key: 'grave-marker',
+                frames: self.anims.generateFrameNumbers('grave-marker', { frames: [0] }),
+                frameRate: 1,
+                repeat: 0,
+              });
 
               actions.startGame();
             }
@@ -270,7 +278,7 @@ const newGame = (global: GameInterface): PhaserGame => {
             .setDepth(characterOnLocal.sprite.depth);
           }
           characterOnLocal._nameTag.x = characterOnLocal.sprite.x;
-          characterOnLocal._nameTag.y = characterOnLocal.sprite.y - (characterOnLocal.sprite.height * 1.25);
+          characterOnLocal._nameTag.y = characterOnLocal.sprite.y - (characterOnLocal.sprite.height * 1.75);
 
           // health bar background
           if (!characterOnLocal._healthBarBackground) {
@@ -278,10 +286,11 @@ const newGame = (global: GameInterface): PhaserGame => {
             .add.rectangle(0, 0, 0, 0, 0xBEBEBE)
             .setDepth(characterOnLocal.sprite.depth)
             .setOrigin(0, 0);
+          } else if (characterOnLocal._healthBarBackground.visible) {
+            characterOnLocal._healthBarBackground.setSize(characterOnLocal._nameTag.width, 9);
+            characterOnLocal._healthBarBackground.x = characterOnLocal._nameTag.x - (characterOnLocal._nameTag.width / 2);
+            characterOnLocal._healthBarBackground.y = characterOnLocal._nameTag.y + characterOnLocal._nameTag.height;
           }
-          characterOnLocal._healthBarBackground.setSize(characterOnLocal._nameTag.width, 9);
-          characterOnLocal._healthBarBackground.x = characterOnLocal._nameTag.x - (characterOnLocal._nameTag.width / 2);
-          characterOnLocal._healthBarBackground.y = characterOnLocal._nameTag.y + characterOnLocal._nameTag.height;
 
           // health bar
           if (!characterOnLocal._healthBar) {
@@ -291,13 +300,14 @@ const newGame = (global: GameInterface): PhaserGame => {
             .add.rectangle(0, 0, width, 0, 0x56F33E)
             .setDepth(characterOnLocal.sprite.depth + 1)
             .setOrigin(0, 0);
-          } else if (!global.isAnimating) {
-            const width = characterOnLocal.entity.health / characterOnLocal.entity.maxHealth * (characterOnLocal._nameTag.width);
-            characterOnLocal._healthBar.setSize(width, 10);
+          } else if (characterOnLocal._healthBar.visible) {
+            if (!global.isAnimating) {
+              const width = characterOnLocal.entity.health / characterOnLocal.entity.maxHealth * (characterOnLocal._nameTag.displayWidth);
+              characterOnLocal._healthBar.setSize(width, 10);
+            }
+            characterOnLocal._healthBar.x = characterOnLocal._nameTag.x - (characterOnLocal._nameTag.width / 2);
+            characterOnLocal._healthBar.y = characterOnLocal._nameTag.y + characterOnLocal._nameTag.height;
           }
-          characterOnLocal._healthBar.x = characterOnLocal._nameTag.x - (characterOnLocal._nameTag.width / 2);
-          characterOnLocal._healthBar.y = characterOnLocal._nameTag.y + characterOnLocal._nameTag.height;
-
           // health text
           if (!characterOnLocal._healthText) {
             characterOnLocal._healthText = self.add.text(
@@ -312,11 +322,22 @@ const newGame = (global: GameInterface): PhaserGame => {
             )
             .setOrigin(0.5, 0.5)
             .setDepth(characterOnLocal._healthBar.depth + 1);
+          } else if (characterOnLocal._healthText.visible) {
+            let currentDisplayedHealth = Math.round(characterOnLocal.entity.maxHealth * (characterOnLocal._healthBar.width/characterOnLocal._nameTag.displayWidth));
+            characterOnLocal._healthText.text = `${currentDisplayedHealth}/${characterOnLocal.entity.maxHealth}`;
+            characterOnLocal._healthText.x = characterOnLocal._healthBarBackground.getCenter().x;
+            characterOnLocal._healthText.y = characterOnLocal._healthBarBackground.getCenter().y;
           }
-          let currentDisplayedHealth = Math.round(characterOnLocal.entity.maxHealth * (characterOnLocal._healthBar.width/characterOnLocal._nameTag.displayWidth));
-          characterOnLocal._healthText.text = `${currentDisplayedHealth}/${characterOnLocal.entity.maxHealth}`;
-          characterOnLocal._healthText.x = characterOnLocal._healthBarBackground.getCenter().x;
-          characterOnLocal._healthText.y = characterOnLocal._healthBarBackground.getCenter().y;
+          // grave market
+          if (!characterOnLocal._healthBar.width) {
+            characterOnLocal._healthBar.visible = false;
+            characterOnLocal._healthBarBackground.visible = false;
+            characterOnLocal._healthText.visible = false;
+            characterOnLocal.sprite.play('grave-marker');
+            if (characterOnLocal.enemy) {
+              characterOnLocal.sprite.scaleX = -Math.abs(characterOnLocal.sprite.scaleX);
+            }
+          }
         });
 
         /*
@@ -373,7 +394,7 @@ const newGame = (global: GameInterface): PhaserGame => {
   const actions: GiActions = {
     startGame() {
       let self: GameInstance = this;
-
+console.log('start game');
       // make background;
       actions.addBackground();
 
@@ -649,6 +670,7 @@ const newGame = (global: GameInterface): PhaserGame => {
       const event = events[i];
       const next = events[i + 1];
 
+      if (!event) return global.isAnimating = false;
       actions.animateEvent(event).then(() => {
         if (!!next) {
           actions.animateEvents(events, i + 1);
@@ -736,8 +758,6 @@ const newGame = (global: GameInterface): PhaserGame => {
                     const totalWidth = receiver._nameTag.displayWidth;
                     const currentWidth = receiver._healthBar.width;
                     const newWidth = currentWidth + (totalWidth * healPercentage);
-                    console.log('before', currentWidth);
-                    console.log('after', newWidth);
                     self.tweens.add({
                       targets: receiver._healthBar,
                       width: newWidth,
