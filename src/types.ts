@@ -42,6 +42,7 @@ export interface CombatRoom {
     maxPlayers:  number;
     turn: number;
     level: number;
+    playState: number;
     players: {
         [id: string]: Character,
     },
@@ -50,6 +51,15 @@ export interface CombatRoom {
     },
     turnEvents: { // TODO: probably should make an interface for ``
         [turnIndex: number]: [CombatEvent]
+    }
+    levelRecord: {
+        [userId: number]: {
+            killed: number;
+            healingPoints: number;
+            gold: number;
+            damageDealt: number;
+            damageReceived: number;
+        }
     }
 }
 export interface CombatGame {

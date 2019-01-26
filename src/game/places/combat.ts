@@ -68,7 +68,7 @@ const newGame = (global: GameInterface): PhaserGame => {
     width: window.innerWidth * .98,
     height: window.innerHeight * .68,
     backgroundColor: '#7fb8f9',
-    parent: 'combat',
+    parent: 'canvas-parent',
     physics: {
       default: 'arcade',
       arcade: {
@@ -77,7 +77,7 @@ const newGame = (global: GameInterface): PhaserGame => {
     },
     scene: {
       preload: function() {
-        let canvasParent = document.getElementById('combat');
+        let canvasParent = document.getElementById('canvas-parent');
         if (!canvasParent) {
           throw new Error('Phaser.js expected a parent element for the canvas, but at time of creating got none');
         }
@@ -385,6 +385,11 @@ const newGame = (global: GameInterface): PhaserGame => {
 
           global.gameState.turn = networkGameState.turn;
         }
+        // play state updating
+        if (!global.isAnimating && networkGameState.playState !== global.gameState.playState) {
+          global.gameState.playState = networkGameState.playState;
+          return;
+        }
       },
     },
   });
@@ -395,7 +400,7 @@ const newGame = (global: GameInterface): PhaserGame => {
   const actions: GiActions = {
     startGame() {
       let self: GameInstance = this;
-console.log('start game');
+      console.log('start game');
       // make background;
       actions.addBackground();
 
@@ -839,6 +844,8 @@ function CombatInterface(): GameInterface {
       turn: -1,
       level: 0,
       turnEvents: {},
+      playState: 1,
+      levelRecord: {},
     },
     // called startGame();
     gameInitialized: false,
