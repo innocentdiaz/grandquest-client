@@ -1,15 +1,16 @@
 <template>
   <div class="combat-root">
+    <header>
+      <ul>
+        <router-link to="/combat">Exit</router-link>
+      </ul>
+      <h1 id="title" v-if="combatGame.gameInitialized">
+        Combat - {{ combatGame.gameState.title }}
+      </h1>
+    </header>
     <!-- Main screen -->
-    <div id="combat">
-      <header>
-        <ul>
-          <router-link to="/combat">Exit</router-link>
-        </ul>
-        <h1 id="title">
-          Combat - {{ combatGame.gameState.title }}
-        </h1>
-      </header>
+    <div id="main" v-bind:style="{ display: gameInterface.gameState.playState ? 'flex' : 'none' }">
+      <div id="canvas-parent"></div>
       <!-- Display -->
       <div class="display" v-if="socket.loading">
         <p>Connecting to server</p>
@@ -17,50 +18,55 @@
       <div class="display" v-else-if="!socket.connected">
         <p>You are not connected to the server</p>
       </div>
+      <!-- GUI -->
+      <ActivityIndicator v-if="!gameInterface.gameInitialized"/>
+      <div
+        v-else-if="currentPlayer" 
+        :class="
+          gameInterface.isAnimating || currentPlayer.selectionStatus === -1
+            ? 'GUI hidden'
+            : combatGame.selectionMode === 'TARGET' && currentPlayerSelectionStatus === 0
+            ? 'GUI faded'
+            : 'GUI'
+        "
+      >
+        <div>
+          <h2 class="health" v-if="currentPlayer">
+            HP {{currentPlayer.entity.health}}/{{currentPlayer.entity.maxHealth}}
+          </h2>
+          <h2 class="health" v-else>HP ...</h2>
+          <div class="bar-container" v-if="currentPlayer">
+            <div id="health-bar" v-bind:style="{ width: `${currentPlayer.entity.health / currentPlayer.entity.maxHealth * 100}%` }"></div>
+          </div>
+          <h2 class="energy" v-if="currentPlayer">
+            EP {{currentPlayer.entity.energy}}/{{currentPlayer.entity.maxEnergy}}
+          </h2>
+          <h2 v-else>EP ...</h2>
+          <div class="bar-container" v-if="currentPlayer">
+            <div id="energy-bar" v-bind:style="{ width: `${currentPlayer.entity.energy / currentPlayer.entity.maxEnergy * 100}%` }"></div>
+          </div>
+          <h3>Players: {{ combatGame.gameState.playerCount }} / {{ combatGame.gameState.maxPlayers }}</h3>
+        </div>
+        <div>
+          <ul id="gui-selection-list">
+            <li
+              v-for="(option, index) in currentScreenObject"
+              :key="option.title"
+              :class="`${option.disabled ? 'disabled' : ''} ${combatGame.selectionMode !== 'TARGET' && combatGame.selectionMode !== 'HIDDEN' && currentCursorIndex == index ? 'active' : ''}`"
+            >
+              {{ option.title }}
+            </li>
+          </ul>
+        </div>
+        <div id="gui-description-container">
+          <p v-html="description"></p>
+        </div>
+      </div>
     </div>
-    <!-- GUI -->
-    <ActivityIndicator v-if="!gameInterface.gameInitialized"/>
-    <div 
-      v-else-if="currentPlayer" 
-      :class="
-        gameInterface.isAnimating || currentPlayer.selectionStatus === -1
-          ? 'GUI hidden'
-          : combatGame.selectionMode === 'TARGET' && currentPlayerSelectionStatus === 0
-          ? 'GUI faded'
-          : 'GUI'
-      "
-    >
-      <div>
-        <h2 class="health" v-if="currentPlayer">
-          HP {{currentPlayer.entity.health}}/{{currentPlayer.entity.maxHealth}}
-        </h2>
-        <h2 class="health" v-else>HP ...</h2>
-        <div class="bar-container" v-if="currentPlayer">
-          <div id="health-bar" v-bind:style="{ width: `${currentPlayer.entity.health / currentPlayer.entity.maxHealth * 100}%` }"></div>
-        </div>
-        <h2 class="energy" v-if="currentPlayer">
-          EP {{currentPlayer.entity.energy}}/{{currentPlayer.entity.maxEnergy}}
-        </h2>
-        <h2 v-else>EP ...</h2>
-        <div class="bar-container" v-if="currentPlayer">
-          <div id="energy-bar" v-bind:style="{ width: `${currentPlayer.entity.energy / currentPlayer.entity.maxEnergy * 100}%` }"></div>
-        </div>
-        <h3>Players: {{ combatGame.gameState.playerCount }} / {{ combatGame.gameState.maxPlayers }}</h3>
-      </div>
-      <div>
-        <ul id="gui-selection-list">
-          <li
-            v-for="(option, index) in currentScreenObject"
-            :key="option.title"
-            :class="`${option.disabled ? 'disabled' : ''} ${combatGame.selectionMode !== 'TARGET' && combatGame.selectionMode !== 'HIDDEN' && currentCursorIndex == index ? 'active' : ''}`"
-          >
-            {{ option.title }}
-          </li>
-        </ul>
-      </div>
-      <div id="gui-description-container">
-        <p v-html="description"></p>
-      </div>
+    <!-- Outcomes screen -->
+    <div id="outcomes" v-if="!gameInterface.gameState.playState">
+      <h1>Level {{gameInterface.gameState.level}} complete</h1>
+      <h2 class="subtitle">Level completed in {{gameInterface.gameState.turn}} turns</h2>
     </div>
   </div>
 </template>
@@ -386,12 +392,15 @@ export default class CombatRoom extends Vue {
   flex-direction: column;
   align-items: stretch;
   background: black;
-
+  #main {
+    height: 100vh;
+    width: 100vw;
+    display: flex;
+    align-items: stretch;
+    flex-direction: column;
+    overflow: hidden;
+  }
   header {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
     background: linear-gradient(to bottom, rgb(22, 22, 22), rgba(24, 24, 24, 0.6), rgba(24, 24, 24, 0.4), rgba(0, 0, 0, 0));
     color: white;
     #title {
@@ -421,10 +430,8 @@ export default class CombatRoom extends Vue {
     align-items: stretch;
     justify-content: space-between;
     height: 27vh;
-    overflow: hidden;
     font-family: 'Press Start 2P', monospace;
     padding: 10px;
-    border-radius: 2px;
     color: white;
 
     transition: .75s height ease-in-out;
@@ -447,22 +454,14 @@ export default class CombatRoom extends Vue {
   .GUI .right {
     border-left: 2px solid white
   }
-  .GUI.disabled {
-    filter: blur(5px);
-  }
-  .GUI.disabled li {
-    color: grey;
-  }
   .GUI li.disabled {
     color: rgb(87, 87, 87);
   }
-
   .GUI.disabled li.active {
     color: grey;
     padding-left: 2px;
     list-style-image: url('../../../assets/img/icon/select-hand.png');
   }
-
   .GUI .bar-container {
     height: 10px;
     width: 100%;
