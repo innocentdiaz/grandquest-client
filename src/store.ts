@@ -194,6 +194,10 @@ const actions = {
       });
     }
   },
+  SOCKET_EMIT(ac: any, info: { name: string, param: any }) {
+    console.log(info);
+    socket.emit(info.name, info.param);
+  },
   socketJoinRoom({ commit }: ActionContext, room: { name: string, parameter: any }) {
     if (!socket.connected) console.warn('Attempted to join room before socket connected');
     const { name, parameter } = room;
@@ -217,9 +221,6 @@ const actions = {
 
     socket.emit(`${room.toUpperCase()}_LEAVE`);
     commit(`SET_SOCKET_ROOM`, null);
-  },
-  EMIT_COMBAT_GAME_ACTION ({ state }: ActionContext, action: {}) {
-    socket.emit('COMBAT_ROOM_ACTION', action);
   },
 };
 
