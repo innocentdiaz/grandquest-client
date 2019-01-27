@@ -82,7 +82,7 @@
         <div class="player-container" v-for="(player, id) in currentLevelRecord" v-bind:key="id">
           <img v-bind:src="require(`../../../assets/img/icon/${gameInterface.gameState.players[id].entity.name}.png`)" alt="Player entity">
           <div class="content">
-            <h3 class="title">{{gameInterface.gameState.players[id].username}}</h3>
+            <h3 class="title">{{gameInterface.gameState.players[id].username}} <span>{{combatGame.gameState.readyToContinue[id] ? '- Ready!' : ''}}</span></h3>
             <div class="grid">
               <p>Damage dealt: {{player.damageDealt}}</p>
               <p>Damage taken: {{player.damageReceived}}</p>
@@ -93,7 +93,7 @@
           </div>
         </div>
       </aside>
-      <button>
+      <button v-if="!combatGame.gameState.readyToContinue[user.id]" v-on:click="SOCKET_EMIT({ name: 'COMBAT_ROOM_READY' })">
         <img src="@/assets/img/icon/1bit-swords.png" alt="Battle!">
         <br>
         READY
@@ -143,7 +143,7 @@ export default class CombatRoom extends Vue {
   @State public combatGame!: CombatGame;
   @Action public socketJoinRoom: any;
   @Action public socketLeaveRoom: any;
-  @Action public EMIT_COMBAT_GAME_ACTION: any;
+  @Action public SOCKET_EMIT: any;
   @Mutation public SET_HEADER_VISIBILITY: any;
   @Mutation public SET_COMBAT_GAME_SELECTION_MODE: any;
   @Mutation public RESET_GAME_STATE: any;
@@ -276,9 +276,12 @@ export default class CombatRoom extends Vue {
           return console.error('No target available');
         }
 
-        this.EMIT_COMBAT_GAME_ACTION({
-          receiverId: target.id,
-          action: selectedOption.select
+        this.SOCKET_EMIT({
+          name: 'COMBAT_ROOM_ACTION',
+          param: {
+            receiverId: target.id,
+            action: selectedOption.select
+          },
         });
       }
     }
