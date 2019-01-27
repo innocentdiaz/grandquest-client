@@ -52,6 +52,9 @@ export interface CombatRoom {
     turnEvents: { // TODO: probably should make an interface for ``
         [turnIndex: number]: [CombatEvent]
     }
+    readyToContinue: {
+        [userId: string]: boolean;
+    },
     levelRecord: {
         [userId: number]: {
             killed: number;

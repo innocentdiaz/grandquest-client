@@ -849,6 +849,7 @@ function CombatInterface(): GameInterface {
       turnEvents: {},
       playState: 1,
       levelRecord: {},
+      readyToContinue: {},
     },
     // called startGame();
     gameInitialized: false,
