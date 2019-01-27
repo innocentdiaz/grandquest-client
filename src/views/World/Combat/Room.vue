@@ -4,8 +4,8 @@
       <ul>
         <router-link to="/combat">Exit</router-link>
       </ul>
-      <h1 id="title" v-if="combatGame.gameInitialized">
-        Combat - {{ combatGame.gameState.title }}
+      <h1 id="title" v-if="gameInterface.gameInitialized && !gameInterface.isAnimating && gameInterface.gameState.playState">
+        Combat - {{ combatGame.gameState.title }}, Level - {{ gameInterface.gameState.level }}, Turn - {{ gameInterface.gameState.turn }}
       </h1>
     </header>
     <!-- Main screen -->
@@ -64,9 +64,39 @@
       </div>
     </div>
     <!-- Outcomes screen -->
-    <div id="outcomes" v-if="!gameInterface.gameState.playState">
-      <h1>Level {{gameInterface.gameState.level}} complete</h1>
-      <h2 class="subtitle">Level completed in {{gameInterface.gameState.turn}} turns</h2>
+    <div id="outcomes" v-if="gameInterface.gameInitialized && !gameInterface.gameState.playState">
+      <div id="main">
+        <h1>Level {{gameInterface.gameState.level}} complete</h1>
+        <h2 class="subtitle">Level completed in {{gameInterface.gameState.turn}} turns</h2>
+        <div v-if="currentLevelRecord[this.user.id]">
+          <p>Damage dealt: {{currentLevelRecord[this.user.id].damageDealt}}</p>
+          <p>Health points: {{currentLevelRecord[this.user.id].healingPoints}}</p>
+          <p>Killed: {{currentLevelRecord[this.user.id].killed}}</p>
+          <p>Gold: {{currentLevelRecord[this.user.id].gold}}</p>
+        </div>
+        <div v-else>
+          <p>No stats available</p>
+        </div>
+      </div>
+      <aside>
+        <div class="player-container" v-for="(player, id) in currentLevelRecord" v-bind:key="id">
+          <img v-bind:src="require(`../../../assets/img/icon/${gameInterface.gameState.players[id].entity.name}.png`)" alt="Player entity">
+          <div class="content">
+            <h3 class="title">{{gameInterface.gameState.players[id].username}}</h3>
+            <div class="grid">
+              <p>Damage dealt: {{player.damageDealt}}</p>
+              <p>Health points: {{player.healingPoints}}</p>
+              <p>Killed: {{player.killed}}</p>
+              <p>Gold: {{player.gold}}</p>
+            </div>
+          </div>
+        </div>
+      </aside>
+      <button>
+        <img src="@/assets/img/icon/1bit-swords.png" alt="Battle!">
+        <br>
+        READY
+      </button>
     </div>
   </div>
 </template>
@@ -381,6 +411,10 @@ export default class CombatRoom extends Vue {
     }
     return this.guiMasterObject[this.currentScreen];
   }
+  get currentLevelRecord() {
+    let level = this.gameInterface.gameState.level;
+    return this.gameInterface.gameState.levelRecord[level]
+  }
 }
 </script>
 <style lang="scss" scoped>
@@ -392,15 +426,11 @@ export default class CombatRoom extends Vue {
   flex-direction: column;
   align-items: stretch;
   background: black;
-  #main {
-    height: 100vh;
-    width: 100vw;
-    display: flex;
-    align-items: stretch;
-    flex-direction: column;
-    overflow: hidden;
-  }
   header {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
     background: linear-gradient(to bottom, rgb(22, 22, 22), rgba(24, 24, 24, 0.6), rgba(24, 24, 24, 0.4), rgba(0, 0, 0, 0));
     color: white;
     #title {
@@ -411,6 +441,86 @@ export default class CombatRoom extends Vue {
       margin: 0;
       padding: 10px;
       background: black;
+    }
+  }
+  #main {
+    height: 100vh;
+    width: 100vw;
+    display: flex;
+    align-items: stretch;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  #outcomes {
+    height: 100vh;
+    width: 100vw;
+    display: flex;
+    flex-direction: row;
+    overflow: hidden;
+    color: white;
+    background: black;
+    padding-top: 25px;
+    background: linear-gradient(to right, black 66.6%, #ff2828 5%);
+    button {
+      background: black;
+      color: white;
+      padding: 25px 10px;
+      border: none;
+      transition: .2s all ease-in-out;
+      img {
+        height: 2.85em;
+      }
+      &:hover {
+        padding: 25px 30px;
+      }
+    }
+  }
+  #outcomes > div {
+    padding: 0.8em;
+  }
+  #outcomes #main {
+    flex: 2;
+    background: black;
+    h2 {
+      font-size: larger;
+    }
+  }
+  #outcomes aside {
+    background: rgb(255, 40, 40);
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+
+    .player-container {
+      display: flex;
+      flex-direction: row;
+      align-items: flex-start;
+      padding: 25px 5px;
+      img {
+        height: 3.5em;
+        width: 3.5em;
+        border: 5px inset rgb(124, 61, 32);
+        border-radius: 2px;
+        background: rgb(199, 40, 40);
+      }
+      .content {
+        flex: 1;
+        align-self: stretch;
+        margin-left: 10px;
+        .title {
+          font-size: large;
+          margin: 0;
+        }
+        .grid {
+          display: grid;
+          grid-gap: 5px;
+          grid-template-columns: auto auto;
+          p {
+            margin: 1px 0;
+          }
+        }
+      }
     }
   }
   .display {
