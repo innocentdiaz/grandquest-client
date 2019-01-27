@@ -382,11 +382,12 @@ const newGame = (global: GameInterface): PhaserGame => {
             let appliedEvents = networkGameState.turnEvents[global.gameState.turn];
             actions.animateEvents(appliedEvents);
           }
-
           global.gameState.turn = networkGameState.turn;
         }
         // play state updating
         if (!global.isAnimating && networkGameState.playState !== global.gameState.playState) {
+          global.gameState.level = networkGameState.level;
+          global.gameState.levelRecord = networkGameState.levelRecord;
           global.gameState.playState = networkGameState.playState;
           return;
         }
@@ -681,7 +682,9 @@ const newGame = (global: GameInterface): PhaserGame => {
         if (!!next) {
           actions.animateEvents(events, i + 1);
         } else {
-          global.isAnimating = false;
+          setTimeout(() => {
+            global.isAnimating = false;
+          }, 1000);
         }
       });
     },
