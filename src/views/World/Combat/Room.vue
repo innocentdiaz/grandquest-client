@@ -85,6 +85,7 @@
             <h3 class="title">{{gameInterface.gameState.players[id].username}}</h3>
             <div class="grid">
               <p>Damage dealt: {{player.damageDealt}}</p>
+              <p>Damage taken: {{player.damageReceived}}</p>
               <p>Health points: {{player.healingPoints}}</p>
               <p>Killed: {{player.killed}}</p>
               <p>Gold: {{player.gold}}</p>
@@ -337,18 +338,20 @@ export default class CombatRoom extends Vue {
     _.pairs(attacks).forEach((pair: [string, Attack]) => {
       const id = pair[0];
       const attackInfo = pair[1];
-
+      const disabled = attackInfo.stats.energy > currentPlayer.entity.energy;
       guiMasterObject.attacks.push({
         title: attackInfo.name,
-        description: `
-          Description - <br/>
-          ${attackInfo.description} <br/>
-          Stats - <br/>
-          Energy: ${attackInfo.stats.energy} <br/>
-          Base dmg: ${attackInfo.stats.baseDamage}
-        `,
+        description: !disabled
+          ?
+          `
+            Description - <br/>
+            ${attackInfo.description} <br/>
+            Stats - <br/>
+            Energy: ${attackInfo.stats.energy} <br/>
+            Base dmg: ${attackInfo.stats.baseDamage}
+          ` : `Description - <br/> ...`,
         to: null,
-        disabled: attackInfo.stats.energy > currentPlayer.entity.energy,
+        disabled,
         select: {
           type: 'attack',
           id,
