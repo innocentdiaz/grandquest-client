@@ -1,9 +1,9 @@
 <template>
     <div class="forum">
         <div class="control">
-            <div class="user-control" v-if="user.authenticated">
-                <h2>{{user.username}}</h2>
-                <p>Joined {{userJoinDate}}</p>
+            <div class="user-control" v-if="player.authenticated">
+                <h2>{{player.username}}</h2>
+                <p>Joined {{playerJoinDate}}</p>
             </div>
             <div class="user-control" v-else>
                 <h2>Have an account?</h2>
@@ -36,7 +36,7 @@
                         Back to forums
                     </router-link>
                     <router-link
-                            v-if="board.id && !board.admin_managed || board.admin_managed && user.is_admin"
+                            v-if="board.id && !board.admin_managed || board.admin_managed && player.is_admin"
                             :to="'/submit/post/' + board.id "
                             class="forum-link back create-post-btn"
                     >
@@ -71,7 +71,7 @@
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator';
 import { Getter, State } from 'vuex-class';
-import { User } from '@/types';
+import { Player } from '@/types';
 import ActivityIndicator from '../../components/ActivityIndicator.vue';
 import api from '../../api';
 import { ApiResponse } from 'apisauce';
@@ -82,8 +82,8 @@ import moment from 'moment';
 })
 
 export default class Board extends Vue {
-  @State public user!: User;
-  @Getter public userJoinDate!: string;
+  @State public player!: Player;
+  @Getter public playerJoinDate!: string;
 
   public board = {
     title: '',

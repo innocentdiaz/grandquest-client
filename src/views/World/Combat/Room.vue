@@ -68,19 +68,19 @@
       <div id="main">
         <h1>Level {{gameInterface.gameState.level}} complete</h1>
         <h2 class="subtitle">Level completed in {{gameInterface.gameState.turn}} turns</h2>
-        <div v-if="currentLevelRecord[this.user.id]">
+        <div v-if="currentLevelRecord[this.player.id]">
           <h2>Stats</h2>
-          <p>Damage received: {{currentLevelRecord[this.user.id].damageReceived}}</p>
-          <p>Damage dealt: {{currentLevelRecord[this.user.id].damageDealt}}</p>
-          <p>Health points: {{Object.values(currentLevelRecord[this.user.id].healed).reduce((a, h) => a + h.total, 0)}}</p>
-          <p>Killed: {{Object.keys(currentLevelRecord[this.user.id].killed).length}}</p>
-          <p>Gold: {{currentLevelRecord[this.user.id].gold}}</p>
+          <p>Damage received: {{currentLevelRecord[this.player.id].damageReceived}}</p>
+          <p>Damage dealt: {{currentLevelRecord[this.player.id].damageDealt}}</p>
+          <p>Health points: {{Object.values(currentLevelRecord[this.player.id].healed).reduce((a, h) => a + h.total, 0)}}</p>
+          <p>Killed: {{Object.keys(currentLevelRecord[this.player.id].killed).length}}</p>
+          <p>Gold: {{currentLevelRecord[this.player.id].gold}}</p>
           <h2>Rewards</h2>
           <p>
-            <span v-for="(healed, name) in currentLevelRecord[this.user.id].healed" :key="name">
+            <span v-for="(healed, name) in currentLevelRecord[this.player.id].healed" :key="name">
               Healed {{name}} {{healed.times}} times for {{healed.reward}} gold
             </span>
-            <span v-for="(killed, name) in currentLevelRecord[this.user.id].killed" :key="name">
+            <span v-for="(killed, name) in currentLevelRecord[this.player.id].killed" :key="name">
               Killed {{killed.times}} {{ killed.times > 1 ? `${name}s` : name }} for {{killed.reward}} gold
             </span>
           </p>
@@ -104,7 +104,7 @@
           </div>
         </div>
       </aside>
-      <button v-if="!combatGame.gameState.readyToContinue[user.id]" v-on:click="SOCKET_EMIT({ name: 'COMBAT_ROOM_READY' })">
+      <button v-if="!combatGame.gameState.readyToContinue[player.id]" v-on:click="SOCKET_EMIT({ name: 'COMBAT_ROOM_READY' })">
         <img src="@/assets/img/icon/1bit-swords.png" alt="Battle!">
         <br>
         READY
@@ -116,7 +116,7 @@
 import { Component, Vue } from 'vue-property-decorator';
 import { Action, State, Mutation } from 'vuex-class';
 import ActivityIndicator from '@/components/ActivityIndicator.vue';
-import { SocketState, User, CombatGame } from '@/types';
+import { SocketState, Player, CombatGame } from '@/types';
 import { Character, Attack, InventoryItem } from '@/game/types';
 import _ from 'underscore';
 import io from 'socket.io-client';
@@ -149,7 +149,7 @@ interface GuiMasterObject {
   components: { ActivityIndicator },
 })
 export default class CombatRoom extends Vue {
-  @State public user!: User;
+  @State public player!: Player;
   @State public socket!: SocketState;
   @State public combatGame!: CombatGame;
   @Action public socketJoinRoom: any;
@@ -402,7 +402,7 @@ export default class CombatRoom extends Vue {
   }
   get currentPlayer(): Character | null {
     // if not authenticated
-    const { id } = this.user;
+    const { id } = this.player;
     if (!id) {
       return null;
     }
@@ -410,7 +410,7 @@ export default class CombatRoom extends Vue {
     if (!this.gameInterface.gameInitialized) {
       return null;
     }
-    // if no player matching this user id
+    // if no player matching this player id
     if (!this.gameInterface.gameState.players.hasOwnProperty(id)) {
       return null;
     }

@@ -3,7 +3,7 @@ import { Character, CombatEvent } from '@/game/types';
 // Store
 export interface State {
     headerVisibility: boolean;
-    user: User;
+    player: Player;
     world: World;
     combatHub: CombatHub;
     combatGame: CombatGame;
@@ -17,18 +17,19 @@ export interface ActionContext {
 }
 
 // Models
-export interface User {
-    id:             number|null;
-    username:       string;
-    loading:        boolean;
-    authenticated:  boolean;
-    currentJWT:     string;
-    created_at:     string;
-    is_admin:       boolean;
+export interface Player {
+    id: number|null;
+    username: string;
+    role: string;
+    gold: number;
+    created_at: string;
+    is_admin: boolean;
+    token: string|null;
+    authenticated: boolean;
 }
 export interface World {
-    timeOfDay:         number;
-    connections:       number;
+    timeOfDay: number;
+    connections: number;
 }
 export interface CombatHub {
     rooms: {
@@ -36,10 +37,10 @@ export interface CombatHub {
     }
 }
 export interface CombatRoom {
-    id:          string;
-    title:       string;
+    id: string;
+    title: string;
     playerCount: number;
-    maxPlayers:  number;
+    maxPlayers: number;
     turn: number;
     level: number;
     playState: number;
@@ -57,8 +58,12 @@ export interface CombatRoom {
     },
     levelRecord: {
         [userId: number]: {
-            killed: number;
-            healingPoints: number;
+            killed: {
+                [characterId: string]: { total: number; times: number; reward: number };
+            }
+            healed: {
+                [characterId: string]: { total: number; times: number; reward: number };
+            };
             gold: number;
             damageDealt: number;
             damageReceived: number;
@@ -70,10 +75,10 @@ export interface CombatGame {
     selectionMode: string;
 }
 export interface SocketState {
-    connected:  boolean;
-    loading:    boolean;
-    room:       null | {
-        name:       string;
-        parameter:  any;
+    connected: boolean;
+    loading: boolean;
+    room: null | {
+        name: string;
+        parameter: any;
     };
 }

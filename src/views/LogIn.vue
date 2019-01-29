@@ -38,7 +38,7 @@ import { ApiResponse } from 'apisauce';
   components: { ActivityIndicator },
 })
 export default class LogIn extends Vue {
-  @Mutation public SET_USER: any;
+  @Mutation public UPDATE_SOCKET_PLAYER: any;
   @Action public INIT_SOCKET: any;
 
   public email = '';
@@ -53,22 +53,16 @@ export default class LogIn extends Vue {
     this.formLoading = true;
     this.apiError = '';
 
+    // request creation of new JWT token
     api.post('/auth', { email, password })
     .then((res: ApiResponse<any>) => {
       const body = res.data;
 
       if (res.ok) {
         const JWT = res.headers.authorization;
-        const user = res.data.payload;
 
         localStorage.setItem('grandquest:jwt', JWT);
 
-        this.SET_USER({
-          ...user,
-          currentJWT: JWT,
-          authenticated: true,
-          loading: false 
-        });
         this.INIT_SOCKET();
 
         this.$router.replace('/forum');

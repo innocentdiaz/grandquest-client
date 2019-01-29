@@ -35,7 +35,7 @@
 <script lang="ts">
 import { Vue, Component } from 'vue-property-decorator';
 import { State } from 'vuex-class';
-import { User, World, SocketState } from '@/types';
+import { World, SocketState } from '@/types';
 import api from '@/api';
 import UserControl from '@/components/UserControl.vue';
 import ActivityIndicator from '@/components/ActivityIndicator.vue';
@@ -44,7 +44,6 @@ import ActivityIndicator from '@/components/ActivityIndicator.vue';
   components: { ActivityIndicator, UserControl },
 })
 export default class Main extends Vue {
-  @State public user!: User;
   @State public socket!: SocketState;
   @State public world!: World;
 

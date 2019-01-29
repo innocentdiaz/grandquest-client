@@ -7,7 +7,6 @@
 
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator';
-import { User } from '@/types';
 import { State, Action, Mutation } from 'vuex-class';
 import Header from './components/Header.vue';
 import api from '@/api';
@@ -19,27 +18,11 @@ import store from '@/store.ts';
   },
 })
 export default class App extends Vue {
-  @State public headerVisibility: boolean;
-  @Action public INIT_AUTH: any;
+  @State public headerVisibility!: boolean;
+  @Action public OPEN_SOCKET: any;
 
   private async mounted() {
-    /*
-      Pending logout request
-    */
-    let pendingLogoutJWT = localStorage.getItem('grandquest:pending_logout');
-
-    if (pendingLogoutJWT) {
-      console.log('pending jwt logout');
-      let res = await api.delete(`/auth/${pendingLogoutJWT}`)
-      if (res.ok) {
-        localStorage.removeItem('grandquest:pending_logout');
-        location.reload();
-      } else {
-        console.log('could not request log out');
-      }
-    }
-
-    this.INIT_AUTH();
+    this.OPEN_SOCKET();
   }
 }
 </script>

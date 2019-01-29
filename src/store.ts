@@ -3,7 +3,7 @@ import Vuex from 'vuex';
 import {
   State,
   ActionContext,
-  User,
+  Player,
   World,
   CombatHub,
   CombatRoom,
@@ -11,20 +11,21 @@ import {
 
 import io from 'socket.io-client';
 import api from '@/api';
-import { ApiResponse } from 'apisauce';
 import moment from 'moment';
 
 Vue.use(Vuex);
 
 const initialState = {
   headerVisibility: true,
-  user: {
+  player: {
     id: null,
     username: '',
-    loading: true,
+    gold: 0,
+    role: '',
     authenticated: false,
     currentJWT: '',
     created_at: '',
+    token: null,
     is_admin: false,
   },
   world: {
@@ -45,6 +46,9 @@ const initialState = {
       turn: -1,
       level: 0,
       turnEvents: {},
+      playState: 1,
+      readyToContinue: {},
+      levelRecord: {},
     },
     selectionMode: 'TARGET',
   },
@@ -58,18 +62,15 @@ const initialState = {
 const state: State = {...initialState};
 
 const getters = {
-  userJoinDate: (s: State) => {
-    if (!s.user.authenticated) {
+  playerJoinDate: (s: State) => {
+    if (!s.player.authenticated) {
       return null;
     } else {
-      return moment(s.user.created_at).fromNow();
+      return moment(s.player.created_at).fromNow();
     }
   },
 };
 const mutations = {
-  SET_USER(s: State, user: User) {
-    s.user = { ...s.user, ...user };
-  },
   SET_HEADER_VISIBILITY(s: State, b: boolean) {
     s.headerVisibility = b;
   },
@@ -82,6 +83,9 @@ const mutations = {
   },
   SET_SOCKET_LOADING (s: State) {
     s.socket.loading = true;
+  },
+  UPDATE_SOCKET_PLAYER (s: State, player: Player) {
+    s.player = { ...s.player, ...player };
   },
   SET_SOCKET_ROOM (s: State, room: any) {
     s.socket.room = room;
@@ -112,29 +116,6 @@ const mutations = {
 let socket = io(`${api.getBaseURL()}/game`, { autoConnect: false });
 
 const actions = {
-  async INIT_AUTH({ commit, dispatch }: ActionContext) {
-    const JWT = localStorage.getItem('grandquest:jwt');
-    let user = { loading: false };
-
-    if (JWT) {
-      api.setHeader('Authorization', JWT);
-      const res: ApiResponse<any> = await api.get('/auth');
-
-      if (res.ok) {
-        // TODO: switch tokens here
-        user = {
-          ...res.data.payload,
-          currentJWT: JWT,
-          loading: false,
-          authenticated: true,
-        };
-      } else if (res.status === 401) {
-        localStorage.removeItem('grandquest:jwt');
-      }
-    }
-    commit('SET_USER', user);
-    dispatch('OPEN_SOCKET');
-  },
   OPEN_SOCKET({ commit, dispatch }: ActionContext) {
     socket.open();
     /*
@@ -142,7 +123,6 @@ const actions = {
     */
     socket.on('connect', () => {
       commit('SET_SOCKET_CONNECTION', true);
-
       dispatch('INIT_SOCKET');
     });
     socket.on('disconnect', () => {
@@ -171,28 +151,34 @@ const actions = {
     socket.on('COMBAT_HUB_STATE', (combatHubState: CombatHub) => {
       commit('SET_COMBAT_HUB_STATE', combatHubState);
     });
+    socket.on('PLAYER_STATE', (player: Player) => {
+      commit('UPDATE_SOCKET_PLAYER', player);
+    });
     socket.on('COMBAT_ROOM_STATE', (combatRoomState: CombatRoom) => {
       commit('SET_COMBAT_GAME_STATE', combatRoomState);
     });
   },
-  INIT_SOCKET({ state, dispatch }: ActionContext) {
+  INIT_SOCKET({ state, dispatch, commit }: ActionContext) {
     /*
       Authenticate socket
     */
-    if (state.user.authenticated) {
-      console.log(`vuex > initializeSocket > "attempting authentication of socket"`);
-      socket.emit('AUTHENTICATE_SOCKET', state.user.currentJWT, (err: any) => {
-        if (err) {
-          return console.log(`vuex > initializeSocket > "socket auth error = '${err}'"`);
-        } else if (state.socket.room) {
-          /*
-            Join rooms
-          */
-          console.log('vuex > initializeSocket > "joining disconnected rooms"');
-          dispatch('socketJoinRoom', state.socket.room);
+    const JWT = localStorage.getItem('grandquest:jwt');
+    console.log(JWT);
+    if (JWT) {
+      socket.emit('AUTHENTICATE_SOCKET', JWT, (err: any) => {
+        if (!err) {
+          commit('UPDATE_SOCKET_PLAYER', { authenticated: true });
+          // join disconnected rooms IF they exist
+          if (state.socket.room) {
+            console.log('vuex > initializeSocket > "joining disconnected rooms"');
+            dispatch('socketJoinRoom', state.socket.room);
+          }
+        } else {
+          console.log(`vuex > initializeSocket > "socket auth error = '${err}'"`);
+          localStorage.removeItem('grandquest:jwt');
         }
       });
-    }
+    };
   },
   SOCKET_EMIT(ac: any, info: { name: string, param: any }) {
     console.log(info);

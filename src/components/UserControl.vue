@@ -1,6 +1,6 @@
 <template>
-  <div class="user-control" v-if="user.authenticated">
-      <h2>{{ user.username }}</h2>
+  <div class="user-control" v-if="player.authenticated">
+      <h2>{{ player.username }}</h2>
       <p>Joined {{ userJoinDate() }}</p>
   </div>
   <div class="user-control" v-else>
@@ -11,15 +11,15 @@
 <script lang="ts">
 import { Vue, Component } from 'vue-property-decorator';
 import { State } from 'vuex-class';
-import { User } from '@/types';
+import { Player } from '@/types';
 import moment from 'moment';
 
 @Component
 export default class UserControl extends Vue {
-  @State public user!: User;
+  @State public player!: Player;
 
   public userJoinDate() {
-    return moment(this.user.created_at).fromNow();
+    return moment(this.player.created_at).fromNow();
   }
 }
 </script>
