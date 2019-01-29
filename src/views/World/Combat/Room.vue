@@ -69,10 +69,21 @@
         <h1>Level {{gameInterface.gameState.level}} complete</h1>
         <h2 class="subtitle">Level completed in {{gameInterface.gameState.turn}} turns</h2>
         <div v-if="currentLevelRecord[this.user.id]">
+          <h2>Stats</h2>
+          <p>Damage received: {{currentLevelRecord[this.user.id].damageReceived}}</p>
           <p>Damage dealt: {{currentLevelRecord[this.user.id].damageDealt}}</p>
-          <p>Health points: {{currentLevelRecord[this.user.id].healingPoints}}</p>
-          <p>Killed: {{currentLevelRecord[this.user.id].killed}}</p>
+          <p>Health points: {{Object.values(currentLevelRecord[this.user.id].healed).reduce((a, h) => a + h.total, 0)}}</p>
+          <p>Killed: {{Object.keys(currentLevelRecord[this.user.id].killed).length}}</p>
           <p>Gold: {{currentLevelRecord[this.user.id].gold}}</p>
+          <h2>Rewards</h2>
+          <p>
+            <span v-for="(healed, name) in currentLevelRecord[this.user.id].healed" :key="name">
+              Healed {{name}} {{healed.times}} times for {{healed.reward}} gold
+            </span>
+            <span v-for="(killed, name) in currentLevelRecord[this.user.id].killed" :key="name">
+              Killed {{killed.times}} {{ killed.times > 1 ? `${name}s` : name }} for {{killed.reward}} gold
+            </span>
+          </p>
         </div>
         <div v-else>
           <p>No stats available</p>
@@ -86,8 +97,8 @@
             <div class="grid">
               <p>Damage dealt: {{player.damageDealt}}</p>
               <p>Damage taken: {{player.damageReceived}}</p>
-              <p>Health points: {{player.healingPoints}}</p>
-              <p>Killed: {{player.killed}}</p>
+              <p>Health points: {{player.healed.total}}</p>
+              <p>Killed: {{Object.keys(player.killed).length}}</p>
               <p>Gold: {{player.gold}}</p>
             </div>
           </div>
