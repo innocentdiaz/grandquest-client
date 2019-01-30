@@ -91,7 +91,7 @@
       </div>
       <aside>
         <div class="player-container" v-for="(player, id) in currentLevelRecord" v-bind:key="id">
-          <img v-bind:src="require(`../../../assets/img/icon/${gameInterface.gameState.players[id].entity.name}.png`)" alt="Player entity">
+          <img v-bind:src="require(`../../../assets/img/icon/people/${gameInterface.gameState.players[id].entity.name}.png`)" alt="Player entity">
           <div class="content">
             <h3 class="title">{{gameInterface.gameState.players[id].username}} <span>{{combatGame.gameState.readyToContinue[id] ? '- Ready!' : ''}}</span></h3>
             <div class="grid">
