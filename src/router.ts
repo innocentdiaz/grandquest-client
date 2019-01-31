@@ -21,6 +21,8 @@ import LogOut from './views/LogOut.vue';
 import World from './views/World/Main.vue';
 import CombatHub from './views/World/Combat/Hub.vue';
 import CombatRoom from './views/World/Combat/Room.vue';
+import Market from './views/World/Market/Main.vue';
+import Shop from './views/World/Market/Shop.vue';
 
 Vue.use(Router);
 
@@ -87,5 +89,15 @@ export default new Router({
       name: 'combatRoom',
       component: CombatRoom,
     },
+    {
+      path: '/market',
+      name: 'market',
+      component: Market,
+    },
+    {
+      path: '/shop/:name',
+      name: 'shop',
+      component: Shop,
+    }
   ],
 });
