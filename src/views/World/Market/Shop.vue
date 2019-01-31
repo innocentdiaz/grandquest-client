@@ -24,8 +24,16 @@
       </div>
     </div>
     <!-- Selection Window -->
-    <div class="main">
-
+    <div class="GUI">
+      <ul id="gui-selection-list">
+        <li
+          v-for="(option, index) in currentScreenObject"
+          :key="option.title"
+          :class="`${option.disabled ? 'disabled' : ''} ${currentCursorIndex == index ? 'active' : ''}`"
+        >
+          {{ option.title }}
+        </li>
+      </ul>
     </div>
   </div> 
 </template>
@@ -36,6 +44,12 @@ import { Mutation } from 'vuex-class';
 @Component
 export default class Shop extends Vue {
   @Mutation public SET_HEADER_VISIBILITY!: any;
+
+  // GUI state
+  public moveCursorDelta: number = Date.now();
+  public currentCursorIndex: number = 0;
+  public currentScreen: string = 'root';
+
   public speechAnimationInterval: any = null;
   public shopName: string = '';
   public shops = {
@@ -45,15 +59,28 @@ export default class Shop extends Vue {
         'I used to be an adventurer just like you',
         'Are you supposed to be wandering the markets all by yourself?',
       ],
+      guiMasterObject: {
+        // screens
+        'root': [
+          // options
+          { title: 'Repairs', description: 'Repair damaged weapons and armor', to: 'repairs', disabled: false, select: null },
+          { title: 'Upgrades', description: 'Level up your weapons', to: 'upgrades', disabled: false, select: null },
+          { title: 'Chat', description: 'Talk about the news and events', to: null, disabled: false, select: {} },
+        ],
+        'repairs': [
+          { title: 'Back', description: '', to: 'root', disabled: false, select: null },
+        ],
+        'upgrades': [
+          { title: 'Back', description: '', to: 'root', disabled: false, select: null },
+        ],
+      }
     },
   }
 
   public beforeMount() {
     const { name } = this.$route.params;
 
-    if (this.shops.hasOwnProperty(name)) {
-      console.log('blacksmith');
-    } else {
+    if (!this.shops.hasOwnProperty(name)) {
       this.$router.replace({
         name: 'market',
       });
@@ -63,7 +90,32 @@ export default class Shop extends Vue {
   }
   public mounted() {
     this.SET_HEADER_VISIBILITY(false);
-    this.animateSpeech('Welcome young traveller.')
+    this.animateSpeech('Welcome young traveller. What do you seek?');
+
+    document.addEventListener('keydown', (event) => {
+
+      if (Date.now() - this.moveCursorDelta <= 100) {
+        return
+      }
+      this.moveCursorDelta = Date.now();
+      switch (event.key.toUpperCase()) {
+        case 'W':
+          this.moveCursor('up');
+          break;
+        case 'A':
+          this.moveCursor('left');
+          break;
+        case 'S':
+          this.moveCursor('down');
+          break;
+        case 'D':
+          this.moveCursor('right');
+          break;
+        case 'ENTER':
+          this.selectOption();
+          break;
+      }
+    });
   }
   public destroyed() {
     this.SET_HEADER_VISIBILITY(true);
@@ -75,10 +127,8 @@ export default class Shop extends Vue {
     while (speechBubble.firstChild) {
       speechBubble.removeChild(speechBubble.firstChild);
     }
-    console.log('clear speech bubble');
     if (this.speechAnimationInterval) {
       this.speechAnimationInterval = clearInterval(this.speechAnimationInterval);
-      console.log('clear interval');
     }
     // loop
     let i = 0;
@@ -98,8 +148,35 @@ export default class Shop extends Vue {
   }
   public speak() {
     const randomSpeech = this.currentShop.npcSpeak[Math.floor(Math.random() * this.currentShop.npcSpeak.length)];
-    console.log(randomSpeech);
     this.animateSpeech(randomSpeech)
+  }
+  public selectOption() {
+
+  }
+  public moveCursor(direction) {
+    const options = this.currentScreenObject;
+    const currentIndex = this.currentCursorIndex;
+    let nextIndex = currentIndex;
+    let j = currentIndex;
+
+    // Move the cursor index
+    if (direction === 'up') {
+      if (currentIndex > 0) {
+        j--;
+      } else {
+        j = options.length - 1;
+      }
+    } else if (direction === 'down') {
+      if (currentIndex < options.length - 1) {
+        j++;
+      } else {
+        j = 0;
+      }
+    } else {
+      return;
+    }
+
+    this.currentCursorIndex = j;
   }
   get currentShop() {
     return this.shops[this.shopName];
@@ -107,6 +184,9 @@ export default class Shop extends Vue {
   get npcName() {
     let npcName = this.currentShop.npcName;
     return npcName.charAt(0).toUpperCase() + npcName.substr(1);
+  }
+  get currentScreenObject() {
+    return this.currentShop.guiMasterObject[this.currentScreen];
   }
 }
 </script>
@@ -116,6 +196,7 @@ export default class Shop extends Vue {
   flex-direction: row;
   align-items: stretch;
   height: 100vh;
+  overflow: hidden;
   
   .npc-container {
     background: #e6e6e6;
@@ -190,9 +271,11 @@ export default class Shop extends Vue {
       }
     }
   }
-  .main {
+  .GUI {
     flex: 1;
     background: rgb(26, 26, 26);
+    height: 100% !important;
+    font-size: large;
   }
 
   .fade-in {
