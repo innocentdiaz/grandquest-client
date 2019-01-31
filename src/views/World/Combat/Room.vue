@@ -184,8 +184,6 @@ export default class CombatRoom extends Vue {
     this.SET_HEADER_VISIBILITY(false);
 
     document.addEventListener('keydown', (event) => {
-      event.preventDefault();
-
       if (Date.now() - this.cursorMoveDate <= 100) {
         return;
       }
@@ -550,64 +548,6 @@ export default class CombatRoom extends Vue {
     align-items: center;
     justify-content: center;
     font-family: 'Press Start 2P', monospace;
-  }
-  .GUI {
-    background: rgba(24, 24, 24, 0.856);
-    display: inline-flex;
-    align-items: stretch;
-    justify-content: space-between;
-    height: 27vh;
-    font-family: 'Press Start 2P', monospace;
-    padding: 10px;
-    color: white;
-
-    transition: .75s height ease-in-out;
-  }
-  .GUI > div {
-    flex: 1;
-  }
-  .GUI li {
-    list-style-type: none;
-    transition: .1s all ease-in-out;
-  }
-  .GUI li.active {
-    color: rgb(199, 199, 199);
-    padding-left: 2px;
-    list-style-image: url('../../../assets/img/icon/select-hand.png');
-  }
-  .GUI .left {
-    border-right: 2px solid white
-  }
-  .GUI .right {
-    border-left: 2px solid white
-  }
-  .GUI li.disabled {
-    color: rgb(87, 87, 87);
-  }
-  .GUI.disabled li.active {
-    color: grey;
-    padding-left: 2px;
-    list-style-image: url('../../../assets/img/icon/select-hand.png');
-  }
-  .GUI .bar-container {
-    height: 10px;
-    width: 100%;
-    max-width: 200px;
-    border: 1px solid grey;
-  }
-  .GUI #health-bar {
-    background: #56f33e;
-    height: 10px;
-  }
-  .GUI #energy-bar {
-    background: rgb(0, 218, 218);
-    height: 10px;
-  }
-  .GUI.faded {
-    opacity: 0.5;
-  }
-  .GUI.hidden {
-    opacity: 0;
   }
 }
 </style>
