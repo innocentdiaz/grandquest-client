@@ -49,3 +49,9 @@ yarn run test:e2e
 
 ### Customize configuration
 See [Configuration Reference](https://cli.vuejs.org/config/).
+
+# Art collaborators:
+ - https://www.artstation.com/artwork/9PeZa
+ - https://cazwolf.itch.io/
+ - https://rvros.itch.io/
+ - https://thkaspar.itch.io/
