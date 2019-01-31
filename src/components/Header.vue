@@ -31,7 +31,7 @@
           <router-link to="/forum">Forum</router-link>
         </li>
         <li>
-          <router-link to="/shops">Shops</router-link>
+          <router-link to="/market">Shops</router-link>
         </li>
         <li>
           <router-link to="/world">World</router-link>
@@ -71,7 +71,7 @@ $mainGreen: #9dff5c;
   flex-direction: column;
   align-items: stretch;
   .header-main {
-    min-height: 150px;
+    height: 10rem;
     background-image: url('../assets/img/landscapes/fort.jpg');
     background-size: cover;
     background-position: center;
