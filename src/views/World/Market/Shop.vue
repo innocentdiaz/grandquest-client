@@ -25,6 +25,14 @@
     </div>
     <!-- Selection Window -->
     <div class="GUI">
+      <div class="user-control">
+        <h2>{{player.username}}</h2>
+        <div id="stats">
+          <h2>Stats</h2>
+          <p>Gold: {{player.gold}}</p>
+          <p>Weapon Health: {{player.weapon_health}}</p>
+        </div>
+      </div>
       <ul id="gui-selection-list">
         <li
           v-for="(option, index) in currentScreenObject"
@@ -39,10 +47,12 @@
 </template>
 <script lang="ts">
 import { Vue, Component } from 'vue-property-decorator';
-import { Mutation } from 'vuex-class';
+import { State, Mutation, Action } from 'vuex-class';
+import { Player } from '@/types';
 
-@Component
 export default class Shop extends Vue {
+  @State public player!: Player;
+  @Action public SOCKET_EMIT: any;
   @Mutation public SET_HEADER_VISIBILITY!: any;
 
   // GUI state
@@ -63,12 +73,8 @@ export default class Shop extends Vue {
         // screens
         'root': [
           // options
-          { title: 'Repairs', description: 'Repair damaged weapons and armor', to: 'repairs', disabled: false, select: null },
+          { title: 'Repairs', description: 'Repair damaged weapons and armor', to: 'repairs', disabled: false, select: 'REPAIR_WEAPON' },
           { title: 'Upgrades', description: 'Level up your weapons', to: 'upgrades', disabled: false, select: null },
-          { title: 'Chat', description: 'Talk about the news and events', to: null, disabled: false, select: {} },
-        ],
-        'repairs': [
-          { title: 'Back', description: '', to: 'root', disabled: false, select: null },
         ],
         'upgrades': [
           { title: 'Back', description: '', to: 'root', disabled: false, select: null },
@@ -123,35 +129,53 @@ export default class Shop extends Vue {
   public animateSpeech(speech: string) {
     const speechBubble = document.querySelector('.speech-bubble');
     if (!speechBubble) throw new Error('no speech bubble el available to animate');
-
     while (speechBubble.firstChild) {
       speechBubble.removeChild(speechBubble.firstChild);
     }
-    if (this.speechAnimationInterval) {
-      this.speechAnimationInterval = clearInterval(this.speechAnimationInterval);
-    }
-    // loop
-    let i = 0;
+
+    const id = `${speech.trim().toLowerCase()}${Date.now()}`;
     const a = speech.split('');
 
-    this.speechAnimationInterval = setInterval(() => {
-      const currentChar = a[i];
-      const nextChar = a[i + 1];
+    if (this.speechAnimationInterval === id) return;
+    this.speechAnimationInterval = id;
 
-      const charEl = document.createElement('span');
-      charEl.innerHTML = currentChar;
-      speechBubble.appendChild(charEl);
-      charEl.classList.add('fade-in');
-      if (!nextChar) return this.speechAnimationInterval = clearInterval(this.speechAnimationInterval);
-      i++;
-    }, 35);
+    a.forEach((s, i) => {
+      setTimeout(() => {
+        if (this.speechAnimationInterval === id) {
+          const charEl = document.createElement('span');
+          charEl.innerHTML = s;
+          speechBubble.appendChild(charEl);
+          charEl.classList.add('fade-in');
+          if (i === a.length - 1) {
+            this.speechAnimationInterval = null;
+          }
+        }
+      }, 35 * (i + 1));
+    });
   }
   public speak() {
     const randomSpeech = this.currentShop.npcSpeak[Math.floor(Math.random() * this.currentShop.npcSpeak.length)];
     this.animateSpeech(randomSpeech)
   }
   public selectOption() {
+    let option = this.currentScreenObject[this.currentCursorIndex];
 
+    if (option.select) {
+      this.SOCKET_EMIT({
+        name: 'MARKET_BLACKSMITH_SELECT',
+        params: [
+          option.select, 
+          (message: any) => {
+            if (typeof message === 'string') {
+              this.animateSpeech(message);
+            }
+          }
+        ],
+      });
+    } else if (option.to) {
+      this.currentScreen = option.to;
+      this.currentCursorIndex = 0;
+    }
   }
   public moveCursor(direction) {
     const options = this.currentScreenObject;
@@ -276,6 +300,20 @@ export default class Shop extends Vue {
     background: rgb(26, 26, 26);
     height: 100% !important;
     font-size: large;
+
+    .user-control {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background-color: rgb(43, 43, 43);
+      h2 {
+        margin-top: 0;
+        font-size: medium;
+      }
+      small, img {
+        display: none;
+      }
+    }
   }
 
   .fade-in {
