@@ -26,6 +26,8 @@ export interface Player {
     is_admin: boolean;
     token: string|null;
     authenticated: boolean;
+    weapon_id: string;
+    weapon_health: number;
 }
 export interface World {
     timeOfDay: number;
