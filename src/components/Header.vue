@@ -12,13 +12,19 @@
           <div class="sign">
             <h2>{{player.username}}</h2>
             <div>
-
+              <p>Connection: {{socket.connected ? 'OK!' : socket.loading ? 'Attempting' : 'Not connected'}}</p>
             </div>
           </div>
         </div>
         <div v-else class="banner">
           <router-link to="/register">Register</router-link>
-          <router-link to="/login">Log In</router-link>
+          <router-link to="/login">Log In</router-link> 
+          <img v-if="!socket.connected"
+            src="https://cdn2.iconfinder.com/data/icons/prohibitions/105/12-512.png" 
+            title="Not connected to the server. Sorry :(" 
+            alt="No connection" 
+            height="20"
+          />
         </div>
       </div>
     </div>
@@ -45,7 +51,7 @@
 import { Component, Vue } from 'vue-property-decorator';
 import ActivityIndicator from '@/components/ActivityIndicator.vue';
 import { State } from 'vuex-class';
-import { Player } from '../types';
+import { Player, SocketState } from '../types';
 
 @Component({
   components: { ActivityIndicator },
@@ -53,6 +59,7 @@ import { Player } from '../types';
 
 export default class Header extends Vue {
   @State public player!: Player;
+  @State public socket!: SocketState;
 }
 </script>
 
