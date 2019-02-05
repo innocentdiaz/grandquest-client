@@ -59,7 +59,9 @@ export default class LogIn extends Vue {
       const body = res.data;
 
       if (res.ok) {
-        const JWT = res.headers.authorization;
+        if (!res.headers) return;
+        const headers: any = {...res.headers};
+        const JWT = headers.authorization;
 
         localStorage.setItem('grandquest:jwt', JWT);
 

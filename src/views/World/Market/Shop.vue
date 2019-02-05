@@ -50,6 +50,7 @@ import { Vue, Component } from 'vue-property-decorator';
 import { State, Mutation, Action } from 'vuex-class';
 import { Player } from '@/types';
 
+@Component
 export default class Shop extends Vue {
   @State public player!: Player;
   @Action public SOCKET_EMIT: any;
@@ -87,7 +88,7 @@ export default class Shop extends Vue {
     const { name } = this.$route.params;
 
     if (!this.shops.hasOwnProperty(name)) {
-      this.$router.replace({
+      return this.$router.replace({
         name: 'market',
       });
     }
@@ -125,6 +126,7 @@ export default class Shop extends Vue {
   }
   public destroyed() {
     this.SET_HEADER_VISIBILITY(true);
+    this.shopName = '';
   }
   public animateSpeech(speech: string) {
     const speechBubble = document.querySelector('.speech-bubble');
@@ -147,7 +149,7 @@ export default class Shop extends Vue {
           speechBubble.appendChild(charEl);
           charEl.classList.add('fade-in');
           if (i === a.length - 1) {
-            this.speechAnimationInterval = null;
+            this.speechAnimationInterval = '';
           }
         }
       }, 35 * (i + 1));
@@ -177,7 +179,7 @@ export default class Shop extends Vue {
       this.currentCursorIndex = 0;
     }
   }
-  public moveCursor(direction) {
+  public moveCursor(direction: string) {
     const options = this.currentScreenObject;
     const currentIndex = this.currentCursorIndex;
     let nextIndex = currentIndex;
@@ -206,6 +208,8 @@ export default class Shop extends Vue {
     return this.shops[this.shopName];
   }
   get npcName() {
+    if (!this.currentShop) return 'Daelen'; // default npc
+
     let npcName = this.currentShop.npcName;
     return npcName.charAt(0).toUpperCase() + npcName.substr(1);
   }

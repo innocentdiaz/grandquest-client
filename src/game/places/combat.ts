@@ -11,7 +11,7 @@
 */
 
 import Phaser from 'phaser';
-import { Howl } from 'howler';
+import Howler from 'howler';
 import _ from 'underscore';
 import store from '@/store';
 
@@ -38,11 +38,6 @@ import healPotionImage from '@/assets/img/items/heal-potion.png';
 */
 import cursorMoveSrc from '@/assets/audio/cursor-move.mp3';
 import cursorSelectSrc from '@/assets/audio/cursor-select.mp3';
-
-/*
-  Import data
-*/
-import Entities from '@/game/data/characters';
 
 /*
   Declare definitions
@@ -96,12 +91,7 @@ const newGame = (global: GameInterface): PhaserGame => {
         _.each(actions, (func: any, action: string) => {
           actions[action] = func.bind(self);
         });
-        /*
-          Bind entity generators to `self`
-        */
-        for(const id in Entities) {
-          Entities[id] = Entities[id].bind(self);
-        }
+
         // Load images asyncronously
         let assetsLoaded = 0;
         _.each([
@@ -246,15 +236,16 @@ const newGame = (global: GameInterface): PhaserGame => {
         // Spawn & Update Characters
         _.forEach({...networkGameState.players, ...networkGameState.enemies}, (characterOnNetwork) => {
           let category = characterOnNetwork.enemy
-            ? 'enemies'
-            : 'players';
-          let characterOnLocal = global.gameState[category][characterOnNetwork.id];
+            ? global.gameState.enemies
+            : global.gameState.players;
+          let id: string = String(characterOnNetwork.id);
+          let characterOnLocal = category[id];
 
           // spawn player if not yet added locally
           if (characterOnLocal) {
-            global.gameState[category] = {
-              ...global.gameState[category],
-              [characterOnNetwork.id]: {...characterOnLocal, ...characterOnNetwork},
+            category = {
+              ...category,
+              [id]: {...characterOnLocal, ...characterOnNetwork},
             }
           } else {
             characterOnLocal = actions.spawnCharacter(characterOnNetwork);
@@ -551,18 +542,13 @@ const newGame = (global: GameInterface): PhaserGame => {
 
       let { entity } = character;
 
-      let selectedEntityGenerator = Entities[entity.name];
-      if (!selectedEntityGenerator) {
-        console.error('Attempted to spawn unknown entity ', entity.name);
-      }
-
       // place them in our game state
       let placingLine = character.enemy
         ? global.enemyPlacingLine
         : global.playerPlacingLine;
 
       // find empty spot in line
-      let emptySpotInLine: any = _.findKey({...placingLine}, (spot: PlacingLineSpot) => !spot.character);
+      let emptySpotInLine: string = _.findKey({...placingLine}, (spot: PlacingLineSpot) => !spot.character);
 
       if (!emptySpotInLine) {
         throw new Error('Attempted to spawn character but there are not empty spaces in the placing line');
@@ -573,23 +559,37 @@ const newGame = (global: GameInterface): PhaserGame => {
 
       let coordinatesForEntity = character.enemy
         ? {
-            x: canvasWidth * (0.6 + (0.08 * emptySpotInLine)),
-            y: canvasHeight * ((0.9 - (0.02 * Object.keys(placingLine).length)) + (0.02 * emptySpotInLine)),
+            x: canvasWidth * (0.6 + (0.08 * Number(emptySpotInLine))),
+            y: canvasHeight * ((0.9 - (0.02 * Object.keys(placingLine).length)) + (0.02 * Number(emptySpotInLine))),
           }
         : {
-            x: canvasWidth * (0.25 - (0.08 * emptySpotInLine)),
-            y: canvasHeight * ((0.9 - (0.02 * Object.keys(placingLine).length)) + (0.02 * emptySpotInLine)),
+            x: canvasWidth * (0.25 - (0.08 * Number(emptySpotInLine))),
+            y: canvasHeight * ((0.9 - (0.02 * Object.keys(placingLine).length)) + (0.02 * Number(emptySpotInLine))),
           };
 
       const cat = character.enemy
           ? 'enemies'
           : 'players';
       const p = character.enemy
-          ? 'enemyPlacingLine'
-          : 'playerPlacingLine';
+        ? 'enemyPlacingLine'
+        : 'playerPlacingLine';
+
+      // create game sprite
+      let sprite =
+        self.add.sprite(coordinatesForEntity.x, coordinatesForEntity.y, entity.name)
+        .setScale(self.game.canvas.offsetHeight / 230)
+        .setDepth(10)
+        .setOrigin(0.5)
+        .play(`${entity.name}-idle`, false, Math.floor(Math.random() * 3));
+
+      let characterId: string = String(character.id);
+      // add character with sprite to the global game state!
       global.gameState[cat] = {
         ...global.gameState[cat],
-        [character.id]: selectedEntityGenerator(character, coordinatesForEntity),
+        [characterId]: {
+          ...character,
+          sprite,
+        },
       };
 
       // reference the spawned player in their placing line
@@ -604,10 +604,10 @@ const newGame = (global: GameInterface): PhaserGame => {
       return global.gameState[cat][character.id];
     },
     despawnCharacter(id: string) {
-      let character: Character | undefined = global.gameState.players[id] || global.gameState.enemies[id];
+      let character: Character = global.gameState.players[id] || global.gameState.enemies[id];
 
       if (!character) {
-        return console.error('Attempted to despawn a character that does not exist in the game state');
+        return;
       }
 
       let gameStateCategory = character.enemy
@@ -619,11 +619,24 @@ const newGame = (global: GameInterface): PhaserGame => {
 
       delete gameStateCategory[id];
 
-      _.forEach(['sprite', '_nameTag', '_healthBar', '_healthBarBackground', '_healthText'], (graphic) => {
-        if (character.hasOwnProperty(graphic)) {
-          character[graphic].destroy();
-        }
-      });
+      /*
+        Delete any graphics
+      */
+      if (character.hasOwnProperty('sprite')) {
+        character.sprite.destroy();
+      }
+      if (character.hasOwnProperty('_nameTag')) {
+        character._nameTag.destroy();
+      }
+      if (character.hasOwnProperty('_healthBar')) {
+        character._healthBar.destroy();
+      }
+      if (character.hasOwnProperty('_healthBarBackground')) {
+        character._healthBarBackground.destroy();
+      }
+      if (character.hasOwnProperty('_healthText')) {
+        character._healthText.destroy();
+      }
     },
     addTargetHand() {
       let self: GameInstance = this;
@@ -820,10 +833,10 @@ interface PlacingLineSpot {
   prevIndex: number;
 }
 
-const cursorMoveAudio = new Howl({
+const cursorMoveAudio = new Howler.Howl({
   src: [ cursorMoveSrc ],
 });
-const cursorSelectAudio = new Howl({
+const cursorSelectAudio = new Howler.Howl({
   src: [ cursorSelectSrc ],
 });
 /*
@@ -861,7 +874,7 @@ function CombatInterface(): GameInterface {
     // this will be generated using the game state with `gameInterface.actions.startGame()
     playerPlacingLine: _.reduce(_.range(1, 5), (memo, index) => ({
       ...memo,
-      [index]: {
+      [String(index)]: {
         character: null,
         nextIndex: index >= store.state.combatGame.gameState.maxPlayers ? 1 : index + 1,
         prevIndex: index === 1 ? store.state.combatGame.gameState.maxPlayers : index - 1,

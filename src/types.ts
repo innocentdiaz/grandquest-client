@@ -53,18 +53,18 @@ export interface CombatRoom {
         [id: string]: Character,
     },
     turnEvents: { // TODO: probably should make an interface for ``
-        [turnIndex: number]: [CombatEvent]
+        [turnIndex: string]: [CombatEvent]
     }
     readyToContinue: {
         [userId: string]: boolean;
     },
     levelRecord: {
-        [userId: number]: {
+        [userId: string]: {
             killed: {
-                [characterId: string]: { total: number; times: number; reward: number };
+                id: { total: number; times: number; reward: number };
             }
             healed: {
-                [characterId: string]: { total: number; times: number; reward: number };
+                id: { total: number; times: number; reward: number };
             };
             gold: number;
             damageDealt: number;
@@ -79,7 +79,7 @@ export interface CombatGame {
 export interface SocketState {
     connected: boolean;
     loading: boolean;
-    room: null | {
+    room: null|{
         name: string;
         parameter: any;
     };

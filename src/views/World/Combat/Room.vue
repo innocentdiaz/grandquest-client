@@ -124,7 +124,7 @@ import api from '@/api';
 import CombatInterface, { GameInterface } from '@/game/places/combat';
 
 // audio
-import { Howl } from 'howler';
+import Howler from 'howler';
 import cursorMoveSrc from '@/assets/audio/cursor-move.mp3';
 import cursorSelectSrc from '@/assets/audio/cursor-select.mp3';
 
@@ -161,10 +161,10 @@ export default class CombatRoom extends Vue {
 
   public description: string = '';
 
-  public cursorSelectAudio = new Howl({
+  public cursorSelectAudio = new Howler.Howl({
     src: [ cursorSelectSrc ],
   });
-  public cursorMoveAudio = new Howl({
+  public cursorMoveAudio = new Howler.Howl({
     src: [ cursorMoveSrc ],
   });
 

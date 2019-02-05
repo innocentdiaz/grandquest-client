@@ -1,7 +1,8 @@
 import potions from "./potions";
 import weapons from "./weapons";
 
-export default {
+const items: any = {
   ...potions,
   ...weapons,
 }
+export default items;

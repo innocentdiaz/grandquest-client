@@ -27,6 +27,8 @@ const initialState = {
     created_at: '',
     token: null,
     is_admin: false,
+    weapon_health: 0,
+    weapon_id: '',
   },
   world: {
     timeOfDay: 0,
