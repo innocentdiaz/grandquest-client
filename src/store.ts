@@ -180,9 +180,10 @@ const actions = {
       });
     };
   },
-  SOCKET_EMIT(ac: any, info: { name: string, param: any }) {
-    console.log(info);
-    socket.emit(info.name, info.param);
+  SOCKET_EMIT(ac: any, info: { name: string, params: object|undefined }) {
+    const params = Array.isArray(info.params) ? info.params : [];
+
+    socket.emit(info.name, ...params);
   },
   socketJoinRoom({ commit }: ActionContext, room: { name: string, parameter: any }) {
     if (!socket.connected) console.warn('Attempted to join room before socket connected');

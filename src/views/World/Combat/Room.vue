@@ -287,10 +287,10 @@ export default class CombatRoom extends Vue {
 
         this.SOCKET_EMIT({
           name: 'COMBAT_ROOM_ACTION',
-          param: {
+          params: [{
             receiverId: target.id,
             action: selectedOption.select
-          },
+          }],
         });
       }
     }
