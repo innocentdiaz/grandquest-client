@@ -63,7 +63,7 @@ export default class Shop extends Vue {
 
   public speechAnimationInterval: any = null;
   public shopName: string = '';
-  public shops = {
+  public shops: { [shopName: string]: any } = {
     blacksmith: {
       npcName: 'Daelen',
       npcSpeak: [
@@ -210,7 +210,7 @@ export default class Shop extends Vue {
   get npcName() {
     if (!this.currentShop) return 'Daelen'; // default npc
 
-    let npcName = this.currentShop.npcName;
+    const npcName = this.currentShop.npcName;
     return npcName.charAt(0).toUpperCase() + npcName.substr(1);
   }
   get currentScreenObject() {

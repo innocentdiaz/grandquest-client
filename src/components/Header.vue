@@ -31,16 +31,16 @@
     <div class="header-sub">
       <ul>
         <li>
-          <router-link to="/">Home</router-link>
+          <router-link to="/" exact active-class="active-link">Home</router-link>
         </li>
         <li>
-          <router-link to="/forum">Forum</router-link>
+          <router-link to="/forum" active-class="active-link">Forum</router-link>
         </li>
         <li>
-          <router-link to="/market">Shops</router-link>
+          <router-link to="/market" active-class="active-link">Shops</router-link>
         </li>
         <li>
-          <router-link to="/world">World</router-link>
+          <router-link to="/world" active-class="active-link">World</router-link>
         </li>
       </ul>
     </div>

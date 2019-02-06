@@ -33,6 +33,7 @@ const initialState = {
   world: {
     timeOfDay: 0,
     connections: 0,
+    inCombat: 0,
   },
   combatHub: {
     rooms: {},

@@ -8,10 +8,14 @@
         and you can feel the adventure calling you. What will you do 
         with the skills, tools and alliences you build?
       </aside>
-      <div class="content">
+      <div class="content" v-if="!player.authenticated">
         <h1>Want to try our world? <br/> Join us!</h1>
         <h2 class="subtitle">Make new friends, participate in forums, and explore our world</h2>
         <SignUpForm />
+      </div>
+      <div class="content" v-else>
+        <h1>Thank you for joining GrandQuest!</h1>
+        <h2>This page is still WIP :)</h2>
       </div>
     </div>
   </div>
@@ -19,13 +23,17 @@
 
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator';
+import { State } from 'vuex-class';
 import SignUpForm from '@/components/forms/SignUp.vue';
+import { Player } from '@/types';
 
 @Component({
   components: { SignUpForm },
 })
 
-export default class Home extends Vue {}
+export default class Home extends Vue {
+  @State public player!: Player;
+}
 </script>
 
 <style lang="scss">

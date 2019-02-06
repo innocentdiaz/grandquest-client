@@ -25,7 +25,7 @@
     <div class="main-container">
       <div class="container">
         <h1 class="header-title">COMBAT <br> ARENA</h1>
-        <span class="subtitle">13 players online</span>
+        <span class="subtitle">{{world.inCombat}} players in combat</span>
       </div>
       <aside>
         Live feed
@@ -38,7 +38,7 @@
 import { Component, Vue } from 'vue-property-decorator';
 import { State, Action } from 'vuex-class';
 import ActivityIndicator from '@/components/ActivityIndicator.vue';
-import { CombatRoom, CombatHub, SocketState } from '@/types';
+import { CombatRoom, CombatHub, SocketState, World } from '@/types';
 import api from '@/api';
 
 interface CombatRooms {
@@ -49,6 +49,7 @@ interface CombatRooms {
   components: { ActivityIndicator },
 })
 export default class Hub extends Vue {
+  @State public world!: World;
   @State  public combatHub!: CombatHub;
   @State  public socket!: SocketState;
   @Action public socketJoinRoom: any;

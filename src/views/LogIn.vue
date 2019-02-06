@@ -1,5 +1,5 @@
 <template>
-  <div class="log-in">
+  <div class="log-in" v-if="!player.authenticated">
     <aside>
       <h1>GrandQuest: live feed!</h1>
 
@@ -25,19 +25,28 @@
       </form>
     </div>
   </div>
+  <div class="log-in" v-else>
+    <div class="content">
+      <h1>Congrats!</h1>
+      <h2 class="subtitle">You're already authenticated! Go and have some fun.</h2>
+      <router-link to="/">Back home</router-link>
+    </div>
+  </div>
 </template>
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator';
-import { Mutation, Action } from 'vuex-class';
+import { Mutation, Action, State } from 'vuex-class';
 import ActivityIndicator from '@/components/ActivityIndicator.vue';
 
 import api from '@/api';
 import { ApiResponse } from 'apisauce';
+import { Player } from '@/types';
 
 @Component({
   components: { ActivityIndicator },
 })
 export default class LogIn extends Vue {
+  @State public player!: Player;
   @Mutation public UPDATE_SOCKET_PLAYER: any;
   @Action public INIT_SOCKET: any;
 

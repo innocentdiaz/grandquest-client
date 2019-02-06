@@ -86,7 +86,19 @@
                     },
                 ],
             },
-            { title: 'Art', description: 'Dedicated to the discussion of music, painting, poetry.', boards: [] },
+            {
+                title: 'Art',
+                description: 'Dedicated to the discussion of music, painting, poetry.',
+                boards: [
+                    {
+                        id: 3,
+                        title: 'Music',
+                        description: `
+                            A board for the appreciation of music and music theory
+                        `,
+                    }
+                ]
+            },
             { title: 'General', description: 'A forum for discussing general topics.', boards: [] },
         ];
 

@@ -55,6 +55,9 @@ button {
 a {
   color: $mainBlue;
   text-decoration: none;
+  &.active-link {
+    color: $mainGrey !important;
+  }
 }
 
 .admin-label {

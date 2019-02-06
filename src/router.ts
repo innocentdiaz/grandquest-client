@@ -98,6 +98,8 @@ export default new Router({
       path: '/shop/:name',
       name: 'shop',
       component: Shop,
-    }
+    },
+    // 404
+    { path: "*", redirect: '/' },
   ],
 });

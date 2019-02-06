@@ -24,7 +24,7 @@
         <div v-else>
             <router-link :to="'/board/' + board.id " class="forum-link back">Back to {{board.title}}</router-link>
             <h1>Create post</h1>
-            <p>Helpful links: <router-link to="wip">Guidelines</router-link> - <router-link to="/login">Login</router-link></p>
+            <p>Helpful links: <router-link>Guidelines</router-link> - <router-link to="/login">Login</router-link></p>
             <form v-on:submit.prevent="onSubmit">
                 <label>
                     Title

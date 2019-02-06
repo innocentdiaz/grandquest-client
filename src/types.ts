@@ -32,6 +32,7 @@ export interface Player {
 export interface World {
     timeOfDay: number;
     connections: number;
+    inCombat: number;
 }
 export interface CombatHub {
     rooms: {

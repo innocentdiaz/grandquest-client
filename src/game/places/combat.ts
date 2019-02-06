@@ -235,17 +235,21 @@ const newGame = (global: GameInterface): PhaserGame => {
 
         // Spawn & Update Characters
         _.forEach({...networkGameState.players, ...networkGameState.enemies}, (characterOnNetwork) => {
-          let category = characterOnNetwork.enemy
-            ? global.gameState.enemies
-            : global.gameState.players;
           let id: string = String(characterOnNetwork.id);
-          let characterOnLocal = category[id];
+          let characterOnLocal = {...global.gameState.enemies, ...global.gameState.players}[id];
 
           // spawn player if not yet added locally
           if (characterOnLocal) {
-            category = {
-              ...category,
-              [id]: {...characterOnLocal, ...characterOnNetwork},
+            if (characterOnNetwork.enemy) {
+              global.gameState.enemies = {
+                ...global.gameState.enemies,
+                [id]: {...characterOnLocal, ...characterOnNetwork},
+              }
+            } else {
+              global.gameState.players = {
+                ...global.gameState.players,
+                [id]: {...characterOnLocal, ...characterOnNetwork},
+              }
             }
           } else {
             characterOnLocal = actions.spawnCharacter(characterOnNetwork);
@@ -736,7 +740,7 @@ const newGame = (global: GameInterface): PhaserGame => {
               x: atkPosition,
               onStart() {
                 character.sprite.play(event.action.id);
-                receiver.sprite.play(`${receiver.entity.name}-hurt`);
+                setTimeout(() => receiver.sprite.play(`${receiver.entity.name}-hurt`), 200);
                 // update sprite health bar
                 const damagePercentage = (event.outcome.damage / receiver.entity.maxHealth);
                 const totalWidth = receiver._nameTag.displayWidth;
