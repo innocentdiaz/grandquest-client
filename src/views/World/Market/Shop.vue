@@ -25,13 +25,21 @@
     </div>
     <!-- Selection Window -->
     <div class="GUI">
-      <div class="user-control">
+      <div class="user-control abs" v-if="!socket.connected">
+        <h2>Offline</h2>
+        <span>You don't appear to be connected to the server. You can not make any transactions unless you are online.</span>
+      </div>
+      <div class="user-control" v-else-if="player.authenticated">
         <h2>{{player.username}}</h2>
         <div id="stats">
           <h2>Stats</h2>
           <p>Gold: {{player.gold}}</p>
           <p>Weapon Health: {{player.weapon_health}}</p>
         </div>
+      </div>
+      <div class="user-control abs" v-else>
+        <h2>Hmmm...</h2>
+        <span>It doesn't look like you are logged in... Please log in order to make </span>
       </div>
       <ul id="gui-selection-list">
         <li
@@ -48,11 +56,12 @@
 <script lang="ts">
 import { Vue, Component } from 'vue-property-decorator';
 import { State, Mutation, Action } from 'vuex-class';
-import { Player } from '@/types';
+import { Player, SocketState } from '@/types';
 
 @Component
 export default class Shop extends Vue {
   @State public player!: Player;
+  @State public socket!: SocketState;
   @Action public SOCKET_EMIT: any;
   @Mutation public SET_HEADER_VISIBILITY!: any;
 
@@ -102,6 +111,9 @@ export default class Shop extends Vue {
     document.addEventListener('keydown', (event) => {
 
       if (Date.now() - this.moveCursorDelta <= 100) {
+        return
+      }
+      if (!this.player.authenticated || !this.socket.connected) {
         return
       }
       this.moveCursorDelta = Date.now();
@@ -316,6 +328,16 @@ export default class Shop extends Vue {
       }
       small, img {
         display: none;
+      }
+      &.abs {
+        top: 0;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        margin: 5em 1em;
+        max-width: 1020px;
+        max-height: 45vh;
+        display: block;
       }
     }
   }
