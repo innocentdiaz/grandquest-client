@@ -11,8 +11,8 @@
 */
 
 import Phaser from 'phaser';
-import Howler from 'howler';
 import _ from 'underscore';
+import AudioManager from '../audio-manager';
 import store from '@/store';
 
 /*
@@ -33,11 +33,6 @@ import SlimeSheet from '@/assets/img/spritesheets/slime-sheet.png';
 import graveMarkerImage from'@/assets/img/misc/grave-marker.png';
 import SelectHandImage from '@/assets/img/icon/select-hand.png';
 import healPotionImage from '@/assets/img/items/heal-potion.png';
-/*
-  Import audio
-*/
-import cursorMoveSrc from '@/assets/audio/cursor-move.mp3';
-import cursorSelectSrc from '@/assets/audio/cursor-select.mp3';
 
 /*
   Declare definitions
@@ -60,7 +55,8 @@ const newGame = (global: GameInterface): PhaserGame => {
   */
   let game: any = new Phaser.Game({
     type: Phaser.AUTO,
-    width: window.innerWidth * .98,
+    
+    width: Math.max(Math.min(window.innerWidth * .98, 200), 920),
     height: window.innerHeight * .68,
     backgroundColor: '#7fb8f9',
     parent: 'canvas-parent',
@@ -422,7 +418,7 @@ const newGame = (global: GameInterface): PhaserGame => {
               actions.moveCursor('right');
               break;
             case 'ENTER':
-              cursorSelectAudio.play();
+              AudioManager.playOnce('cursorSelect');
               store.commit('SET_COMBAT_GAME_SELECTION_MODE', 'ACTION');
               break;
           }
@@ -502,7 +498,7 @@ const newGame = (global: GameInterface): PhaserGame => {
         return;
       }
 
-      cursorMoveAudio.play();
+      AudioManager.playOnce('cursorMove');
     },
     addBackground() {
       let self: any = this;
@@ -837,12 +833,6 @@ interface PlacingLineSpot {
   prevIndex: number;
 }
 
-const cursorMoveAudio = new Howler.Howl({
-  src: [ cursorMoveSrc ],
-});
-const cursorSelectAudio = new Howler.Howl({
-  src: [ cursorSelectSrc ],
-});
 /*
   Launch function
   Will return a GameInterface.Global object
