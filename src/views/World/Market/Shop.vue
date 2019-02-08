@@ -54,9 +54,10 @@
   </div> 
 </template>
 <script lang="ts">
-import { Vue, Component } from 'vue-property-decorator';
+import { Vue, Component, Watch } from 'vue-property-decorator';
 import { State, Mutation, Action } from 'vuex-class';
 import { Player, SocketState } from '@/types';
+import AudioManager from '@/game/audio-manager';
 
 @Component
 export default class Shop extends Vue {
@@ -215,6 +216,12 @@ export default class Shop extends Vue {
     }
 
     this.currentCursorIndex = j;
+  }
+  @Watch('player')
+  onChildChanged(cur: Player, prev: Player) {
+    if (cur.gold !== prev.gold && (prev.gold === 0 && cur.gold !== 0)) {
+      AudioManager.playOnce('goldDrop');
+    }
   }
   get currentShop() {
     return this.shops[this.shopName];
