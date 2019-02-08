@@ -87,6 +87,11 @@ const mutations = {
   SET_SOCKET_LOADING (s: State) {
     s.socket.loading = true;
   },
+  SET_INITIAL_STATES(s: State) {
+    s.world = initialState.world;
+    s.combatGame = initialState.combatGame;
+    s.combatHub = initialState.combatHub;
+  },
   UPDATE_SOCKET_PLAYER (s: State, player: Player) {
     s.player = { ...s.player, ...player };
   },
@@ -126,6 +131,7 @@ const actions = {
     */
     socket.on('connect', () => {
       commit('SET_SOCKET_CONNECTION', true);
+      commit('SET_INITIAL_STATES');
       dispatch('INIT_SOCKET');
     });
     socket.on('disconnect', () => {
