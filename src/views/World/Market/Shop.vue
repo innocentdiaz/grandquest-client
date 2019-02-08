@@ -109,41 +109,44 @@ export default class Shop extends Vue {
     this.SET_HEADER_VISIBILITY(false);
     this.animateSpeech('Welcome young traveller. What do you seek?');
 
-    document.addEventListener('keydown', (event) => {
-
-      if (Date.now() - this.moveCursorDelta <= 100) {
-        return
-      }
-      if (!this.player.authenticated || !this.socket.connected) {
-        return
-      }
-      this.moveCursorDelta = Date.now();
-      switch (event.key.toUpperCase()) {
-        case 'W':
-          this.moveCursor('up');
-          break;
-        case 'A':
-          this.moveCursor('left');
-          break;
-        case 'S':
-          this.moveCursor('down');
-          break;
-        case 'D':
-          this.moveCursor('right');
-          break;
-        case 'ENTER':
-          this.selectOption();
-          break;
-      }
-    });
+    document.addEventListener('keydown', this.keyMonitor, true);
+  }
+  public keyMonitor(event: any) {
+    if (Date.now() - this.moveCursorDelta <= 100) {
+      return
+    }
+    if (!this.player.authenticated || !this.socket.connected) {
+      return
+    }
+    this.moveCursorDelta = Date.now();
+    switch (event.key.toUpperCase()) {
+      case 'W':
+        this.moveCursor('up');
+        break;
+      case 'A':
+        this.moveCursor('left');
+        break;
+      case 'S':
+        this.moveCursor('down');
+        break;
+      case 'D':
+        this.moveCursor('right');
+        break;
+      case 'ENTER':
+        this.selectOption();
+        break;
+    }
   }
   public destroyed() {
     this.SET_HEADER_VISIBILITY(true);
     this.shopName = '';
+    document.removeEventListener('keydown', this.keyMonitor, true);
   }
   public animateSpeech(speech: string) {
     const speechBubble = document.querySelector('.speech-bubble');
-    if (!speechBubble) throw new Error('no speech bubble el available to animate');
+    if (!speechBubble) {
+      return;
+    }
     while (speechBubble.firstChild) {
       speechBubble.removeChild(speechBubble.firstChild);
     }
@@ -190,6 +193,7 @@ export default class Shop extends Vue {
     } else if (option.to) {
       this.currentScreen = option.to;
       this.currentCursorIndex = 0;
+      AudioManager.play('cursorSelect');
     }
   }
   public moveCursor(direction: string) {
@@ -214,7 +218,7 @@ export default class Shop extends Vue {
     } else {
       return;
     }
-
+    AudioManager.play('cursorMove');
     this.currentCursorIndex = j;
   }
   @Watch('player')
