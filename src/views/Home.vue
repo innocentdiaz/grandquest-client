@@ -3,10 +3,13 @@
     <div id="combat-img"></div>
     <div class="container">
       <aside>
-        You've stumbled onto a great quest. Mountains range as far as 
-        the eye can see. Ahead of you stand walls of a great empire,
-        and you can feel the adventure calling you. What will you do 
-        with the skills, tools and alliences you build?
+        <img :src="require('@/assets/img/logo.png')" id="logo">
+        <p>
+          You've stumbled onto a great quest. Mountains range as far as 
+          the eye can see. Ahead of you stand walls of a great empire,
+          and you can feel the adventure calling you. What will you do 
+          with the skills, tools and alliences you build?
+        </p>
       </aside>
       <div class="content" v-if="!player.authenticated">
         <h1>Want to try our world? <br/> Join us!</h1>
@@ -15,7 +18,10 @@
       </div>
       <div class="content" v-else>
         <h1>Thank you for joining GrandQuest!</h1>
-        <h2>This page is still WIP :)</h2>
+        <h2 class="subtitle">Here are some useful links</h2>
+        <p><router-link to="/about">About GrandQuest</router-link></p>
+        <p><router-link to="/world">Our World</router-link></p>
+        <p><router-link to="/forum">Community Forums</router-link></p>
       </div>
     </div>
   </div>
@@ -55,6 +61,10 @@ $mainGrey: rgb(179, 179, 179);
     top: 0;
     
     position: absolute;
+  }
+  #logo {
+    height: 5.75em;
+    border-radius: 5px;
   }
 
   .container {

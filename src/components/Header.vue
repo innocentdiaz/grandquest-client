@@ -34,6 +34,9 @@
           <router-link to="/" exact active-class="active-link">Home</router-link>
         </li>
         <li>
+          <router-link to="/about" active-class="active-link">About</router-link>
+        </li>
+        <li>
           <router-link to="/forum" active-class="active-link">Forum</router-link>
         </li>
         <li>
