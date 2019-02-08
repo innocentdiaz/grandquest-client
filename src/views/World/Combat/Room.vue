@@ -2,7 +2,7 @@
   <div class="combat-root" v-on:keydown="keyMonitor">
     <header>
       <ul>
-        <router-link to="/combat">Exit</router-link>
+        <router-link to="/combat">Exit</router-link> <span>Controls: [W, A, S, D, ENTER, ESC]</span>
       </ul>
       <h1 id="title" v-if="gameInterface.gameInitialized && !gameInterface.isAnimating && gameInterface.gameState.playState">
         Combat - {{ combatGame.gameState.title }}, Level - {{ gameInterface.gameState.level }}, Turn - {{ gameInterface.gameState.turn }}
@@ -421,8 +421,11 @@ export default class CombatRoom extends Vue {
   position: relative;
   display: flex;
   flex-direction: column;
-  align-items: stretch;
+  align-items: center;
   background: black;
+  #canvas-parent {
+    text-align: center;
+  }
   header {
     position: absolute;
     top: 0;
@@ -438,6 +441,9 @@ export default class CombatRoom extends Vue {
       margin: 0;
       padding: 10px;
       background: black;
+      span {
+        float: right;
+      }
     }
   }
   #main {

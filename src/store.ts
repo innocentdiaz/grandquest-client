@@ -174,9 +174,9 @@ const actions = {
     const JWT = localStorage.getItem('grandquest:jwt');
     console.log(JWT);
     if (JWT) {
-      socket.emit('AUTHENTICATE_SOCKET', JWT, (err: any) => {
-        if (!err) {
-          commit('UPDATE_SOCKET_PLAYER', { authenticated: true, token: JWT });
+      socket.emit('AUTHENTICATE_SOCKET', JWT, (err: any, player: Player) => {
+        if (!err && player) {
+          commit('UPDATE_SOCKET_PLAYER', { ...player, authenticated: true, token: JWT });
           // join disconnected rooms IF they exist
           if (state.socket.room) {
             console.log('vuex > initializeSocket > "joining disconnected rooms"');

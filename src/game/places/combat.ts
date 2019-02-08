@@ -24,12 +24,21 @@ import { Character, CombatEvent } from '@/game/types';
 /*
   Import images
 */
+// country landsacpe
 import countryPlatformImage from '@/assets/img/landscapes/country/platform.png';
 import countryTreesImage from '@/assets/img/landscapes/country/trees.png';
 import countryMountainsImage from '@/assets/img/landscapes/country/mountains.png';
 import countryCloudsImage from '@/assets/img/landscapes/country/clouds.png';
+// grassy mountains landscape
+import grassyMountainsImage from '@/assets/img/landscapes/mountains/grassy_mountains.png';
+import grassyMountainsFarImage from '@/assets/img/landscapes/mountains/far_mountains.png';
+import grassyMountainsClouds from '@/assets/img/landscapes/mountains/clouds.png';
+import grassyMountainsHill from '@/assets/img/landscapes/mountains/hill.png';
+
+// spritesheets
 import AdventurerSheet from '@/assets/img/spritesheets/adventurer-sheet.png';
 import SlimeSheet from '@/assets/img/spritesheets/slime-sheet.png';
+// misc
 import graveMarkerImage from'@/assets/img/misc/grave-marker.png';
 import SelectHandImage from '@/assets/img/icon/select-hand.png';
 import healPotionImage from '@/assets/img/items/heal-potion.png';
@@ -91,12 +100,19 @@ const newGame = (global: GameInterface): PhaserGame => {
         // Load images asyncronously
         let assetsLoaded = 0;
         _.each([
-          { name: 'select-hand', src: SelectHandImage, type: 'image' },
+          // country landscape
           { name: 'country-platform', src: countryPlatformImage, type: 'image' },
           { name: 'country-trees-bg', src: countryTreesImage, type: 'image' },
           { name: 'country-mountains-bg', src: countryMountainsImage, type: 'image' },
           { name: 'country-clouds-bg', src: countryCloudsImage, type: 'image' },
+          // grassy mountains landscape
+          { name: 'grassy-mountains-bg', src: grassyMountainsImage, type: 'image' },
+          { name: 'grassy-mountains-far-bg', src: grassyMountainsFarImage, type: 'image' },
+          { name: 'grassy-mountains-clouds-bg', src: grassyMountainsClouds, type: 'image' },
+          { name: 'grassy-mountains-hill', src: grassyMountainsHill, type: 'image' },
+          // misc
           { name: 'item-heal-potion', src: healPotionImage, type: 'image' },
+          { name: 'select-hand', src: SelectHandImage, type: 'image' },
           { name: 'adventurer', src: AdventurerSheet, type: 'spritesheet', spriteDimensions: [ 50, 37 ] },
           { name: 'slime', src: SlimeSheet, type: 'spritesheet', spriteDimensions: [32, 25] },
           { name: 'grave-marker', src: graveMarkerImage, type: 'spritesheet', spriteDimensions: [29, 20] },
@@ -197,8 +213,7 @@ const newGame = (global: GameInterface): PhaserGame => {
                 frameRate: 1,
                 repeat: 0,
               });
-
-              actions.startGame();
+              global.gameInitialized = true;
             }
           };
         });
@@ -209,13 +224,12 @@ const newGame = (global: GameInterface): PhaserGame => {
           return;
         }
 
-        // Cloud animation
-        if (global.gameClouds) {
-          global.gameClouds.tilePositionX += 0.072;
-        }
-
         const networkGameState = store.state.combatGame.gameState;
 
+        // Cloud animation
+        if (global._gameClouds) {
+          global._gameClouds.tilePositionX += 0.072;
+        }
         /*
           CHARACTER UPDATING
         */
@@ -234,7 +248,6 @@ const newGame = (global: GameInterface): PhaserGame => {
           let id: string = String(characterOnNetwork.id);
           let characterOnLocal = {...global.gameState.enemies, ...global.gameState.players}[id];
 
-          // spawn player if not yet added locally
           if (characterOnLocal) {
             if (characterOnNetwork.enemy) {
               global.gameState.enemies = {
@@ -246,6 +259,12 @@ const newGame = (global: GameInterface): PhaserGame => {
                 ...global.gameState.players,
                 [id]: {...characterOnLocal, ...characterOnNetwork},
               }
+            }
+
+            if (!global.isAnimating) {
+              let coordinates = actions.coordinatesForEntity(characterOnLocal);
+              characterOnLocal.sprite.x = coordinates.x;
+              characterOnLocal.sprite.y = coordinates.y;
             }
           } else {
             characterOnLocal = actions.spawnCharacter(characterOnNetwork);
@@ -377,10 +396,22 @@ const newGame = (global: GameInterface): PhaserGame => {
         }
         // play state updating
         if (!global.isAnimating && networkGameState.playState !== global.gameState.playState) {
-          global.gameState.level = networkGameState.level;
           global.gameState.levelRecord = networkGameState.levelRecord;
           global.gameState.playState = networkGameState.playState;
           return;
+        }
+
+        /*
+          Level updating / rendering
+        */
+        if (global.gameState.level !== networkGameState.level) {
+          global.gameState.level = networkGameState.level;
+          _.forEach({...global.gameState.players, ...global.gameState.enemies}, c => {
+            console.log('despawn ', c.id);
+            actions.despawnCharacter(c.id);
+          });
+          console.log(JSON.parse(JSON.stringify(global.enemyPlacingLine)));
+          actions.loadScene();
         }
       },
     },
@@ -390,15 +421,6 @@ const newGame = (global: GameInterface): PhaserGame => {
     GameInterface.Actions
   */
   const actions: GiActions = {
-    startGame() {
-      console.log('start game');
-      // make background;
-      actions.addBackground();
-      // play bg music
-      AudioManager.playOnce('fieldsCombat', true);
-
-      global.gameInitialized = true;
-    },
     keyMonitor(event: any) {
       let self: any = this;
       if (Date.now() - self.cursorMoveDate <= 100) {
@@ -498,42 +520,87 @@ const newGame = (global: GameInterface): PhaserGame => {
 
       AudioManager.playOnce('cursorMove');
     },
+    loadScene() {
+      console.log('load scene ', global.gameState.level);
+      actions.addBackground();
+      AudioManager.playOnce('fieldsCombat', true);
+    },
     addBackground() {
       let self: any = this;
+      /*
+        Wipe the old scene if it exists
+      */
+      if (global._sceneImg.length) {
+        for (let img of global._sceneImg) {
+          img.destroy();
+        }
+        global._sceneImg = [];
+      }
       /*
         Handy dimensions
       */
       const canvasWidth = self.game.canvas.offsetWidth;
       const canvasHeight = self.game.canvas.offsetHeight;
+      let imagePixelHeight = 0;
+      let scaleRatio = 0;
 
-      /*
-        Country background
-      */
-      const imagePixelHeight = 210;
-      const exponential = canvasHeight / imagePixelHeight;
+      switch(global.gameState.level) {
+        case 0:
+          imagePixelHeight = 210;
+          scaleRatio = canvasHeight / imagePixelHeight;
 
-      // add each image in order
-      _.each([
-        'country-mountains-bg',
-        'country-clouds-bg',
-        'country-trees-bg',
-        'country-platform',
-      ], (name, i) => {
-        // clouds are parallax
-        const img =
-          self.add.tileSprite(0, 0, canvasWidth, canvasHeight, name)
-          // z-axis
-          .setDepth(i)
-          // pixelHeight of each image in tileset
-          .setScale(exponential)
-          .setOrigin(0);
-        if (name === 'country-clouds-bg') {
-          // set them to the game instance
-          global.gameClouds = img
-        } else if (name === 'country-mountains-bg') {
-          img.setScale(exponential * .7);
-        }
-      });
+          // add each image in order
+          _.each([
+            'country-mountains-bg',
+            'country-clouds-bg',
+            'country-trees-bg',
+            'country-platform',
+          ], (name, i) => {
+            // clouds are parallax
+            const img =
+              self.add.tileSprite(0, 0, canvasWidth, canvasHeight, name)
+              // z-axis
+              .setDepth(i)
+              // pixelHeight of each image in tileset
+              .setScale(scaleRatio)
+              .setOrigin(0);
+            if (name === 'country-clouds-bg') {
+              // set them to the game instance
+              global._gameClouds = img;
+            } else if (name === 'country-mountains-bg') {
+              img.setScale(scaleRatio * .7);
+            }
+            global._sceneImg.push(img);
+          });
+          break;
+        case 1:
+          imagePixelHeight = 216;
+          scaleRatio = canvasHeight / imagePixelHeight;
+
+          _.each([
+            'grassy-mountains-far-bg',
+            'grassy-mountains-bg',
+            'grassy-mountains-clouds-bg',
+            'grassy-mountains-hill',
+          ], (name, i) => {
+            // clouds are parallax
+            const img =
+              self.add.tileSprite(0, 0, canvasWidth, canvasHeight, name)
+              // z-axis
+              .setDepth(i)
+              // pixelHeight of each image in tileset
+              .setScale(scaleRatio)
+              .setOrigin(0);
+            if (name === 'grassy-mountains-clouds-bg') {
+              // set them to the game instance
+              global._gameClouds = img;
+            }
+            global._sceneImg.push(img);
+          });
+          break;
+        default:
+          throw new Error('Scene not configured for level ' + global.gameState.level);
+      }
     },
     spawnCharacter(character: Character): Character {
       let self: GameInstance = this;
@@ -552,19 +619,6 @@ const newGame = (global: GameInterface): PhaserGame => {
         throw new Error('Attempted to spawn character but there are not empty spaces in the placing line');
       }
 
-      const canvasWidth = self.game.canvas.offsetWidth;
-      const canvasHeight = self.game.canvas.offsetHeight;
-
-      let coordinatesForEntity = character.enemy
-        ? {
-            x: canvasWidth * (0.6 + (0.08 * Number(emptySpotInLine))),
-            y: canvasHeight * ((0.9 - (0.02 * Object.keys(placingLine).length)) + (0.02 * Number(emptySpotInLine))),
-          }
-        : {
-            x: canvasWidth * (0.25 - (0.08 * Number(emptySpotInLine))),
-            y: canvasHeight * ((0.9 - (0.02 * Object.keys(placingLine).length)) + (0.02 * Number(emptySpotInLine))),
-          };
-
       const cat = character.enemy
           ? 'enemies'
           : 'players';
@@ -574,9 +628,9 @@ const newGame = (global: GameInterface): PhaserGame => {
 
       // create game sprite
       let sprite =
-        self.add.sprite(coordinatesForEntity.x, coordinatesForEntity.y, entity.name)
-        .setScale(self.game.canvas.offsetHeight / 230)
-        .setDepth(10)
+        self.add.sprite(0, 0, entity.name)
+        .setScale(self.game.canvas.offsetHeight / 210)
+        .setDepth(10 + emptySpotInLine)
         .setOrigin(0.5)
         .play(`${entity.name}-idle`, false, Math.floor(Math.random() * 3));
 
@@ -601,6 +655,43 @@ const newGame = (global: GameInterface): PhaserGame => {
 
       return global.gameState[cat][character.id];
     },
+    coordinatesForEntity(character: Character): { x: number, y: number } {
+      let self: any = this;
+      // place them in our game state
+      let placingLine = character.enemy
+        ? global.enemyPlacingLine
+        : global.playerPlacingLine;
+      let spotInLine: string = _.findKey({...placingLine}, (spot: PlacingLineSpot) => !!spot.character && spot.character.id === character.id);
+      if (!spotInLine) {
+        throw new Error('no empty spot for coordinates');
+      }
+
+      const canvasWidth = self.game.canvas.offsetWidth;
+      const canvasHeight = self.game.canvas.offsetHeight;
+
+      let b = character.enemy ? 0.6 : 0.2;
+      let c = global.gameState.level === 0
+        ? 0.8
+        : global.gameState.level === 1
+        ? 0.6
+        : 0;
+
+      let xDelta = global.gameState.level === 0
+        ? 0.08
+        : global.gameState.level === 1
+        ? 0.055
+        : 0;
+      let yDelta = global.gameState.level === 0
+        ? 0.02
+        : global.gameState.level === 1
+        ? 0.03
+        : 0;
+
+      return {
+        x: canvasWidth * ((Number(spotInLine) * xDelta) + b),
+        y: canvasHeight * ((Number(spotInLine) * yDelta) + c),
+      }
+    },
     despawnCharacter(id: string) {
       let character: Character = global.gameState.players[id] || global.gameState.enemies[id];
 
@@ -616,6 +707,11 @@ const newGame = (global: GameInterface): PhaserGame => {
         : global.playerPlacingLine;
 
       delete gameStateCategory[id];
+      // filter out the character from the placing line
+      p = _.mapObject(p, (spot) => ({
+        ...spot,
+        character: spot.character && spot.character.id === character.id ? null : spot.character,
+      }));
 
       /*
         Delete any graphics
@@ -654,7 +750,7 @@ const newGame = (global: GameInterface): PhaserGame => {
 
       global.targetHand =
         self.add.image(character.sprite.x, character.sprite.y, 'select-hand')
-        .setDepth(11); // z-coordinate above the player
+        .setDepth(character.sprite.depth + 5); // z-coordinate above the player
     },
     removeTargetHand() {
       if (!global.targetHand) {
@@ -833,7 +929,8 @@ export interface GameInterface {
   gameInitialized: boolean;
   currentTargetSide: number;
   currentTargetIndex: number;
-  gameClouds: any;
+  _gameClouds: any;
+  _sceneImg: any[];
   targetHand: any;
   isAnimating: boolean;
   playerPlacingLine: PlacingLine;
@@ -870,7 +967,7 @@ function CombatInterface(): GameInterface {
       playerCount: 0,
       maxPlayers: 4,
       turn: -1,
-      level: 0,
+      level: -1,
       turnEvents: {},
       playState: 1,
       levelRecord: {},
@@ -880,7 +977,8 @@ function CombatInterface(): GameInterface {
     gameInitialized: false,
     currentTargetSide: 0,
     currentTargetIndex: 1,
-    gameClouds: null,
+    _gameClouds: null,
+    _sceneImg: [],
     targetHand: null,
     isAnimating: false,
     // this will be generated using the game state with `gameInterface.actions.startGame()
