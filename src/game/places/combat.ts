@@ -1,10 +1,6 @@
 /*
   TODO:
-  - Add icons for selection status
-  - Add potions
   - Work on level scenery
-  - Add music
-  - Fix bug on game destruction/mounting
   - Optimize game loop updating
   - Add window.on resize events
   - Add low framerate setting
@@ -407,10 +403,8 @@ const newGame = (global: GameInterface): PhaserGame => {
         if (global.gameState.level !== networkGameState.level) {
           global.gameState.level = networkGameState.level;
           _.forEach({...global.gameState.players, ...global.gameState.enemies}, c => {
-            console.log('despawn ', c.id);
             actions.despawnCharacter(c.id);
           });
-          console.log(JSON.parse(JSON.stringify(global.enemyPlacingLine)));
           actions.loadScene();
         }
       },
