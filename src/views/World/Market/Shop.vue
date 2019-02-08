@@ -193,7 +193,7 @@ export default class Shop extends Vue {
     } else if (option.to) {
       this.currentScreen = option.to;
       this.currentCursorIndex = 0;
-      AudioManager.play('cursorSelect');
+      AudioManager.playOnce('cursorSelect');
     }
   }
   public moveCursor(direction: string) {
@@ -218,7 +218,7 @@ export default class Shop extends Vue {
     } else {
       return;
     }
-    AudioManager.play('cursorMove');
+    AudioManager.playOnce('cursorMove');
     this.currentCursorIndex = j;
   }
   @Watch('player')
