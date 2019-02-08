@@ -6,21 +6,24 @@ import CursorSelectFX from '@/assets/audio/cursor-select.mp3';
 import CursorMoveFX from '@/assets/audio/cursor-move.mp3';
 import FieldsCombatAudio from '@/assets/audio/fields-music1.mp3';
 import CombatHitAudio from '@/assets/audio/combat-hit.mp3';
+import CombatSuccessAudio from '@/assets/audio/combat-success.mp3';
+import CombatFailAudio from '@/assets/audio/combat-fail.mp3';
 
 let AudioManager: { [sound: string]: any } = {
   sounds: {
     goldDrop: new Howler.Howl({ src: [ GoldDropFX ] }),
-    cursorSelect: new Howler.Howl({ src: [ CursorSelectFX ], volume: 0.5 }),
-    cursorMove: new Howler.Howl({ src: [ CursorMoveFX ], volume: 0.5 }),
-    fieldsCombat: new Howler.Howl({ src: [ FieldsCombatAudio ], volume: 0.5 }),
-    combatHit: new Howler.Howl({ src: [ CombatHitAudio ], volume: 0.75 }),
+    cursorSelect: new Howler.Howl({ src: [ CursorSelectFX ], volume: 0.65 }),
+    cursorMove: new Howler.Howl({ src: [ CursorMoveFX ], volume: 0.65 }),
+    fieldsCombat: new Howler.Howl({ src: [ FieldsCombatAudio ], volume: 0.5, loop: true }),
+    combatHit: new Howler.Howl({ src: [ CombatHitAudio ], volume: 0.6 }),
+    combatSuccess: new Howler.Howl({ src: [ CombatSuccessAudio ], volume: 0.6 }),
+    combatFail: new Howler.Howl({ src: [ CombatFailAudio ], volume: 0.6 }),
   },
   playOnce(name: string, stop: boolean) {
     if (!AudioManager.sounds.hasOwnProperty(name)) {
       console.error('AudioManager does not know sound: ', name);
     } else {
       let Howl = AudioManager.sounds[name];
-      console.log(`now playing ${name} (${Howl.state()})`);
       if (stop) {
         Howl.stop();
       }
