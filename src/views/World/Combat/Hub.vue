@@ -7,6 +7,9 @@
       <div v-if="socket.loading">
         <ActivityIndicator />
       </div>
+      <div v-else-if="!player.authenticated">
+        <p><router-link to="/login">Log in</router-link> to view available journies</p>
+      </div>
       <ul v-else-if="socket.connected">
         <li v-for="room in combatHub.rooms" :key="room.id" v-on:click="joinRoom(room.id)" 
           :class="room.playerCount + 1 > room.maxPlayers ? 'disabled' : ''"
@@ -38,7 +41,7 @@
 import { Component, Vue } from 'vue-property-decorator';
 import { State, Action } from 'vuex-class';
 import ActivityIndicator from '@/components/ActivityIndicator.vue';
-import { CombatRoom, CombatHub, SocketState, World } from '@/types';
+import { CombatRoom, CombatHub, SocketState, World, Player } from '@/types';
 import api from '@/api';
 
 interface CombatRooms {
@@ -50,6 +53,7 @@ interface CombatRooms {
 })
 export default class Hub extends Vue {
   @State public world!: World;
+  @State public player!: Player;
   @State  public combatHub!: CombatHub;
   @State  public socket!: SocketState;
   @Action public socketJoinRoom: any;
@@ -163,7 +167,7 @@ $mainLightGrey: #e0e0e0;
       color: white;
       background: 
       linear-gradient(black, rgba(0, 0, 0, 0), black), url('../../../assets/img/combat.png');
-      @media screen and (min-width: 750px) {
+      @media screen and (max-width: 750px) {
         flex: 0;
         display: none;
         opacity: 0;
