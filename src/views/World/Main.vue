@@ -13,7 +13,7 @@
         </div>
         <div class="stats" v-else-if="socket.connected">
           <h2>GrandQuest World</h2>
-          <p>Current time: {{ readableTimeOfDay() }}</p>
+          <p>Current time: {{ readableTimeOfDay }}</p>
           <p>Players Online: {{ world.connections }}</p>
         </div>
         <div class="stats" v-else>
@@ -35,6 +35,7 @@
 <script lang="ts">
 import { Vue, Component } from 'vue-property-decorator';
 import { State } from 'vuex-class';
+import moment from 'moment';
 import { World, SocketState } from '@/types';
 import api from '@/api';
 import UserControl from '@/components/UserControl.vue';
@@ -50,12 +51,8 @@ export default class Main extends Vue {
   public setGame(name: string) {
     this.$router.replace(name);
   }
-  public readableTimeOfDay() {
-    const militaryTime = Math.floor(this.world.timeOfDay / 1000);
-    const leftSide = militaryTime > 12 ? militaryTime - 12 : militaryTime;
-    const rightSide = ((this.world.timeOfDay / 1000 - leftSide) * 60).toFixed(0);
-    const period = militaryTime > 12 ? 'pm' : 'am';
-    return `${militaryTime}:${rightSide}${period}`;
+  get readableTimeOfDay() {
+    return moment(this.world.timeOfDay).format('LT'); ;
   }
 }
 </script>
