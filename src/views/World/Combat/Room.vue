@@ -1,5 +1,5 @@
 <template>
-  <div class="combat-root">
+  <div class="combat-root" v-on:keydown="keyMonitor">
     <header>
       <ul>
         <router-link to="/combat">Exit</router-link>
@@ -23,7 +23,7 @@
       <div
         v-else-if="currentPlayer" 
         :class="
-          gameInterface.isAnimating || currentPlayer.selectionStatus === -1
+          gameInterface.isAnimating || currentPlayerSelectionStatus === -1
             ? 'GUI hidden'
             : combatGame.selectionMode === 'TARGET' && currentPlayerSelectionStatus === 0
             ? 'GUI faded'
@@ -76,13 +76,11 @@
           <p>Killed: {{Object.keys(currentLevelRecord[this.player.id].killed).length}}</p>
           <p>Gold: {{currentLevelRecord[this.player.id].gold}}</p>
           <h2>Rewards</h2>
-          <p>
-            <span v-for="(healed, name) in currentLevelRecord[this.player.id].healed" :key="name">
-              Healed {{name}} {{healed.times}} times for {{healed.reward}} gold
-            </span>
-            <span v-for="(killed, name) in currentLevelRecord[this.player.id].killed" :key="name">
-              Killed {{killed.times}} {{ killed.times > 1 ? `${name}s` : name }} for {{killed.reward}} gold
-            </span>
+          <p v-for="(healed, name) in currentLevelRecord[this.player.id].healed" :key="name">
+            Healed {{name}} {{healed.times}} times for {{healed.reward}} gold
+          </p>
+          <p v-for="(killed, name) in currentLevelRecord[this.player.id].killed" :key="name">
+            Killed {{killed.times}} {{ killed.times > 1 ? `${name}s` : name }} for {{killed.reward}} gold
           </p>
         </div>
         <div v-else>
@@ -97,8 +95,7 @@
             <div class="grid">
               <p>Damage dealt: {{player.damageDealt}}</p>
               <p>Damage taken: {{player.damageReceived}}</p>
-              <p>Health points: {{player.healed.total}}</p>
-              <p>Killed: {{Object.keys(player.killed).length}}</p>
+              <p>Players healed: {{Object.keys(player.healed).length}}</p>
               <p>Gold: {{player.gold}}</p>
             </div>
           </div>
@@ -171,40 +168,7 @@ export default class CombatRoom extends Vue {
 
     this.socketJoinRoom({ name: 'COMBAT_ROOM', parameter: roomID });
     this.SET_HEADER_VISIBILITY(false);
-
-    document.addEventListener('keydown', (event) => {
-      if (Date.now() - this.cursorMoveDate <= 100 && !this.gameInterface.isAnimating) {
-        return;
-      }
-      this.cursorMoveDate = Date.now();
-
-      if (this.combatGame.selectionMode === 'ACTION') {
-        switch (event.key.toUpperCase()) {
-          case 'W':
-            this.moveCursor('up');
-            break;
-          case 'A':
-            this.moveCursor('left');
-            break;
-          case 'S':
-            this.moveCursor('down');
-            break;
-          case 'D':
-            this.moveCursor('right');
-            break;
-          case 'ENTER':
-            this.selectOption();
-            break;
-          case 'ESCAPE':
-            if (this.combatGame.selectionMode === 'ACTION') {
-              this.currentScreen = 'root';
-              this.currentCursorIndex = 0;
-              this.SET_COMBAT_GAME_SELECTION_MODE('TARGET');
-            }
-            break;
-        }
-      }
-    });
+    document.addEventListener('keydown', this.keyMonitor, true);
   }
   public destroyed() {
     if (this.gameInterface) {
@@ -212,76 +176,104 @@ export default class CombatRoom extends Vue {
     }
     this.SET_HEADER_VISIBILITY(true);
     this.socketLeaveRoom('COMBAT_ROOM');
-    this.RESET_GAME_STATE('COMBAT_ROOM')
+    this.RESET_GAME_STATE('COMBAT_ROOM');
+    document.removeEventListener('keydown', this.keyMonitor, true);
   }
+  public keyMonitor(event: any) {
+    if (Date.now() - this.cursorMoveDate <= 100 || this.gameInterface.isAnimating) {
+      return;
+    }
+    this.cursorMoveDate = Date.now();
 
-  public moveCursor(direction: string) {
     if (this.combatGame.selectionMode === 'ACTION' && this.currentPlayerSelectionStatus === 0) {
-      const options = this.currentScreenObject;
-      const currentIndex = this.currentCursorIndex;
-      let nextIndex = currentIndex;
-      let j = currentIndex;
-
-      // Move the cursor index
-      if (direction === 'up') {
-        if (currentIndex > 0) {
-          j--;
-        } else {
-          j = options.length - 1;
-        }
-      } else if (direction === 'down') {
-        if (currentIndex < options.length - 1) {
-          j++;
-        } else {
-          j = 0;
-        }
-      } else {
-        return;
+      switch (event.key.toUpperCase()) {
+        case 'W':
+          this.moveCursor('up');
+          break;
+        case 'A':
+          this.moveCursor('left');
+          break;
+        case 'S':
+          this.moveCursor('down');
+          break;
+        case 'D':
+          this.moveCursor('right');
+          break;
+        case 'ENTER':
+          this.selectOption();
+          break;
+        case 'ESCAPE':
+          this.currentScreen = 'root';
+          this.currentCursorIndex = 0;
+          this.SET_COMBAT_GAME_SELECTION_MODE('TARGET');
+          break;
       }
-
-      AudioManager.playOnce('cursorMove', true);
-
-      this.description = options[j].description;
-
-      this.currentCursorIndex = j;
+    } else {
+      this.gameInterface.keyMonitor(event);
     }
   }
+  public moveCursor(direction: string) {
+    const options = this.currentScreenObject;
+    const currentIndex = this.currentCursorIndex;
+    let nextIndex = currentIndex;
+    let j = currentIndex;
+
+    // Move the cursor index
+    if (direction === 'up') {
+      if (currentIndex > 0) {
+        j--;
+      } else {
+        j = options.length - 1;
+      }
+    } else if (direction === 'down') {
+      if (currentIndex < options.length - 1) {
+        j++;
+      } else {
+        j = 0;
+      }
+    } else {
+      return;
+    }
+
+    AudioManager.playOnce('cursorMove', true);
+
+    this.description = options[j].description;
+
+    this.currentCursorIndex = j;
+  }
   public selectOption() {
-    if (this.combatGame.selectionMode == 'ACTION') {
-      const currentScreenObj = this.guiMasterObject[this.currentScreen];
-      const currentIndex = this.currentCursorIndex;
-      const selectedOption: MasterObjectOption = currentScreenObj[currentIndex];
+    const currentScreenObj = this.guiMasterObject[this.currentScreen];
+    const currentIndex = this.currentCursorIndex;
+    const selectedOption: MasterObjectOption = currentScreenObj[currentIndex];
 
-      if (selectedOption.disabled) {
-        return;
+    if (!selectedOption || selectedOption.disabled) {
+      return;
+    }
+    AudioManager.playOnce('cursorSelect')
+    // this is a route
+    if(selectedOption.to) {
+      this.currentScreen = selectedOption.to;
+      this.currentCursorIndex = 0;
+    } else if (selectedOption.select) {
+      // remove and update index if player is removed / changed
+      const placingLine = this.gameInterface.currentTargetSide == 0
+        ? this.gameInterface.playerPlacingLine
+        : this.gameInterface.enemyPlacingLine;
+
+      const target = placingLine[this.gameInterface.currentTargetIndex].character;
+
+      // TODO: player.onDisconnect => IF player is target THEN setSelectionMode('TARGET');
+      if (!target) {
+        return console.error('No target available');
       }
 
-      // this is a route
-      if(selectedOption.to) {
-        this.currentScreen = selectedOption.to;
-        this.currentCursorIndex = 0;
-      } else if (selectedOption.select) {
-        // remove and update index if player is removed / changed
-        const placingLine = this.gameInterface.currentTargetSide == 0
-          ? this.gameInterface.playerPlacingLine
-          : this.gameInterface.enemyPlacingLine;
-
-        const target = placingLine[this.gameInterface.currentTargetIndex].character;
-
-        // TODO: player.onDisconnect => IF player is target THEN setSelectionMode('TARGET');
-        if (!target) {
-          return console.error('No target available');
-        }
-
-        AudioManager.playOnce('cursorSelect')
-        this.SOCKET_EMIT({
-          name: 'COMBAT_ROOM_ACTION',
-          params: [{
-            receiverId: target.id,
-            action: selectedOption.select
-          }],
-        });
-      }
+      this.SOCKET_EMIT({
+        name: 'COMBAT_ROOM_ACTION',
+        params: [{
+          receiverId: target.id,
+          action: selectedOption.select
+        }],
+      });
     }
   }
   get guiMasterObject(): GuiMasterObject {

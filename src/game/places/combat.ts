@@ -391,43 +391,39 @@ const newGame = (global: GameInterface): PhaserGame => {
   */
   const actions: GiActions = {
     startGame() {
-      let self: GameInstance = this;
       console.log('start game');
       // make background;
       actions.addBackground();
       // play bg music
       AudioManager.playOnce('fieldsCombat', true);
 
-      // add events
-      document.addEventListener('keydown', (event) => {
-        if (Date.now() - self.cursorMoveDate <= 100) {
-          return;
-        }
-        self.cursorMoveDate = Date.now();
-
-        if (store.state.combatGame.selectionMode === 'TARGET') {
-          switch (event.key.toUpperCase()) {
-            case 'W':
-              actions.moveCursor('up');
-              break;
-            case 'A':
-              actions.moveCursor('left');
-              break;
-            case 'S':
-              actions.moveCursor('down');
-              break;
-            case 'D':
-              actions.moveCursor('right');
-              break;
-            case 'ENTER':
-              AudioManager.playOnce('cursorSelect');
-              store.commit('SET_COMBAT_GAME_SELECTION_MODE', 'ACTION');
-              break;
-          }
-        }
-      });
-
       global.gameInitialized = true;
+    },
+    keyMonitor(event: any) {
+      let self: any = this;
+      if (Date.now() - self.cursorMoveDate <= 100) {
+        return;
+      }
+      self.cursorMoveDate = Date.now();
+  
+      switch (event.key.toUpperCase()) {
+        case 'W':
+          actions.moveCursor('up');
+          break;
+        case 'A':
+          actions.moveCursor('left');
+          break;
+        case 'S':
+          actions.moveCursor('down');
+          break;
+        case 'D':
+          actions.moveCursor('right');
+          break;
+        case 'ENTER':
+          AudioManager.playOnce('cursorSelect');
+          store.commit('SET_COMBAT_GAME_SELECTION_MODE', 'ACTION');
+          break;
+      }
     },
     moveCursor(direction: string) {
       let indexDirection = null;
@@ -697,15 +693,21 @@ const newGame = (global: GameInterface): PhaserGame => {
         if (!!next) {
           actions.animateEvents(events, i + 1);
         } else {
-          if (!global.gameState.playState) {
+          let aliveEnemies = _.filter(global.gameState.enemies, e => e.entity.health > 0);
+          let alivePlayers = _.filter(global.gameState.players, p => p.entity.health > 0);
+
+          if (!aliveEnemies.length || !alivePlayers.length) {
             AudioManager.stopAll();
-            /* 
-              success ? AudioManager.play('combatSucess') : AudioManager.play('combatFailure');
-              showBanner();
-            */
+            AudioManager.playOnce(alivePlayers.length ? 'combatSuccess' : 'combatFail');
+            setTimeout(() => {
+              global.isAnimating = false;
+            }, 5000);
           } else {
             setTimeout(() => {
               global.isAnimating = false;
+              if (global.gameState.turn % 2 === 0) {
+                store.commit('SET_COMBAT_GAME_SELECTION_MODE', 'TARGET');
+              }
             }, 1000);
           }
         }
@@ -821,6 +823,8 @@ const newGame = (global: GameInterface): PhaserGame => {
       });
     }
   };
+  // Bind key monitor to game interface
+  global.keyMonitor = actions.keyMonitor;
 
   return game;
 }
@@ -836,6 +840,7 @@ export interface GameInterface {
   enemyPlacingLine:  PlacingLine;
   launch: () => void;
   destroyGame: () => void;
+  keyMonitor: (event: any) => void;
 };
 interface PlacingLine {
   [index: string]: PlacingLineSpot;
@@ -907,6 +912,9 @@ function CombatInterface(): GameInterface {
         game = game.destroy();
       }
     },
+    keyMonitor: () => {
+      // this will be binded to the game on launch
+    }
   };
 
   console.log('new global');
