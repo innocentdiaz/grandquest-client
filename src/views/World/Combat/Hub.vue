@@ -84,7 +84,7 @@ $mainBlueHover: #005e91;
 $mainLightGrey: #e0e0e0;
 
 .combat {
-  height: 100%;
+  height: 70vh;
   width: 100%;
   display: flex;
   flex-direction: row;
@@ -92,6 +92,7 @@ $mainLightGrey: #e0e0e0;
 
   .side-menu {
     overflow-y: scroll;
+    background: $mainLightGrey;
     .main-title {
       padding: 5px;
       color: white;
@@ -161,7 +162,12 @@ $mainLightGrey: #e0e0e0;
       padding: 25px;
       color: white;
       background: 
-        linear-gradient(black, rgba(0, 0, 0, 0), black), url('../../../assets/img/combat.png');
+      linear-gradient(black, rgba(0, 0, 0, 0), black), url('../../../assets/img/combat.png');
+      @media screen and (min-width: 750px) {
+        flex: 0;
+        display: none;
+        opacity: 0;
+      }
     }
     hr {
       background: white;
