@@ -122,11 +122,7 @@ import _ from 'underscore';
 import io from 'socket.io-client';
 import api from '@/api';
 import CombatInterface, { GameInterface } from '@/game/places/combat';
-
-// audio
-import Howler from 'howler';
-import cursorMoveSrc from '@/assets/audio/cursor-move.mp3';
-import cursorSelectSrc from '@/assets/audio/cursor-select.mp3';
+import AudioManager from '@/game/audio-manager';
 
 interface MasterObjectOption {
   title: string;
@@ -161,13 +157,6 @@ export default class CombatRoom extends Vue {
 
   public description: string = '';
 
-  public cursorSelectAudio = new Howler.Howl({
-    src: [ cursorSelectSrc ],
-  });
-  public cursorMoveAudio = new Howler.Howl({
-    src: [ cursorMoveSrc ],
-  });
-
   public gameInterface: GameInterface = CombatInterface();
   public currentScreen = 'root';
   public currentCursorIndex = 0;
@@ -184,7 +173,7 @@ export default class CombatRoom extends Vue {
     this.SET_HEADER_VISIBILITY(false);
 
     document.addEventListener('keydown', (event) => {
-      if (Date.now() - this.cursorMoveDate <= 100) {
+      if (Date.now() - this.cursorMoveDate <= 100 && !this.gameInterface.isAnimating) {
         return;
       }
       this.cursorMoveDate = Date.now();
@@ -209,6 +198,7 @@ export default class CombatRoom extends Vue {
           case 'ESCAPE':
             if (this.combatGame.selectionMode === 'ACTION') {
               this.currentScreen = 'root';
+              this.currentCursorIndex = 0;
               this.SET_COMBAT_GAME_SELECTION_MODE('TARGET');
             }
             break;
@@ -249,7 +239,7 @@ export default class CombatRoom extends Vue {
         return;
       }
 
-      this.cursorMoveAudio.play();
+      AudioManager.playOnce('cursorMove', true);
 
       this.description = options[j].description;
 
@@ -257,8 +247,6 @@ export default class CombatRoom extends Vue {
     }
   }
   public selectOption() {
-    this.cursorSelectAudio.play();
-
     if (this.combatGame.selectionMode == 'ACTION') {
       const currentScreenObj = this.guiMasterObject[this.currentScreen];
       const currentIndex = this.currentCursorIndex;
@@ -285,6 +273,7 @@ export default class CombatRoom extends Vue {
           return console.error('No target available');
         }
 
+        AudioManager.playOnce('cursorSelect')
         this.SOCKET_EMIT({
           name: 'COMBAT_ROOM_ACTION',
           params: [{
@@ -423,6 +412,7 @@ export default class CombatRoom extends Vue {
   get currentScreenObject() {
     if (this.combatGame.selectionMode === 'TARGET') {
       this.currentScreen = 'root';
+      this.currentCursorIndex = 0;
     }
     return this.guiMasterObject[this.currentScreen];
   }
