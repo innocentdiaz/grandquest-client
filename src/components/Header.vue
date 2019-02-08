@@ -22,7 +22,7 @@
           <img v-if="!socket.connected"
             src="https://cdn2.iconfinder.com/data/icons/prohibitions/105/12-512.png" 
             title="Not connected to the server. Sorry :(" 
-            alt="No connection" 
+            alt="" 
             height="20"
           />
         </div>
