@@ -101,10 +101,10 @@
           </div>
         </div>
       </aside>
-      <button v-if="!combatGame.gameState.readyToContinue[player.id]" v-on:click="SOCKET_EMIT({ name: 'COMBAT_ROOM_READY' })">
+      <button v-if="!combatGame.gameState.readyToContinue[player.id]">
         <img src="@/assets/img/icon/1bit-swords.png" alt="Battle!">
         <br>
-        READY
+        More levels coming soon!
       </button>
     </div>
   </div>
