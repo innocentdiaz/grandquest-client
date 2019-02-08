@@ -395,6 +395,8 @@ const newGame = (global: GameInterface): PhaserGame => {
       console.log('start game');
       // make background;
       actions.addBackground();
+      // play bg music
+      AudioManager.playOnce('fieldsCombat', true);
 
       // add events
       document.addEventListener('keydown', (event) => {
@@ -695,9 +697,17 @@ const newGame = (global: GameInterface): PhaserGame => {
         if (!!next) {
           actions.animateEvents(events, i + 1);
         } else {
-          setTimeout(() => {
-            global.isAnimating = false;
-          }, 1000);
+          if (!global.gameState.playState) {
+            AudioManager.stopAll();
+            /* 
+              success ? AudioManager.play('combatSucess') : AudioManager.play('combatFailure');
+              showBanner();
+            */
+          } else {
+            setTimeout(() => {
+              global.isAnimating = false;
+            }, 1000);
+          }
         }
       });
     },
@@ -736,17 +746,20 @@ const newGame = (global: GameInterface): PhaserGame => {
               x: atkPosition,
               onStart() {
                 character.sprite.play(event.action.id);
-                setTimeout(() => receiver.sprite.play(`${receiver.entity.name}-hurt`), 200);
-                // update sprite health bar
-                const damagePercentage = (event.outcome.damage / receiver.entity.maxHealth);
-                const totalWidth = receiver._nameTag.displayWidth;
-                const currentWidth = receiver._healthBar.width;
-                const newWidth = currentWidth - (totalWidth * damagePercentage);
-                self.tweens.add({
-                  targets: receiver._healthBar,
-                  width: newWidth <= 0 ? 0 : newWidth, // avoid negative health bar
-                  duration: 250,
-                });
+                setTimeout(() => {
+                  receiver.sprite.play(`${receiver.entity.name}-hurt`)
+                  AudioManager.playOnce('combatHit');
+                  // update sprite health bar
+                  const damagePercentage = (event.outcome.damage / receiver.entity.maxHealth);
+                  const totalWidth = receiver._nameTag.displayWidth;
+                  const currentWidth = receiver._healthBar.width;
+                  const newWidth = currentWidth - (totalWidth * damagePercentage);
+                  self.tweens.add({
+                    targets: receiver._healthBar,
+                    width: newWidth <= 0 ? 0 : newWidth, // avoid negative health bar
+                    duration: 250,
+                  });
+                }, 290);
               },
             });
             timeline.add({ // walk back
@@ -889,6 +902,7 @@ function CombatInterface(): GameInterface {
       }
     },
     destroyGame: () => {
+      AudioManager.stopAll();
       if (game) {
         game = game.destroy();
       }
