@@ -173,7 +173,6 @@ const actions = {
       Authenticate socket
     */
     const JWT = localStorage.getItem('grandquest:jwt');
-    console.log(JWT);
     if (JWT) {
       socket.emit('AUTHENTICATE_SOCKET', JWT, (err: any, player: Player) => {
         if (!err && player) {
