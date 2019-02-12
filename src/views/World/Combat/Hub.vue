@@ -33,7 +33,7 @@
       </div>
     </div>
     <!-- Character selection -->
-    <div class="character-selection">
+    <div class="character-selection" v-if="player.authenticated">
       <div class="img-container">
         <div class="cover" v-if="player.level < currentCharacter.level">
           <p>Unlocked at level {{currentCharacter.level}}</p>
