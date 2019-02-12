@@ -28,6 +28,7 @@ export interface Player {
     authenticated: boolean;
     weapon_id: string;
     weapon_health: number;
+    level: number;
 }
 export interface World {
     timeOfDay: number;

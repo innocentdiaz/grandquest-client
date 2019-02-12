@@ -22,6 +22,7 @@ const initialState = {
     username: '',
     gold: 0,
     role: '',
+    level: 0,
     authenticated: false,
     currentJWT: '',
     created_at: '',
