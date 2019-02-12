@@ -214,10 +214,10 @@ $mainLightGrey: #e0e0e0;
       flex-direction: row;
       align-items: center;
       justify-content: center;
-
+      padding: 0 30px;
       img {
-        height: 198px;
-        width: 198px;
+        height: 200px;
+        width: 200px;
         background: #0d1c2c;
         border: 2px solid #454b40;
       }
@@ -225,11 +225,10 @@ $mainLightGrey: #e0e0e0;
         position: absolute;
         top: 0;
         bottom: 0;
-        left: 0;
-        right: 0;
+        width: 200px;
         background: rgba(10, 10, 10, 0.8);
         color: white;
-        margin: 0 30px;
+        margin: 0;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -237,12 +236,11 @@ $mainLightGrey: #e0e0e0;
       .character-name {
         position: absolute;
         top: 0;
-        left: 0;
-        right: 0;
+        width: 190px;
         color: white;
         border: 1px 0 solid white;
         background: rgba(10, 10, 10, 0.75);
-        margin: 0 30px;
+        margin: 0;
         padding: 10px;
       }
       .chevron {

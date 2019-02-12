@@ -36,6 +36,10 @@ $mainGrey: rgb(179, 179, 179);
 $mainBlueHover: #005e91;
 $mainLightGrey: #e0e0e0;
 
+* {
+  box-sizing: border-box;
+}
+
 body {
   padding: 0;
   margin: 0;
