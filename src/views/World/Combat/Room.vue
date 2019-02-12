@@ -2,7 +2,16 @@
   <div class="combat-root" v-on:keydown="keyMonitor">
     <header>
       <ul>
-        <router-link to="/combat">Exit</router-link> <span>Controls: [W, A, S, D, ENTER, ESC]</span>
+        <router-link to="/combat">Exit</router-link>
+        <div class="level">
+          <div class="icon">
+            <span>1</span>
+          </div>
+          <div class="bar">
+            <p class="text">0/200</p>
+            <div id="xp-juice"></div>
+          </div>
+        </div>
       </ul>
       <h1 id="title" v-if="gameInterface.gameInitialized && !gameInterface.isAnimating && gameInterface.gameState.playState">
         Combat - {{ combatGame.gameState.title }}, Level - {{ gameInterface.gameState.level }}, Turn - {{ gameInterface.gameState.turn }}
@@ -439,10 +448,59 @@ export default class CombatRoom extends Vue {
     ul {
       display: block;
       margin: 0;
-      padding: 10px;
+      padding: 0;
       background: black;
-      span {
-        float: right;
+      min-height: 30px;
+      padding: 0 10px;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+
+      .level {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        span {
+          z-index: 10;
+        }
+        .icon {
+          height: 20px;
+          width: 20px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: white;
+          font-weight: bold;
+          background-image: url('../../../assets/img/misc/gold-frame.png');
+          background-position: center center;
+          background-repeat: no-repeat;
+          background-size: contain;
+          height: 45px;
+          font-size: 15px;
+          margin-right: 10px;
+        }
+        .bar {
+          position: relative;
+          height: 20px;
+          width: 250px;
+          color: white;
+          background: black;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          border: 1px solid white;
+          font-size: 15px;
+          #xp-juice {
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            background: rgb(167, 0, 167);
+            width: 20px;
+            z-index: 5;
+          }
+        }
       }
     }
   }
