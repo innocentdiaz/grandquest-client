@@ -35,12 +35,15 @@
     <!-- Character selection -->
     <div class="character-selection">
       <div class="img-container">
-        <button class="chevron left"></button>
-        <h2 class="character-name">{{'Adventurer'}}</h2>
-        <img src="@/assets/img/icon/people/adventurer.png" alt="">
-        <button class="chevron right"></button>
+        <div class="cover" v-if="player.level < currentCharacter.level">
+          <p>Unlocked at level {{currentCharacter.level}}</p>
+        </div>
+        <button :class="`chevron left ${currentCharacterIndex === 0 ? 'disabled' : ''}`" v-on:click="moveSelection(-1)"></button>
+        <h2 class="character-name" v-if="player.level >= currentCharacter.level">{{currentCharacter.name}}</h2>
+        <img :src="require(`@/assets/img/icon/people/${currentCharacter.name.toLowerCase()}.png`)" alt="character avatar">
+        <button :class="`chevron right ${currentCharacterIndex === availableCharacters.length - 1 ? 'disabled' : ''}`" v-on:click="moveSelection(1)"></button>
       </div>
-      <p>You're off on an adventure! But beware, here be dragons.</p>
+      <p v-if="player.level >= currentCharacter.level">{{currentCharacter.description}}</p>
     </div>
   </div>
 </template>
@@ -66,6 +69,20 @@ export default class Hub extends Vue {
   @Action public socketJoinRoom: any;
   @Action public socketLeaveRoom: any;
 
+  public availableCharacters = [
+    {
+      name: 'Adventurer',
+      description: 'You\'re off on an adventure! But beware, here be dragons.',
+      level: 0,
+    },
+    {
+      name: 'Ninja',
+      description: 'A sneaky ninja...',
+      level: 3,
+    },
+  ];
+  public currentCharacterIndex = 0;
+
   public mounted () {
     this.socketJoinRoom({ name: 'COMBAT_HUB'});
   }
@@ -84,6 +101,14 @@ export default class Hub extends Vue {
         roomID,
       },
     });
+  }
+  public moveSelection(direction: number) {
+    if (this.availableCharacters[this.currentCharacterIndex + direction]) {
+      this.currentCharacterIndex += direction;
+    }
+  }
+  get currentCharacter() {
+    return this.availableCharacters[this.currentCharacterIndex];
   }
 }
 </script>
@@ -196,6 +221,19 @@ $mainLightGrey: #e0e0e0;
         background: #0d1c2c;
         border: 2px solid #454b40;
       }
+      .cover {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: rgba(10, 10, 10, 0.8);
+        color: white;
+        margin: 0 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
       .character-name {
         position: absolute;
         top: 0;
@@ -221,6 +259,13 @@ $mainLightGrey: #e0e0e0;
         }
         &.right {
           transform: rotateZ(90deg);
+        }
+        &.disabled {
+          opacity: 0.6;
+          cursor: default;
+          &:hover {
+            opacity: 0.6;
+          }
         }
         &:hover {
           opacity: 0.75;
