@@ -25,15 +25,22 @@
         <p>You are not connected to the server</p>
       </div>
     </div>
+    <!-- Main content -->
     <div class="main-container">
       <div class="container">
         <h1 class="header-title">COMBAT <br> ARENA</h1>
         <span class="subtitle">{{world.inCombat}} players in combat</span>
       </div>
-      <aside>
-        Live feed
-        <hr>
-      </aside>
+    </div>
+    <!-- Character selection -->
+    <div class="character-selection">
+      <div class="img-container">
+        <button class="chevron left"></button>
+        <h2 class="character-name">{{'Adventurer'}}</h2>
+        <img src="@/assets/img/icon/people/adventurer.png" alt="">
+        <button class="chevron right"></button>
+      </div>
+      <p>You're off on an adventure! But beware, here be dragons.</p>
     </div>
   </div>
 </template>
@@ -95,6 +102,7 @@ $mainLightGrey: #e0e0e0;
   align-items: stretch;
 
   .side-menu {
+    flex: 1;
     overflow-y: scroll;
     background: $mainLightGrey;
     .main-title {
@@ -147,7 +155,7 @@ $mainLightGrey: #e0e0e0;
     }
   }
   .main-container {
-    flex: 1;
+    flex: 2;
     display: flex;
     flex-direction: row;
     align-items: stretch;
@@ -161,21 +169,63 @@ $mainLightGrey: #e0e0e0;
         margin-bottom: 0;
       }
     }
-    aside {
-      flex: 2;
-      padding: 25px;
-      color: white;
-      background: 
-      linear-gradient(black, rgba(0, 0, 0, 0), black), url('../../../assets/img/combat.png');
-      @media screen and (max-width: 750px) {
-        flex: 0;
-        display: none;
-        opacity: 0;
-      }
-    }
     hr {
       background: white;
       border-color: white;
+    }
+  }
+  .character-selection {
+    flex: 1;
+    padding: 25px;
+    text-align: left;
+    h1 {
+      margin: 0;
+    }
+    .img-container {
+      position: relative;
+      height: 200px;
+      width: 100%;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
+
+      img {
+        height: 198px;
+        width: 198px;
+        background: #0d1c2c;
+        border: 2px solid #454b40;
+      }
+      .character-name {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        color: white;
+        border: 1px 0 solid white;
+        background: rgba(10, 10, 10, 0.75);
+        margin: 0 30px;
+        padding: 10px;
+      }
+      .chevron {
+        height: 30px;
+        width: 30px;
+        border: none;
+        background-color: transparent;
+        background-image: url('../../../assets/img/icon/chevron.png');
+        background-size: contain;
+        background-repeat: no-repeat;
+        background-position: center center;
+        &.left {
+          transform: rotateZ(-90deg);
+        }
+        &.right {
+          transform: rotateZ(90deg);
+        }
+        &:hover {
+          opacity: 0.75;
+        }
+      }
     }
   }
 }
