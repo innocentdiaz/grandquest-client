@@ -222,12 +222,8 @@ const newGame = (global: GameInterface): PhaserGame => {
 
         const networkGameState = store.state.combatGame.gameState;
 
-        // Cloud animation
-        if (global._gameClouds) {
-          global._gameClouds.tilePositionX += 0.072;
-        }
         /*
-          CHARACTER UPDATING
+          GAME LOGIC
         */
 
         // Despawn Characters
@@ -239,7 +235,14 @@ const newGame = (global: GameInterface): PhaserGame => {
           }
         });
 
-        // Spawn & Update Characters
+        /*
+          SCENE RENDERING
+        */
+        // Cloud animation
+        if (global._gameClouds) {
+          global._gameClouds.tilePositionX += 0.072;
+        }
+        // Spawn & Update Characters Graphics
         _.forEach({...networkGameState.players, ...networkGameState.enemies}, (characterOnNetwork) => {
           let id: string = String(characterOnNetwork.id);
           let characterOnLocal = {...global.gameState.enemies, ...global.gameState.players}[id];
@@ -265,9 +268,6 @@ const newGame = (global: GameInterface): PhaserGame => {
           } else {
             characterOnLocal = actions.spawnCharacter(characterOnNetwork);
           }
-          /*
-            Graphics updating
-          */
           // name tag
           if(!characterOnLocal._nameTag) {
             characterOnLocal._nameTag = self.add.text(
@@ -334,7 +334,7 @@ const newGame = (global: GameInterface): PhaserGame => {
             characterOnLocal._healthText.x = characterOnLocal._healthBarBackground.getCenter().x;
             characterOnLocal._healthText.y = characterOnLocal._healthBarBackground.getCenter().y;
           }
-          // grave market
+          // grave marker
           if (!characterOnLocal._healthBar.width) {
             characterOnLocal._healthBar.visible = false;
             characterOnLocal._healthBarBackground.visible = false;
@@ -345,11 +345,7 @@ const newGame = (global: GameInterface): PhaserGame => {
             }
           }
         });
-
-        /*
-          UPDATE SELECTION HAND
-        */
-        // only while selecting a target
+        // target selection hand
         if (store.state.combatGame.selectionMode === 'TARGET' && !global.isAnimating) {
           // if there are players
           if (Object.keys(global.gameState.players).length) {
@@ -377,9 +373,7 @@ const newGame = (global: GameInterface): PhaserGame => {
           store.commit('SET_COMBAT_GAME_SELECTION_MODE', 'TARGET');
         }
 
-        /*
-          EVENTS UPDATING
-        */
+        /* Animate game events */
 
         // IF the network is at a different turn
         if (global.gameState.turn !== networkGameState.turn && !global.isAnimating) {
@@ -397,15 +391,20 @@ const newGame = (global: GameInterface): PhaserGame => {
           return;
         }
 
-        /*
-          Level updating / rendering
-        */
+        /* Level updating / rendering */
         if (global.gameState.level !== networkGameState.level) {
           global.gameState.level = networkGameState.level;
           _.forEach({...global.gameState.players, ...global.gameState.enemies}, c => {
             actions.despawnCharacter(c.id);
           });
           actions.loadScene();
+        }
+
+        /*
+          GUI rendering
+        */
+        if (!global.isAnimating) {
+          actions.animateXPBar();
         }
       },
     },
@@ -607,7 +606,7 @@ const newGame = (global: GameInterface): PhaserGame => {
         : global.playerPlacingLine;
 
       // find empty spot in line
-      let emptySpotInLine: string = _.findKey({...placingLine}, (spot: PlacingLineSpot) => !spot.character);
+      let emptySpotInLine = _.findKey({...placingLine}, (spot: PlacingLineSpot) => !spot.character);
 
       if (!emptySpotInLine) {
         throw new Error('Attempted to spawn character but there are not empty spaces in the placing line');
@@ -842,6 +841,7 @@ const newGame = (global: GameInterface): PhaserGame => {
                   receiver.sprite.play(`${receiver.entity.name}-hurt`)
                   AudioManager.playOnce('combatHit');
                   // update sprite health bar
+                  if (!event.outcome.damage) return;
                   const damagePercentage = (event.outcome.damage / receiver.entity.maxHealth);
                   const totalWidth = receiver._nameTag.displayWidth;
                   const currentWidth = receiver._healthBar.width;
@@ -851,6 +851,11 @@ const newGame = (global: GameInterface): PhaserGame => {
                     width: newWidth <= 0 ? 0 : newWidth, // avoid negative health bar
                     duration: 250,
                   });
+
+                  // animate XP bar for the current player
+                  if (store.state.player.id === character.id) {
+                    actions.animateXPBar(event.outcome.xp);
+                  }
                 }, 290);
               },
             });
@@ -881,6 +886,7 @@ const newGame = (global: GameInterface): PhaserGame => {
                   duration: 250,
                   onStart() {
                     // update sprite health bar
+                    if (!event.outcome.heal) return;
                     const healPercentage = (event.outcome.heal / receiver.entity.maxHealth);
                     const totalWidth = receiver._nameTag.displayWidth;
                     const currentWidth = receiver._healthBar.width;
@@ -911,6 +917,93 @@ const newGame = (global: GameInterface): PhaserGame => {
           }
         }
       });
+    },
+    setInterval(name: string, func: (i: number) => () => void, interval: number) {
+      if (global.gameIntervals[name]) {
+        actions.stopInterval(name);
+      }
+      let i = 0;
+      let int = setInterval(() => {
+        func(i);
+        i++;
+      }, interval);
+      global.gameIntervals[name] = int;
+    },
+    stopInterval(name: string) {
+      if (global.gameIntervals[name]) {
+        clearInterval(global.gameIntervals[name]);
+        delete global.gameIntervals[name];
+      }
+    },
+    animateXPBar(amount?: number) {
+      if (!store.state.player.id) {
+        return;
+      }
+      const currentPlayer = global.gameState.players[store.state.player.id];
+      if (!currentPlayer) {
+        return;
+      }
+      let XP = currentPlayer.xp;
+      let level = currentPlayer.level;
+      const max = level === 1
+        ? 55
+        : level === 2
+        ? 175
+        : 0;
+      // elements
+      const barElement = document.querySelector('.level .bar');
+      const barJuiceElement = document.getElementById('xp-juice');
+      const barLabelElement = document.getElementById('xp-label');
+      const levelLabelElement = document.getElementById('level-label');
+      
+      if (!barElement || !barJuiceElement || !barLabelElement || !levelLabelElement) {
+        return;
+      }
+
+      barLabelElement.innerHTML = `${XP}/${max} xp`;
+
+      if (!amount) {
+        levelLabelElement.innerHTML = String(level);
+        barJuiceElement.style.width = `${(XP/max) * 100}%`;
+        return;
+      }
+      let barWidth = Number((barJuiceElement.clientWidth / (barElement.clientWidth - 2)).toFixed(2));
+      const lvlShown = Number(levelLabelElement.innerHTML);
+      const shownXP = barWidth*max;
+
+      // maths
+      const totalXP = shownXP+amount;
+      const leveled = Math.floor(totalXP/max); // 0
+      const remainder = totalXP%max;
+      let j = leveled-lvlShown > 0 ? leveled-lvlShown : 0;
+      actions.setInterval('xpBar', (i: number) => {
+        barWidth = Number((barJuiceElement.clientWidth / (barElement.clientWidth - 2)).toFixed(2));
+        let newWidth = 0;
+        barJuiceElement.setAttribute('class', '');
+        // if we animated the parents to 100% last animation
+        if (barWidth >= 1) {
+          barWidth = 0;
+          barJuiceElement.style.width = '0%';
+          level++;
+          levelLabelElement.innerHTML = String(level);
+        }
+        if (i < j) {
+          newWidth = 1;
+        }
+        else if (i === j) // ANIMATE LAST ONE
+        {
+          newWidth = (remainder/max)+barWidth;
+        }
+        else // ALL ANIMATIONS ARE COMPLETE
+        {
+          if (i === 1) {
+            barJuiceElement.style.width = `${remainder/max*100}%`;
+          }
+          return actions.stopInterval('xpBar');
+        }
+        barJuiceElement.setAttribute('class', 'animated');
+        barJuiceElement.style.width = `${newWidth*100}%`;
+      }, 300);
     }
   };
   // Bind key monitor to game interface
@@ -921,6 +1014,9 @@ const newGame = (global: GameInterface): PhaserGame => {
 export interface GameInterface {
   gameState: CombatRoom;
   gameInitialized: boolean;
+  gameIntervals: {
+    [intervalName: string]: number,
+  }
   currentTargetSide: number;
   currentTargetIndex: number;
   _gameClouds: any;
@@ -993,13 +1089,20 @@ function CombatInterface(): GameInterface {
         prevIndex: index === 1 ? 4 : index - 1,
       },
     }), {}),
+    gameIntervals: {},
     launch: () => {
       if (!game) {
         game = newGame(global);
       }
     },
     destroyGame: () => {
+      // stop any audio playing
       AudioManager.stopAll();
+      // stop any intervals set
+      _.forEach(global.gameIntervals, (i) => {
+        clearInterval(i);
+      });
+      // destroy the phaser game instance
       if (game) {
         game = game.destroy();
       }

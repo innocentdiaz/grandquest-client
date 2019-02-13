@@ -3,12 +3,12 @@
     <header>
       <ul>
         <router-link to="/combat">Exit</router-link>
-        <div class="level">
+        <div class="level" v-if="currentPlayer">
           <div class="icon">
-            <span>1</span>
+            <span id="level-label">{{currentPlayer.level}}</span>
           </div>
           <div class="bar">
-            <p class="text">0/200</p>
+            <p id="xp-label"></p>
             <div id="xp-juice"></div>
           </div>
         </div>
@@ -79,18 +79,9 @@
         <h2 class="subtitle">Level completed in {{gameInterface.gameState.turn}} turns</h2>
         <div v-if="currentLevelRecord[this.player.id]">
           <h2>Stats</h2>
-          <p>Damage received: {{currentLevelRecord[this.player.id].damageReceived}}</p>
           <p>Damage dealt: {{currentLevelRecord[this.player.id].damageDealt}}</p>
-          <p>Health points: {{Object.values(currentLevelRecord[this.player.id].healed).reduce((a, h) => a + h.total, 0)}}</p>
-          <p>Killed: {{Object.keys(currentLevelRecord[this.player.id].killed).length}}</p>
-          <p>Gold: {{currentLevelRecord[this.player.id].gold}}</p>
-          <h2>Rewards</h2>
-          <p v-for="(healed, name) in currentLevelRecord[this.player.id].healed" :key="name">
-            Healed {{name}} {{healed.times}} times for {{healed.reward}} gold
-          </p>
-          <p v-for="(killed, name) in currentLevelRecord[this.player.id].killed" :key="name">
-            Killed {{killed.times}} {{ killed.times > 1 ? `${name}s` : name }} for {{killed.reward}} gold
-          </p>
+          <p>Gold Earned: {{currentLevelRecord[this.player.id].gold}}</p>
+          <p>XP Gained: {{currentLevelRecord[this.player.id].xp}}</p>
         </div>
         <div v-else>
           <p>No stats available</p>
@@ -103,9 +94,8 @@
             <h3 class="title">{{gameInterface.gameState.players[id].username}} <span>{{combatGame.gameState.readyToContinue[id] ? '- Ready!' : ''}}</span></h3>
             <div class="grid">
               <p>Damage dealt: {{player.damageDealt}}</p>
-              <p>Damage taken: {{player.damageReceived}}</p>
-              <p>Players healed: {{Object.keys(player.healed).length}}</p>
               <p>Gold: {{player.gold}}</p>
+              <p>XP: {{player.xp}}</p>
             </div>
           </div>
         </div>
@@ -490,15 +480,23 @@ export default class CombatRoom extends Vue {
           justify-content: center;
           align-items: center;
           border: 1px solid white;
+          overflow: hidden;
           font-size: 15px;
+          #xp-label {
+            z-index: 6;
+          }
           #xp-juice {
             position: absolute;
             left: 0;
             top: 0;
             bottom: 0;
-            background: rgb(167, 0, 167);
-            width: 20px;
+            background-color: rgb(167, 0, 167);
+            width: 0;
             z-index: 5;
+            &.animated {
+              background-color: rgb(189, 0, 189);
+              transition: .3s all ease-in-out;
+            }
           }
         }
       }
