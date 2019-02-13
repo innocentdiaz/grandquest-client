@@ -19,7 +19,7 @@
 import { Vue, Component } from 'vue-property-decorator';
 import { State } from 'vuex-class';
 import { Player } from '@/types';
-import items from '@/game/data/items';
+import items from '@/game/definitions/items';
 import moment from 'moment';
 
 @Component
