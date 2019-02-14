@@ -3,7 +3,7 @@
     <header>
       <ul>
         <router-link to="/combat">Exit</router-link>
-        <div class="level" v-if="currentPlayer">
+        <div class="level" v-if="gameInterface.gameState.playState && currentPlayer">
           <div class="icon">
             <span id="level-label">{{currentPlayer.level}}</span>
           </div>
@@ -18,7 +18,7 @@
       </h1>
     </header>
     <!-- Main screen -->
-    <div id="main" v-bind:style="{ display: gameInterface.gameState.playState ? 'flex' : 'none' }">
+    <div id="main">
       <div id="canvas-parent"></div>
       <!-- Display -->
       <div class="display" v-if="socket.loading">
@@ -74,37 +74,32 @@
     </div>
     <!-- Outcomes screen -->
     <div id="outcomes" v-if="gameInterface.gameInitialized && !gameInterface.gameState.playState">
-      <div id="main">
-        <h1>Level {{gameInterface.gameState.level}} complete</h1>
-        <h2 class="subtitle">Level completed in {{gameInterface.gameState.turn}} turns</h2>
-        <div v-if="currentLevelRecord[this.player.id]">
-          <h2>Stats</h2>
+      <div class="content">
+        <aside>
+          <div class="player-container" v-for="(player, id) in currentLevelRecord" v-bind:key="id">
+            <img v-bind:src="require(`../../../assets/img/icon/people/${gameInterface.gameState.players[id].entity.name}.png`)" class="avatar" alt="Player entity">
+            <div class="grid">
+              <h3 class="title">{{gameInterface.gameState.players[id].username}}</h3>
+              <h2 v-if="combatGame.gameState.readyToContinue[id]">Ready!</h2>
+              <div v-else>
+                <p>Dmg: {{player.damageDealt}}</p>
+                <p>Gold: {{player.gold}}</p>
+                <p>XP: {{player.xp}}</p>
+              </div>
+            </div>
+          </div>
+        </aside>
+        <div class="main">
+          <h1>Level {{gameInterface.gameState.level}} complete!</h1>
+          <h2 class="subtitle">Level completed in {{gameInterface.gameState.turn}} turns</h2>
           <p>Damage dealt: {{currentLevelRecord[this.player.id].damageDealt}}</p>
           <p>Gold Earned: {{currentLevelRecord[this.player.id].gold}}</p>
           <p>XP Gained: {{currentLevelRecord[this.player.id].xp}}</p>
-        </div>
-        <div v-else>
-          <p>No stats available</p>
+          <button>
+            Ready!
+          </button>
         </div>
       </div>
-      <aside>
-        <div class="player-container" v-for="(player, id) in currentLevelRecord" v-bind:key="id">
-          <img v-bind:src="require(`../../../assets/img/icon/people/${gameInterface.gameState.players[id].entity.name}.png`)" alt="Player entity">
-          <div class="content">
-            <h3 class="title">{{gameInterface.gameState.players[id].username}} <span>{{combatGame.gameState.readyToContinue[id] ? '- Ready!' : ''}}</span></h3>
-            <div class="grid">
-              <p>Damage dealt: {{player.damageDealt}}</p>
-              <p>Gold: {{player.gold}}</p>
-              <p>XP: {{player.xp}}</p>
-            </div>
-          </div>
-        </div>
-      </aside>
-      <button v-if="!combatGame.gameState.readyToContinue[player.id]">
-        <img src="@/assets/img/icon/1bit-swords.png" alt="Battle!">
-        <br>
-        More levels coming soon!
-      </button>
     </div>
   </div>
 </template>
@@ -414,6 +409,7 @@ export default class CombatRoom extends Vue {
 }
 </script>
 <style lang="scss" scoped>
+$mainGreen: #9dff5c;
 .combat-root {
   height: 100vh;
   width: 100%;
@@ -432,6 +428,7 @@ export default class CombatRoom extends Vue {
     right: 0;
     background: linear-gradient(to bottom, rgb(22, 22, 22), rgba(24, 24, 24, 0.6), rgba(24, 24, 24, 0.4), rgba(0, 0, 0, 0));
     color: white;
+    z-index: 15;
     #title {
       margin-left: 10px;
     }
@@ -511,72 +508,77 @@ export default class CombatRoom extends Vue {
     overflow: hidden;
   }
   #outcomes {
-    height: 100vh;
-    width: 100vw;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    right: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 10;
     display: flex;
-    flex-direction: row;
-    overflow: hidden;
-    color: white;
-    background: black;
-    padding-top: 25px;
-    background: linear-gradient(to right, black 66.6%, #ff2828 5%);
-    button {
-      background: black;
-      color: white;
-      padding: 25px 10px;
-      border: none;
-      transition: .2s all ease-in-out;
-      img {
-        height: 2.85em;
-      }
-      &:hover {
-        padding: 25px 30px;
-      }
-    }
-  }
-  #outcomes > div {
-    padding: 0.8em;
-  }
-  #outcomes #main {
-    flex: 2;
-    background: black;
-    h2 {
-      font-size: larger;
-    }
-  }
-  #outcomes aside {
-    background: rgb(255, 40, 40);
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-
-    .player-container {
+    justify-content: center;
+    align-items: center;
+    animation: 2s outcomes-fadein forwards;
+    .content {
+      position: relative;
+      border-radius: 5px;
+      background: white;
+      margin: 2em 1.25em;
+      min-width: 70%;
+      min-height: 50%;
+      max-height: 70%;
       display: flex;
       flex-direction: row;
-      align-items: flex-start;
-      padding: 25px 5px;
-      img {
-        height: 3.5em;
-        width: 3.5em;
-        border: 5px inset rgb(124, 61, 32);
-        border-radius: 2px;
-        background: rgb(199, 40, 40);
-      }
-      .content {
-        flex: 1;
-        align-self: stretch;
-        margin-left: 10px;
-        .title {
-          font-size: large;
-          margin: 0;
+      align-items: stretch;
+      animation: 1s outcomes-scalein forwards;
+
+      .main {
+        flex: 4;
+        padding: 0 1em;
+        button {
+          position: absolute;
+          background: $mainGreen;
+          color: white;
+          border: none;
+          bottom: 1em;
+          right: 1em;
+          font-size: 1.3em;
+          padding: 5px 8px;
+          border-bottom-right-radius: 5px;
+          transition: .2s all ease-in-out;
+          &:hover {
+            transform: scale(1.1);
+            border-radius: 5px;
+            box-shadow: 3px 3px 3px rgb(161, 161, 161);
+          }
         }
-        .grid {
-          display: grid;
-          grid-gap: 5px;
-          grid-template-columns: auto auto;
-          p {
-            margin: 1px 0;
+      }
+      aside {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        box-shadow: 0 0 5px inset grey;
+
+        .player-container {
+          display: flex;
+          flex-direction: row;
+          align-items: center;
+          margin: 20px 10px 0 0;
+
+          .avatar {
+            align-self: flex-start;
+            height: 3.5em;
+          }
+          .grid {
+            .title {
+              display: block;
+              margin: 10px 0 5px 0;
+            }
+            p {
+              margin: 2px 0;
+            }
           }
         }
       }
@@ -592,6 +594,22 @@ export default class CombatRoom extends Vue {
     align-items: center;
     justify-content: center;
     font-family: 'Press Start 2P', monospace;
+  }
+}
+@keyframes outcomes-fadein {
+  from {
+    background-color: transparent;
+  }
+  to {
+    background-color: rgba(24, 24, 24, 0.6);
+  }
+}
+@keyframes outcomes-scalein {
+  from {
+    transform: scale(0);
+  }
+  to {
+    transform: scale(1);
   }
 }
 </style>
