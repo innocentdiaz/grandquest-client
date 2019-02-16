@@ -81,8 +81,8 @@ export interface CombatGame {
 export interface SocketState {
     connected: boolean;
     loading: boolean;
-    room: null|{
+    room: null | {
         name: string;
-        parameter: any;
+        id?: string;
     };
 }

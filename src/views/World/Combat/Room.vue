@@ -143,8 +143,10 @@ export default class CombatRoom extends Vue {
   @Action public socketLeaveRoom: any;
   @Action public SOCKET_EMIT: any;
   @Mutation public SET_HEADER_VISIBILITY: any;
+  @Mutation public SET_COMBAT_GAME_STATE: any;
   @Mutation public SET_COMBAT_GAME_SELECTION_MODE: any;
   @Mutation public RESET_GAME_STATE: any;
+  @Mutation public SET_SOCKET_ROOM: any;
 
   public description: string = '';
 
@@ -153,16 +155,30 @@ export default class CombatRoom extends Vue {
   public currentCursorIndex = 0;
   public cursorMoveDate = Date.now();
 
-  public beforeMount() {
-    this.RESET_GAME_STATE('COMBAT_ROOM');
-  }
   public mounted() {
     const { roomID } = this.$route.params;
-    this.gameInterface.launch();
-
-    this.socketJoinRoom({ name: 'COMBAT_ROOM', parameter: roomID });
+    if (!this.socket.connected) {
+      // SET ERROR SCREEN HERE
+      console.log('ERR SCREEN not connected');
+      return;
+    }
     this.SET_HEADER_VISIBILITY(false);
     document.addEventListener('keydown', this.keyMonitor, true);
+    this.gameInterface.launch();
+    // connect to the room
+    this.SOCKET_EMIT({
+      name: 'COMBAT_ROOM_CONNECT',
+      params: [roomID, (err: any, room?: CombatRoom) => {
+        console.log(err);
+        if (err || !room) {
+          // SET ERROR SCREEN HERE
+          console.log('ERR SCREEN', err);
+        } else {
+          console.log('set state', room);
+          this.SET_COMBAT_GAME_STATE(room);
+        }
+      }],
+    });
   }
   public destroyed() {
     if (this.gameInterface) {

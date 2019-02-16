@@ -148,8 +148,6 @@ const actions = {
     socket.on('reconnect_error', () => {
       commit('SET_SOCKET_CONNECTION', false);
       console.log('Socket reconnection Fail');
-      // TODO: Limit amount of reconnection attempts
-      /* world.reconnectionFails++; IF reconFails > n THEN socket.close() and world.connected = false */
     });
 
     /*
@@ -194,20 +192,24 @@ const actions = {
 
     socket.emit(info.name, ...params);
   },
-  socketJoinRoom({ commit }: ActionContext, room: { name: string, parameter: any }) {
+  /*
+    Provides a way to be 'connect' to rooms on the
+    socket and be reconnected in the case the socket
+    goes off and back on
+  */
+  socketJoinRoom({ commit }: ActionContext, name: string, id?: string) {
     if (!socket.connected) console.warn('Attempted to join room before socket connected');
-    const { name, parameter } = room;
     console.log(`vuex > socketJoinRoom > "attempting to join room '${name}'..."`);
 
-    const event = `${name.toUpperCase()}_CONNECT`;
     const cb = (err: any) => {
-      if   (err) console.log(`vuex > socketJoinRoom > "room '${room.name}' join error = ${err} "`);
-      else commit(`SET_SOCKET_ROOM`, room);
+      if   (err) console.log(`vuex > socketJoinRoom > "room '${name}' join error = ${err} "`);
+      else commit(`SET_SOCKET_ROOM`, { name, id });
     }
-
+    
+    const event = `${name.toUpperCase()}_CONNECT`;
     // if we have a parameter
-    if (typeof parameter !== 'undefined') {
-      socket.emit(event, parameter, cb);
+    if (id) {
+      socket.emit(event, id, cb);
     } else {
       socket.emit(event, cb);
     }

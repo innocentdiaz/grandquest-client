@@ -226,6 +226,38 @@ const newGame = (global: GameInterface): PhaserGame => {
           GAME LOGIC
         */
 
+        // generate player placing line
+        if (networkGameState.maxPlayers !== Object.keys(global.playerPlacingLine).length) {
+          // reset players on local state
+          global.gameState.players = {};
+          console.log('generate player placing line');
+          // generate empty placing line withing range
+          global.playerPlacingLine = _.reduce(_.range(1, networkGameState.maxPlayers + 1), (memo: object, index: number) => ({
+            ...memo,
+            [String(index)]: {
+              character: null,
+              nextIndex: index >= networkGameState.maxPlayers ? 1 : index + 1,
+              prevIndex: index === 1 ? networkGameState.maxPlayers : index - 1,
+            },
+          }), {});
+        }
+
+        // generate enemy placing line
+        if (Object.keys(networkGameState.enemies).length !== Object.keys(global.enemyPlacingLine).length) {
+          // despawn any players that could be on it
+          console.log('generate enemy placing line');
+          global.gameState.enemies = {};
+          // generate empty placing line withing range
+          global.enemyPlacingLine = _.reduce(_.range(1, Object.keys(networkGameState.enemies).length + 1), (memo: object, index: number) => ({
+            ...memo,
+            [String(index)]: {
+              character: null,
+              nextIndex: index >= Object.keys(networkGameState.enemies).length ? 1 : index + 1,
+              prevIndex: index === 1 ? Object.keys(networkGameState.enemies).length : index - 1,
+            },
+          }), {});
+        }
+
         // Despawn Characters
         let charactersOnLocal = {...global.gameState.players, ...global.gameState.enemies};
         _.forEach(charactersOnLocal, ({ id }) => {
@@ -234,6 +266,7 @@ const newGame = (global: GameInterface): PhaserGame => {
             actions.despawnCharacter(id);
           }
         });
+
 
         /*
           SCENE RENDERING
@@ -346,34 +379,27 @@ const newGame = (global: GameInterface): PhaserGame => {
           }
         });
         // target selection hand
-        if (store.state.combatGame.selectionMode === 'TARGET' && !global.isAnimating) {
-          // if there are players
-          if (Object.keys(global.gameState.players).length) {
-            if (!global.targetHand) { // if there are players and there is no target hand
-              actions.addTargetHand();
-            } else {
-              // update selection hand coordinates
-              const placingLine = global.currentTargetSide === 0
-              ? global.playerPlacingLine
-              : global.enemyPlacingLine;
-
-              const { character } = placingLine[global.currentTargetIndex];
-
-              if (character) {
-                global.targetHand.x = character.sprite.x;
-                global.targetHand.y = character.sprite.y;
-              }
-            }
-          } else if (global.targetHand) { // there are no players but there is a target hand
+        if (global.targetHand) {
+          if (store.state.combatGame.selectionMode !== 'TARGET' || global.isAnimating) {
+            console.log('removed target hand');
             actions.removeTargetHand();
-          }
-        }
-        if (global.targetHand && store.state.combatGame.gameState.turn % 2) {
-          actions.removeTargetHand();
-          store.commit('SET_COMBAT_GAME_SELECTION_MODE', 'TARGET');
-        }
+          } else {
+            // update selection hand coordinates
+            const placingLine = global.currentTargetSide === 0
+            ? global.playerPlacingLine
+            : global.enemyPlacingLine;
 
-        /* Animate game events */
+            const { character } = placingLine[global.currentTargetIndex];
+
+            if (character) {
+              global.targetHand.x = character.sprite.x;
+              global.targetHand.y = character.sprite.y;
+              global.targetHand.z = character.sprite.z + 5;
+            }
+          }
+        } else if (store.state.combatGame.selectionMode === 'TARGET' && !global.isAnimating) {
+          actions.addTargetHand();
+        }
 
         // IF the network is at a different turn
         if (global.gameState.turn !== networkGameState.turn && !global.isAnimating) {
@@ -471,21 +497,11 @@ const newGame = (global: GameInterface): PhaserGame => {
         for (const key in placingLine) {
           let position = placingLine[j];
 
-          if (!position) {
-            j = _.findKey({...placingLine}, (p: PlacingLineSpot) => !!p.character);
-            if (!j) {
-              console.warn('Empty placing line ');
-              return actions.removeTargetHand();
-            }
-            position = placingLine[j];
-          }
-
           if (!direction || direction == 'down') {
             j = position.nextIndex;
           } else if (direction == 'up') {
             j = position.prevIndex;
           }
-
           const nextPosition = placingLine[j];
           if (nextPosition.character) {
             global.currentTargetIndex = j;
@@ -517,6 +533,7 @@ const newGame = (global: GameInterface): PhaserGame => {
       console.log('load scene ', global.gameState.level);
       actions.addBackground();
       AudioManager.playOnce('fieldsCombat', true);
+      store.commit('SET_COMBAT_GAME_SELECTION_MODE', 'TARGET');
     },
     addBackground() {
       let self: any = this;
@@ -606,11 +623,9 @@ const newGame = (global: GameInterface): PhaserGame => {
         : global.playerPlacingLine;
 
       // find empty spot in line
-      let emptySpotInLine = _.findKey({...placingLine}, (spot: PlacingLineSpot) => !spot.character);
-
-      if (!emptySpotInLine) {
-        throw new Error('Attempted to spawn character but there are not empty spaces in the placing line');
-      }
+      let emptySpotInLine = _.findKey({...placingLine}, (spot: PlacingLineSpot) => {
+        return spot.character === null;
+      });
 
       const cat = character.enemy
           ? 'enemies'
@@ -655,9 +670,6 @@ const newGame = (global: GameInterface): PhaserGame => {
         ? global.enemyPlacingLine
         : global.playerPlacingLine;
       let spotInLine: string = _.findKey({...placingLine}, (spot: PlacingLineSpot) => !!spot.character && spot.character.id === character.id);
-      if (!spotInLine) {
-        throw new Error('no empty spot for coordinates');
-      }
 
       const canvasWidth = self.game.canvas.offsetWidth;
       const canvasHeight = self.game.canvas.offsetHeight;
@@ -732,7 +744,8 @@ const newGame = (global: GameInterface): PhaserGame => {
         return console.warn('target hand already added')
       };
 
-      let spot: PlacingLineSpot|undefined = _.find({...global.playerPlacingLine}, (index: PlacingLineSpot) => !!index.character);
+      let key = _.findKey({...global.playerPlacingLine}, (index: PlacingLineSpot) => !!index.character);
+      let spot = global.playerPlacingLine[key];
 
       if (!spot || !spot.character) {
         console.error('No player to add target hand to');
@@ -741,6 +754,7 @@ const newGame = (global: GameInterface): PhaserGame => {
 
       const { character } = spot;
 
+      global.currentTargetIndex = Number(key);
       global.targetHand =
         self.add.image(character.sprite.x, character.sprite.y, 'select-hand')
         .setDepth(character.sprite.depth + 5); // z-coordinate above the player
@@ -1063,7 +1077,6 @@ function CombatInterface(): GameInterface {
       levelRecord: {},
       readyToContinue: {},
     },
-    // called startGame();
     gameInitialized: false,
     currentTargetSide: 0,
     currentTargetIndex: 1,
@@ -1071,24 +1084,8 @@ function CombatInterface(): GameInterface {
     _sceneImg: [],
     targetHand: null,
     isAnimating: false,
-    // this will be generated using the game state with `gameInterface.actions.startGame()
-    playerPlacingLine: _.reduce(_.range(1, 5), (memo, index) => ({
-      ...memo,
-      [String(index)]: {
-        character: null,
-        nextIndex: index >= store.state.combatGame.gameState.maxPlayers ? 1 : index + 1,
-        prevIndex: index === 1 ? store.state.combatGame.gameState.maxPlayers : index - 1,
-      },
-    }), {}),
-    // generate placing line object for enemies in a range from 1-4
-    enemyPlacingLine: _.reduce(_.range(1, 5), (memo, index) => ({
-      ...memo,
-      [index]: {
-        character: null,
-        nextIndex: index >= 4 ? 1 : index + 1,
-        prevIndex: index === 1 ? 4 : index - 1,
-      },
-    }), {}),
+    playerPlacingLine: {},
+    enemyPlacingLine: {},
     gameIntervals: {},
     launch: () => {
       if (!game) {

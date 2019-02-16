@@ -84,7 +84,7 @@ export default class Hub extends Vue {
   public currentCharacterIndex = 0;
 
   public mounted () {
-    this.socketJoinRoom({ name: 'COMBAT_HUB'});
+    this.socketJoinRoom('COMBAT_HUB');
   }
   public destroyed() {
     this.socketLeaveRoom('COMBAT_HUB');
