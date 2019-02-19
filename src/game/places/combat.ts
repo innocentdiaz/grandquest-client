@@ -60,7 +60,7 @@ const newGame = (global: GameInterface): PhaserGame => {
   */
   let game: any = new Phaser.Game({
     type: Phaser.AUTO,
-    
+    pixelArt: true,
     width: Math.max(Math.min(window.innerWidth * .98, 200), 920),
     height: window.innerHeight * .68,
     backgroundColor: '#7fb8f9',
