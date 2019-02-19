@@ -1,13 +1,7 @@
 <template>
   <div class="world-main">
-    <div class="aside">
-      <UserControl />
-    </div>
     <div class="container">
-      <header>
-        <div class="landscape">
-          <h1>GrandQuest World</h1>
-        </div>
+      <!-- <header>
         <div class="stats" v-if="socket.loading">
           <h2>Connecting to the world <ActivityIndicator /></h2>
         </div>
@@ -20,13 +14,24 @@
           <h2>GrandQuest World</h2>
           <h3>You are currently offline</h3>
         </div>
-      </header>
+      </header> -->
       <div class="content">
-        <h2>Games</h2>
-        <div class="games-container">
-          <div class="game-item" id="combat" v-on:click="setGame('combat')">
-            <h1 class="title">Combat</h1>
-          </div>
+        <Combat />
+        <div class="side-menu">
+          <ul>
+            <li>
+              <img src="@/assets/img/icon/bag.png" alt="Shop">Shops
+            </li>
+            <li>
+              <img src="@/assets/img/icon/scroll.png" alt="Character">Character
+            </li>
+            <li>
+              <img src="@/assets/img/icon/chest.png" alt="Games">Games
+            </li>
+            <li class="disabled">
+              <img src="@/assets/img/icon/guild.png" alt="Guild">Guild
+            </li>
+          </ul>
         </div>
       </div>
     </div>
@@ -36,17 +41,18 @@
 import { Vue, Component } from 'vue-property-decorator';
 import { State } from 'vuex-class';
 import moment from 'moment';
-import { World, SocketState } from '@/types';
+import { World, SocketState, Player } from '@/types';
 import api from '@/api';
-import UserControl from '@/components/UserControl.vue';
 import ActivityIndicator from '@/components/ActivityIndicator.vue';
+import Combat from './Combat/Hub.vue';
 
 @Component({
-  components: { ActivityIndicator, UserControl },
+  components: { ActivityIndicator, Combat },
 })
 export default class Main extends Vue {
   @State public socket!: SocketState;
   @State public world!: World;
+  @State public player!: Player;
 
   public setGame(name: string) {
     this.$router.replace(name);
@@ -60,91 +66,77 @@ export default class Main extends Vue {
 <style lang="scss">
   $mainGrey: rgb(179, 179, 179);
   .world-main {
-    min-height: 100vh;
+    min-height: 90vh;
     max-width: 100%;
-    background: $mainGrey;
     display: flex;
     flex-direction: row;
     align-items: flex-start;
-    padding: 1.5em;
+    padding: 1em 2em;
 
-    .aside { 
-      flex: 1;
-    }
     .container {
-      flex: 3;
-      margin-left: 2em;
-      display: flex;
-      flex-direction: column;
-      align-items: stretch;
+      max-width: 900px;
+      padding: 5px;
+      border-radius: 5px;
+      background-image: url('../../assets/img/combat.png');
+      width: 100%;
+      color: white;
 
-      header {
+      .content {
         display: flex;
         flex-direction: row;
         align-items: stretch;
-        height: 240px;
+        justify-content: space-between;
+        min-height: 450px;
 
-        .landscape {
-          background-image: url('../../assets/img/landscapes/fort.jpg');
-          background-size: cover;
-          background-repeat: no-repeat;
+        .side-menu {
+          font-family: 'Lora', serif;
+          background-image: url('../../assets/img/backgrounds/map-bg.png');
+          background-blend-mode: darken;
           background-position: center;
-          margin-right: 1em;
-          border-radius: 15px;
-          flex: 3;
-          padding: 20px;
-          user-select: none;
-          background-color: white;
-          cursor: pointer;
-          transition: .2s all ease-in-out;
-
-          h1 {
-            color: white;
+          background-repeat: no-repeat;
+          background-size: cover;
+          border-radius: 2px;
+          ul {
+            list-style: none;
             margin: 0;
-            font-family: serif;
-          }
-          &:hover {
-            opacity: .7
-          }
-        }
-        .stats {
-          background: white;
-          color: black;
-          padding: 5px;
-          border-radius: 15px;
-          flex: 1;
-        }
-      }
-      .content {
-        min-height: 500px;
-        background: white;
-        color: black;
-        border-radius: 15px;
-        padding: 1em;
-        margin-top: 1em;
+            padding: 0.5em 1em;
+            li {
+              position: relative;
+              display: flex;
+              flex-direction: row;
+              align-items: center;
+              color: rgb(243, 243, 243);
+              font-size: x-large;
+              font-weight: bold;
+              padding: 10px;
 
-        .games-container {
-          display: grid;
-          grid-gap: 20px;
-          grid-template-columns: auto auto auto;
-
-          .game-item {
-            border-radius: 15px;
-            height: 130px;
-            background-color: greenyellow;
-            padding: 10px;
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-            cursor: pointer;
-
-            .title {
-              font-size: medium;
-              color: white;
+              border-bottom: 1px solid #9f966a;
+              text-shadow: 1px 1px rgb(73, 73, 73);
+              cursor: pointer;
+              &:hover {
+                color: white;
+              }
+              &.disabled {
+                opacity: 0.6;
+                cursor: default;
+                &:after {
+                  content: 'Coming Soon!';
+                  font-size: small;
+                  position: absolute;
+                  top: 0;
+                  right: 0;
+                  background: rgb(27, 27, 27);
+                  text-shadow: none;
+                  border-radius: 2px;
+                  padding: 2px;
+                }
+              }
+              img {
+                height: 2.5em;
+              }
             }
-
-            &#combat {
-              background-image: url('../../assets/img/combat.png');
+            li:nth-last-child(1) {
+              border: none;
             }
           }
         }
