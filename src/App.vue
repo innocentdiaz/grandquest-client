@@ -29,6 +29,7 @@ export default class App extends Vue {
 
 <style lang="scss">
 @import url('https://fonts.googleapis.com/css?family=Press+Start+2P');
+@import url('https://fonts.googleapis.com/css?family=Lora');
 
 $mainBlue: #036ca5;
 $mainBlack: rgb(24, 24, 24);
@@ -61,6 +62,22 @@ a {
   text-decoration: none;
   &.active-link {
     color: $mainGrey !important;
+  }
+}
+
+.hr-text {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 2px 0;
+  span {
+    margin: 0 5px;
+    color: rgba(255, 255, 255, 0.925);
+  }
+  hr {
+    flex: 1;
+    border: none;
+    border-top: 1px solid rgba(255, 255, 255, 0.925);
   }
 }
 
@@ -137,6 +154,14 @@ form {
   }
   .error {
     color: rgb(255, 49, 49);
+  }
+}
+span, p {
+  &.green {
+    color: #56F33E;
+  }
+  &.red {
+    color: #ca4249;
   }
 }
 .GUI {
