@@ -24,23 +24,32 @@
               </div>
               <p>{{player.level >= currentCharacter.level ? currentCharacter.description : ''}}</p>
             </div>
-            <div class="info">
+            <div class="info" v-if="combatData.loaded">
               <div class="hp-container">
                 <header>
-                  <p>HP</p><p>30/40</p>
+                  <p>HP</p><p>{{combatData.health}}/{{combatData.max_health}}</p>
                 </header>
                 <div class="bar">
-                  <div class="juice"></div>
+                  <div class="juice" :style="{width:`${(combatData.health/combatData.max_health)*100}%`}"></div>
                 </div>
               </div>
-              <p>Wins: <span class="green">0</span></p>
-              <p>Loses: <span class="red">0</span></p>
+              <p>Wins: <span class="green">{{combatData.levels_won}}</span></p>
+              <p>Loses: <span class="red">{{combatData.levels_lost}}</span></p>
             </div>
           </div>
         </section>
+        <!-- <section>
+          <div class="champion">
+            <img src="" alt="">
+            <div class="content">
+              <p>Today's Champion is...</p>
+              <h2 class="title">Pixeltweak</h2>
+            </div>
+          </div>
+        </section> -->
       </div>
       <div class="buttons">
-        <button class="play-multiplayer">
+        <button class="play-multiplayer" :disabled="!socket.connected || !player.authenticated" v-on:click="startMultiplayer">
           PLAY MULTIPLAYER
         </button>
         <div class="hr-text">
@@ -61,6 +70,7 @@ import { State, Action } from 'vuex-class';
 import ActivityIndicator from '@/components/ActivityIndicator.vue';
 import { CombatRoom, CombatHub, SocketState, World, Player } from '@/types';
 import api from '@/api';
+import { ApiResponse } from 'apisauce';
 
 interface CombatRooms {
   [id: string]: CombatRoom;
@@ -74,8 +84,7 @@ export default class Hub extends Vue {
   @State public player!: Player;
   @State  public combatHub!: CombatHub;
   @State  public socket!: SocketState;
-  @Action public socketJoinRoom: any;
-  @Action public socketLeaveRoom: any;
+  @Action public SOCKET_EMIT: any;
 
   public availableCharacters = [
     {
@@ -90,24 +99,39 @@ export default class Hub extends Vue {
     },
   ];
   public currentCharacterIndex = 0;
+  public combatData = {
+    loaded: false,
+  };
 
-  public mounted () {
-    this.socketJoinRoom('COMBAT_HUB');
-  }
-  public destroyed() {
-    this.socketLeaveRoom('COMBAT_HUB');
-  }
-  public joinRoom(roomID: string) {
-    const chosenRoom = this.combatHub.rooms[roomID];
-    if (chosenRoom.playerCount === chosenRoom.maxPlayers) {
-      return;
+  public mounted() {
+    if (this.player.authenticated) {
+      api.get(`player/${this.player.id}/combat`)
+      .then((res: ApiResponse<any>) => {
+        const body = res.data;
+        if (res.ok) {
+          this.combatData = {...body.data, loaded: true};
+        } else {
+          console.log('err');
+        }
+      });
     }
-
-    this.$router.replace({
-      name: 'combatRoom',
-      params: {
-        roomID,
-      },
+  }
+  public startMultiplayer() {
+    this.SOCKET_EMIT({
+      name: 'COMBAT_ROOM_CONNECT',
+      params: [(err: any, roomID?: string) => {
+        if (err || !roomID) {
+          console.log('Combat room connect err ', err);
+        } else {
+          console.log('Connected to ', roomID);
+          this.$router.replace({
+            name: 'combatRoom',
+            params: {
+              roomID,
+            },
+          });
+        }
+      }],
     });
   }
   public moveSelection(direction: number) {
@@ -273,6 +297,14 @@ $mainLightGrey: #e0e0e0;
         box-shadow: 0px 0px 5px white;
         padding: 1em 2em;
         transition: .2s all ease-in-out;
+        &[disabled] {
+          background: grey;
+          opacity: 0.95;
+          cursor: default;
+          &:hover {
+            box-shadow: 0px 0px 5px white;
+          }
+        }
         &:hover {
           box-shadow: 0px 0px 10px white;
         }

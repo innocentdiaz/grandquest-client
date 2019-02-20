@@ -2,7 +2,7 @@
   <div class="combat-root" v-on:keydown="keyMonitor">
     <header>
       <ul>
-        <router-link to="/combat">Exit</router-link>
+        <router-link to="/world">Exit</router-link>
         <div class="level" v-if="gameInterface.gameState.playState && currentPlayer">
           <div class="icon">
             <span id="level-label">{{currentPlayer.level}}</span>
@@ -157,35 +157,19 @@ export default class CombatRoom extends Vue {
 
   public mounted() {
     const { roomID } = this.$route.params;
-    if (!this.socket.connected) {
-      // SET ERROR SCREEN HERE
-      console.log('ERR SCREEN not connected');
-      return;
+    if (!this.socket.connected || !this.player.authenticated) {
+      return this.$router.replace({ name: 'world' });
     }
     this.SET_HEADER_VISIBILITY(false);
     document.addEventListener('keydown', this.keyMonitor, true);
     this.gameInterface.launch();
-    // connect to the room
-    this.SOCKET_EMIT({
-      name: 'COMBAT_ROOM_CONNECT',
-      params: [roomID, (err: any, room?: CombatRoom) => {
-        console.log(err);
-        if (err || !room) {
-          // SET ERROR SCREEN HERE
-          console.log('ERR SCREEN', err);
-        } else {
-          console.log('set state', room);
-          this.SET_COMBAT_GAME_STATE(room);
-        }
-      }],
-    });
   }
   public destroyed() {
     if (this.gameInterface) {
       this.gameInterface.destroyGame();
     }
     this.SET_HEADER_VISIBILITY(true);
-    this.socketLeaveRoom('COMBAT_ROOM');
+    this.SOCKET_EMIT({ name: 'COMBAT_ROOM_LEAVE'});
     this.RESET_GAME_STATE('COMBAT_ROOM');
     document.removeEventListener('keydown', this.keyMonitor, true);
   }
