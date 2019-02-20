@@ -1,13 +1,11 @@
 <template>
   <div class="user-control" v-if="player.authenticated">
-    <img v-bind:src="require(`../assets/img/icon/people/${player.role}.png`)" :alt="`${player.role} avatar`">
     <h2>{{ player.username }}</h2>
     <small>Joined {{ userJoinDate() }}</small>
     <div id="stats">
       <h2>Stats</h2>
       <p>Gold: {{player.gold}}</p>
       <p>XP: {{player.xp}}</p>
-      <p>Weapon health: {{player.weapon_health}}/{{weapon.stats.maxHealth}}hp</p>
     </div>
   </div>
   <div class="user-control" v-else>
