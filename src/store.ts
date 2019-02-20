@@ -89,9 +89,9 @@ const mutations = {
     s.socket.loading = true;
   },
   SET_INITIAL_STATES(s: State) {
-    s.world = initialState.world;
-    s.combatGame = initialState.combatGame;
-    s.combatHub = initialState.combatHub;
+    s.world = {...initialState.world};
+    s.combatGame = {...initialState.combatGame};
+    s.combatHub = {...initialState.combatHub};
   },
   UPDATE_SOCKET_PLAYER (s: State, player: Player) {
     s.player = { ...s.player, ...player };
