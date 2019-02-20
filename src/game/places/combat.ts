@@ -907,7 +907,7 @@ const newGame = (global: GameInterface): PhaserGame => {
                     const newWidth = currentWidth + (totalWidth * healPercentage);
                     self.tweens.add({
                       targets: receiver._healthBar,
-                      width: newWidth,
+                      width: newWidth >= totalWidth ? totalWidth : newWidth,
                       duration: 250,
                     });
                   },
