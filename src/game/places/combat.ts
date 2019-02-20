@@ -365,7 +365,7 @@ const newGame = (global: GameInterface): PhaserGame => {
             let currentDisplayedHealth = Math.round(characterOnLocal.entity.maxHealth * (characterOnLocal._healthBar.width/characterOnLocal._nameTag.displayWidth));
             characterOnLocal._healthText.text = `${currentDisplayedHealth}/${characterOnLocal.entity.maxHealth}`;
             characterOnLocal._healthText.x = characterOnLocal._healthBarBackground.getCenter().x;
-            characterOnLocal._healthText.y = characterOnLocal._healthBarBackground.getCenter().y;
+            characterOnLocal._healthText.y = characterOnLocal._healthBarBackground.getCenter().y + 2;
           }
           // grave marker
           if (!characterOnLocal._healthBar.width) {
