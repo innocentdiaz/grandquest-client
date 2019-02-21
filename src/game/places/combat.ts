@@ -36,7 +36,7 @@ import AdventurerSheet from '@/assets/img/spritesheets/adventurer-sheet.png';
 import SlimeSheet from '@/assets/img/spritesheets/slime-sheet.png';
 // misc
 import graveMarkerImage from'@/assets/img/misc/grave-marker.png';
-import SelectHandImage from '@/assets/img/icon/select-hand.png';
+import SelectTargetImage from '@/assets/img/icon/select-target.png';
 import healPotionImage from '@/assets/img/items/heal-potion.png';
 
 /*
@@ -109,7 +109,7 @@ const newGame = (global: GameInterface): PhaserGame => {
           { name: 'grassy-mountains-hill', src: grassyMountainsHill, type: 'image' },
           // misc
           { name: 'item-heal-potion', src: healPotionImage, type: 'image' },
-          { name: 'select-hand', src: SelectHandImage, type: 'image' },
+          { name: 'select-target', src: SelectTargetImage, type: 'image' },
           { name: 'adventurer', src: AdventurerSheet, type: 'spritesheet', spriteDimensions: [ 50, 37 ] },
           { name: 'slime', src: SlimeSheet, type: 'spritesheet', spriteDimensions: [32, 25] },
           { name: 'grave-marker', src: graveMarkerImage, type: 'spritesheet', spriteDimensions: [29, 20] },
@@ -383,7 +383,9 @@ const newGame = (global: GameInterface): PhaserGame => {
         });
         // target selection hand
         if (global.targetHand) {
-          if (store.state.combatGame.selectionMode !== 'TARGET' || global.isAnimating) {
+          const currentPlayer = store.state.player.id ? global.gameState.players[store.state.player.id] : null;
+          // remove the target hand if game is animating or the user already selected the target & action
+          if (currentPlayer && currentPlayer.selectionStatus === 1 || global.isAnimating) {
             console.log('removed target hand');
             actions.removeTargetHand();
           } else {
@@ -395,9 +397,9 @@ const newGame = (global: GameInterface): PhaserGame => {
             const { character } = placingLine[global.currentTargetIndex];
 
             if (character) {
-              global.targetHand.x = character.sprite.x;
-              global.targetHand.y = character.sprite.y;
-              global.targetHand.z = character.sprite.z + 5;
+              global.targetHand.x = character.sprite.getCenter().x;
+              global.targetHand.y = character._nameTag.y - 15;
+              global.targetHand.z = character.sprite.z + 10;
             }
           }
         } else if (store.state.combatGame.selectionMode === 'TARGET' && !global.isAnimating) {
@@ -771,7 +773,8 @@ const newGame = (global: GameInterface): PhaserGame => {
 
       global.currentTargetIndex = Number(key);
       global.targetHand =
-        self.add.image(character.sprite.x, character.sprite.y, 'select-hand')
+        self.add.image(character.sprite.x, character.sprite.y, 'select-target')
+        .setScale(self.game.canvas.offsetHeight / 17500)
         .setDepth(character.sprite.depth + 5); // z-coordinate above the player
     },
     removeTargetHand() {
