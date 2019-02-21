@@ -165,6 +165,7 @@ export default class CombatRoom extends Vue {
     }
     this.SET_HEADER_VISIBILITY(false);
     document.addEventListener('keydown', this.keyMonitor, true);
+    window.addEventListener('resize', this.resizeMonitor, true);
     this.gameInterface.launch();
   }
   public destroyed() {
@@ -175,6 +176,7 @@ export default class CombatRoom extends Vue {
     this.SOCKET_EMIT({ name: 'COMBAT_ROOM_LEAVE'});
     this.RESET_GAME_STATE('COMBAT_ROOM');
     document.removeEventListener('keydown', this.keyMonitor, true);
+    window.removeEventListener('resize', this.resizeMonitor, true);
   }
   public keyMonitor(event: any) {
     if (Date.now() - this.cursorMoveDate <= 100 || this.gameInterface.isAnimating) {
@@ -207,6 +209,12 @@ export default class CombatRoom extends Vue {
       }
     } else {
       this.gameInterface.keyMonitor(event);
+    }
+  }
+  public resizeMonitor(event: any) {
+    console.log('one');
+    if (this.gameInterface.gameInitialized) {
+      this.gameInterface.resizeMonitor(event);
     }
   }
   public moveCursor(direction: string) {

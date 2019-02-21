@@ -61,7 +61,8 @@ const newGame = (global: GameInterface): PhaserGame => {
   let game: any = new Phaser.Game({
     type: Phaser.AUTO,
     pixelArt: true,
-    width: Math.max(Math.min(window.innerWidth * .98, 200), 920),
+    // width set to 98% of window width withing range of 300 and 920 pixels
+    width: window.innerWidth * .98 > 920 ? 920 : window.innerWidth * .98 < 300 ? 300 : window.innerWidth * .98,
     height: window.innerHeight * .68,
     backgroundColor: '#7fb8f9',
     parent: 'canvas-parent',
@@ -467,6 +468,11 @@ const newGame = (global: GameInterface): PhaserGame => {
           store.commit('SET_COMBAT_GAME_SELECTION_MODE', 'ACTION');
           break;
       }
+    },
+    resizeMonitor() {
+      const width = window.innerWidth * .98;
+      const height = window.innerHeight * .68;
+      game.resize(width > 920 ? 920 : width < 300 ? 300 : width, height);
     },
     moveCursor(direction: string) {
       let indexDirection = null;
@@ -1031,7 +1037,7 @@ const newGame = (global: GameInterface): PhaserGame => {
   };
   // Bind key monitor to game interface
   global.keyMonitor = actions.keyMonitor;
-
+  global.resizeMonitor = actions.resizeMonitor;
   return game;
 }
 export interface GameInterface {
@@ -1051,6 +1057,7 @@ export interface GameInterface {
   launch: () => void;
   destroyGame: () => void;
   keyMonitor: (event: any) => void;
+  resizeMonitor: (event: any) => void;
 };
 interface PlacingLine {
   [index: string]: PlacingLineSpot;
@@ -1113,8 +1120,10 @@ function CombatInterface(): GameInterface {
         game = game.destroy();
       }
     },
+    // this will be binded to the game on launch
     keyMonitor: () => {
-      // this will be binded to the game on launch
+    },
+    resizeMonitor: () => {
     }
   };
 
