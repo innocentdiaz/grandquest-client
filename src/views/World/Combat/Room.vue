@@ -29,6 +29,9 @@
       </div>
       <!-- GUI -->
       <ActivityIndicator v-if="!gameInterface.gameInitialized"/>
+      <div v-else-if="currentPlayerSelectionStatus === 1" class="GUI">
+        <p>OK! Waiting for other players...</p>
+      </div>
       <div
         v-else-if="currentPlayer" 
         :class="
@@ -76,7 +79,7 @@
     <div id="outcomes" v-if="gameInterface.gameInitialized && !gameInterface.gameState.playState">
       <div class="content">
         <aside>
-          <div class="player-container" v-for="(player, id) in currentLevelRecord" v-bind:key="id">
+          <div class="player-container" v-for="(player, id) in currentLevelRecord.players" v-bind:key="id">
             <img v-bind:src="require(`../../../assets/img/icon/people/${gameInterface.gameState.players[id].entity.name}.png`)" class="avatar" alt="Player entity">
             <div class="grid">
               <h3 class="title">{{gameInterface.gameState.players[id].username}}</h3>
@@ -90,11 +93,11 @@
           </div>
         </aside>
         <div class="main">
-          <h1>Level {{gameInterface.gameState.level}} complete!</h1>
+          <h1>Level {{gameInterface.gameState.level}} {{currentLevelRecord.won ? 'completed' : 'lost'}}!</h1>
           <h2 class="subtitle">Level completed in {{gameInterface.gameState.turn}} turns</h2>
-          <p>Damage dealt: {{currentLevelRecord[this.player.id].damageDealt}}</p>
-          <p>Gold Earned: {{currentLevelRecord[this.player.id].gold}}</p>
-          <p>XP Gained: {{currentLevelRecord[this.player.id].xp}}</p>
+          <p>Damage dealt: {{currentLevelRecord.players[this.player.id].damageDealt}}</p>
+          <p>Gold Earned: {{currentLevelRecord.players[this.player.id].gold}}</p>
+          <p>XP Gained: {{currentLevelRecord.players[this.player.id].xp}}</p>
           <button>
             Ready!
           </button>
