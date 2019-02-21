@@ -278,7 +278,9 @@ const newGame = (global: GameInterface): PhaserGame => {
         // Spawn & Update Characters Graphics
         _.forEach({...networkGameState.players, ...networkGameState.enemies}, (characterOnNetwork) => {
           let id: string = String(characterOnNetwork.id);
-          let characterOnLocal = {...global.gameState.enemies, ...global.gameState.players}[id];
+          let characterOnLocal = characterOnNetwork.enemy
+           ? global.gameState.enemies[id]
+           : global.gameState.players[id];
 
           if (characterOnLocal) {
             if (characterOnNetwork.enemy) {
@@ -660,7 +662,6 @@ const newGame = (global: GameInterface): PhaserGame => {
           character: global.gameState[cat][character.id],
         },
       };
-
       return global.gameState[cat][character.id];
     },
     coordinatesForEntity(character: Character): { x: number, y: number } {
@@ -674,7 +675,7 @@ const newGame = (global: GameInterface): PhaserGame => {
       const canvasWidth = self.game.canvas.offsetWidth;
       const canvasHeight = self.game.canvas.offsetHeight;
 
-      let b = character.enemy ? 0.6 : 0.2;
+      let b = character.enemy ? 0.6 : 0.35;
       let c = global.gameState.level === 0
         ? 0.8
         : global.gameState.level === 1
@@ -691,6 +692,9 @@ const newGame = (global: GameInterface): PhaserGame => {
         : global.gameState.level === 1
         ? 0.03
         : 0;
+      if (!character.enemy) {
+        xDelta *= -1;
+      }
 
       return {
         x: canvasWidth * ((Number(spotInLine) * xDelta) + b),
@@ -704,19 +708,24 @@ const newGame = (global: GameInterface): PhaserGame => {
         return;
       }
 
-      let gameStateCategory = character.enemy
+      let cat = character.enemy
         ? global.gameState.enemies
         : global.gameState.players;
-      let p = character.enemy
-        ? global.enemyPlacingLine
-        : global.playerPlacingLine;
-
-      delete gameStateCategory[id];
-      // filter out the character from the placing line
-      p = _.mapObject(p, (spot) => ({
-        ...spot,
-        character: spot.character && spot.character.id === character.id ? null : spot.character,
-      }));
+      
+      // remove character from game state;
+      delete cat[id];
+      // remove character from placing line
+      if (character.enemy) {
+        global.enemyPlacingLine = _.mapObject(global.enemyPlacingLine, (spot) => ({
+          ...spot,
+          character: spot.character && spot.character.id === character.id ? null : spot.character,
+        }));
+      } else {
+        global.playerPlacingLine = _.mapObject(global.playerPlacingLine, (spot) => ({
+          ...spot,
+          character: spot.character && spot.character.id === character.id ? null : spot.character,
+        }));
+      }
 
       /*
         Delete any graphics
@@ -748,7 +757,7 @@ const newGame = (global: GameInterface): PhaserGame => {
       let spot = global.playerPlacingLine[key];
 
       if (!spot || !spot.character) {
-        console.error('No player to add target hand to');
+        console.warn('No player to add target hand to');
         return
       }
 
