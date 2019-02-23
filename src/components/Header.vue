@@ -40,9 +40,6 @@
           <router-link to="/forum" active-class="active-link">Forum</router-link>
         </li>
         <li>
-          <router-link to="/market" active-class="active-link">Shops</router-link>
-        </li>
-        <li>
           <router-link to="/world" active-class="active-link">World</router-link>
         </li>
       </ul>
