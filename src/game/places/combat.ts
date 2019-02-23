@@ -471,11 +471,6 @@ const newGame = (global: GameInterface): PhaserGame => {
           break;
       }
     },
-    resizeMonitor() {
-      const width = window.innerWidth * .98;
-      const height = window.innerHeight * .68;
-      game.resize(width > 920 ? 920 : width < 300 ? 300 : width, height);
-    },
     moveCursor(direction: string) {
       let indexDirection = null;
       let side = null;
@@ -1122,12 +1117,20 @@ function CombatInterface(): GameInterface {
       if (game) {
         game = game.destroy();
       }
+
+      global.gameInitialized = false;
     },
     // this will be binded to the game on launch
     keyMonitor: () => {
     },
-    resizeMonitor: () => {
-    }
+    resizeMonitor() {
+      if (!game || !global.gameInitialized) {
+        return;
+      }
+      const width = window.innerWidth * .98;
+      const height = window.innerHeight * .68;
+      game.resize(width > 920 ? 920 : width < 300 ? 300 : width, height);
+    },
   };
 
   console.log('new global');
