@@ -80,7 +80,7 @@
       <div class="content">
         <aside>
           <div class="player-container" v-for="(player, id) in currentLevelRecord.players" v-bind:key="id">
-            <img v-bind:src="require(`../../../assets/img/icon/people/${gameInterface.gameState.players[id].entity.name}.png`)" class="avatar" alt="Player entity">
+            <img v-bind:src="require(`../assets/img/icon/people/${gameInterface.gameState.players[id].entity.name}.png`)" class="avatar" alt="Player entity">
             <div class="grid">
               <h3 class="title">{{gameInterface.gameState.players[id].username}}</h3>
               <h2 v-if="combatGame.gameState.readyToContinue[id]">Ready!</h2>
@@ -165,7 +165,7 @@ export default class CombatRoom extends Vue {
     }
     this.SET_HEADER_VISIBILITY(false);
     document.addEventListener('keydown', this.keyMonitor, true);
-    window.addEventListener('resize', this.resizeMonitor, true);
+    window.addEventListener('resize', this.gameInterface.resizeMonitor, true);
     this.gameInterface.launch();
   }
   public destroyed() {
@@ -176,7 +176,7 @@ export default class CombatRoom extends Vue {
     this.SOCKET_EMIT({ name: 'COMBAT_ROOM_LEAVE'});
     this.RESET_GAME_STATE('COMBAT_ROOM');
     document.removeEventListener('keydown', this.keyMonitor, true);
-    window.removeEventListener('resize', this.resizeMonitor, true);
+    window.removeEventListener('resize', this.gameInterface.resizeMonitor, true);
   }
   public keyMonitor(event: any) {
     if (Date.now() - this.cursorMoveDate <= 100 || this.gameInterface.isAnimating) {
@@ -209,12 +209,6 @@ export default class CombatRoom extends Vue {
       }
     } else {
       this.gameInterface.keyMonitor(event);
-    }
-  }
-  public resizeMonitor(event: any) {
-    console.log('one');
-    if (this.gameInterface.gameInitialized) {
-      this.gameInterface.resizeMonitor(event);
     }
   }
   public moveCursor(direction: string) {
@@ -470,7 +464,7 @@ $mainGreen: #9dff5c;
           justify-content: center;
           color: white;
           font-weight: bold;
-          background-image: url('../../../assets/img/misc/gold-frame.png');
+          background-image: url('../assets/img/misc/gold-frame.png');
           background-position: center center;
           background-repeat: no-repeat;
           background-size: contain;
