@@ -18,9 +18,9 @@ import LogIn from './views/LogIn.vue';
 import LogOut from './views/LogOut.vue';
 
 // world
-import World from './views/World/Main.vue';
-import CombatHub from './views/World/Combat/Hub.vue';
-import CombatRoom from './views/World/Combat/Room.vue';
+import World from '@/views/World.vue';
+import Combat from '@/views/Combat.vue';
+import Map from '@/views/Map.vue';
 
 Vue.use(Router);
 
@@ -78,14 +78,14 @@ export default new Router({
       component: World,
     },
     {
-      path: '/combat',
-      name: 'combat',
-      component: CombatHub,
-    },
-    {
       path: '/combat/:roomID',
       name: 'combatRoom',
-      component: CombatRoom,
+      component: Combat,
+    },
+    {
+      path: '/map',
+      name: 'map',
+      component: Map,
     },
     // 404
     { path: "*", redirect: '/' },
