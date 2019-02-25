@@ -36,10 +36,12 @@ export default class Map extends Vue {
     this.SET_HEADER_VISIBILITY(false);
     this.gameInterface.launch();
     window.addEventListener('resize', this.gameInterface.resizeMonitor, true);
+    document.addEventListener('wheel', this.gameInterface.scrollMonitor, true);
   }
   public destroyed() {
     this.SET_HEADER_VISIBILITY(true);
     window.removeEventListener('resize', this.gameInterface.resizeMonitor, true);
+    document.removeEventListener('wheel', this.gameInterface.scrollMonitor, true);
     this.gameInterface.destroyGame();
   }
 }

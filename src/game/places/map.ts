@@ -184,7 +184,7 @@ const newGame = (global: GameInterface): any => {
           // if pointer is still within image bounds when click is released
           if (!pointer.wasCancelled) {
             self.cameras.main.fadeOut(750);
-            this.cameras.main.once('camerafadeoutcomplete', () => {
+            self.cameras.main.once('camerafadeoutcomplete', () => {
               global.chosenShop = 'monokai-village/potions-shop';
               global.tooltip = {};
               self.scene.pause();
@@ -213,7 +213,9 @@ interface GameInterface {
   launch: () => void;
   exitShop: () => void;
   destroyGame: () => void;
+
   resizeMonitor: () => void;
+  scrollMonitor: (event: WheelEvent) => void;
 }
 
 /**
@@ -241,6 +243,17 @@ export default (): GameInterface => {
     },
     resizeMonitor() {
       game.resize(window.innerWidth, window.innerHeight);
+    },
+    scrollMonitor(event) {
+      if (!game) {
+        return;
+      }
+      if (event.deltaY < 0 && game.scene.scenes[0].cameras.main.zoom < 2) {
+        game.scene.scenes[0].cameras.main.setZoom(game.scene.scenes[0].cameras.main.zoom + 0.1)
+      }
+      if (event.deltaY > 0 && game.scene.scenes[0].cameras.main.zoom > 1.15) {
+        game.scene.scenes[0].cameras.main.setZoom(game.scene.scenes[0].cameras.main.zoom - 0.1)
+      }
     },
     exitShop() {
       if (!game) {
