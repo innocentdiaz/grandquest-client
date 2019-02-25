@@ -116,6 +116,7 @@ export default class Shop extends Vue {
     document.addEventListener('keydown', this.keyMonitor, true);
   }
   public keyMonitor(event: any) {
+    event.preventDefault();
     if (Date.now() - this.moveCursorDelta <= 100) {
       return
     }
