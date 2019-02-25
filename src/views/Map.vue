@@ -3,12 +3,14 @@
     <button class="exit-button" v-on:click="() => $router.replace({ name: 'world' })">
       EXIT
     </button>
+    <!-- Parent for the Phaser.Game canvas -->
+    <div id="canvas-parent">
+    </div>
     <div class="tool-tip" v-if="gameInterface.tooltip.title">
       <h2>{{gameInterface.tooltip.title}}</h2>
       <p>{{gameInterface.tooltip.description}}</p>
     </div>
-    <div id="canvas-parent">
-    </div>
+    <Shop v-if="gameInterface.chosenShop" v-bind:shopName="gameInterface.chosenShop" v-bind:exitShop="gameInterface.exitShop"/>
   </div>
 </template>
 <script lang="ts">
@@ -16,8 +18,11 @@ import { Component, Vue } from 'vue-property-decorator';
 import { State, Mutation } from 'vuex-class'
 import gameInterface from '@/game/places/map.ts';
 import { Player, SocketState } from '@/types';
+import Shop from '@/components/Shop.vue';
 
-@Component
+@Component({
+  components: { Shop }
+})
 export default class Map extends Vue {
   @State public player!: Player;
   @State public socket!: SocketState;
