@@ -21,7 +21,7 @@
       </div>
     </div>
     <!-- Selection Window -->
-    <div class="GUI">
+    <div class="GUI" :style="{ backgroundImage: `url(${require('../assets/img/backgrounds/' + shopName + '.png')})` }">
       <div class="user-control abs" v-if="!socket.connected">
         <h2>Offline</h2>
         <span>You don't appear to be connected to the server. You can not make any transactions unless you are online.</span>
@@ -30,15 +30,18 @@
         <h2>Hmmm...</h2>
         <span>It doesn't look like you are logged in... Please log in order to make transactions!</span>
       </div>
-      <ul id="gui-selection-list">
-        <li
-          v-for="(option, index) in currentScreenObject"
-          :key="option.title"
-          :class="`${option.disabled ? 'disabled' : ''} ${currentCursorIndex == index ? 'active' : ''}`"
-        >
-          {{ option.title }}
-        </li>
-      </ul>
+      <!-- Sign container -->
+      <div class="sign">
+        <ul id="gui-selection-list">
+          <li
+            v-for="(option, index) in currentScreenObject"
+            :key="option.title"
+            :class="`${option.disabled ? 'disabled' : ''} ${currentCursorIndex == index ? 'active' : ''}`"
+          >
+            {{ option.title }}
+          </li>
+        </ul>
+      </div>
     </div>
   </div> 
 </template>
@@ -330,9 +333,39 @@ export default class Shop extends Vue {
   }
   .GUI {
     flex: 1;
-    background: rgb(26, 26, 26);
+    position: relative;
+    background-repeat: no-repeat;
+    background-size: contain;
     height: 100% !important;
     font-size: large;
+
+    .sign {
+      background: url('../assets/img/textures/wood.png');
+      background-repeat: repeat;
+      border-radius: 5px;
+      margin-top:2em;
+      margin-left: 4em;
+      margin-right: 4em;
+      max-height: 50%;
+      &::before {
+        content: '|';
+        font-size: large;
+        position: absolute;
+        top: 0;
+        left: 25%;
+        background: white;
+        height: 2.5em;
+      }
+      &::after {
+        content: '|';
+        font-size: large;
+        position: absolute;
+        top: 0;
+        right: 25%;
+        background: white;
+        height: 2.5em;
+      }
+    }
 
     .user-control {
       position: absolute;
