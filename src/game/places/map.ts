@@ -1,3 +1,4 @@
+import $vm from '@/main';
 import Phaser from 'phaser';
 import _ from 'underscore';
 
@@ -6,6 +7,9 @@ import _ from 'underscore';
 */
 import MonokaiBgImage from '@/assets/img/backgrounds/monokai-village/monokai-village.png';
 import PotionsShopLabelImage from '@/assets/img/icon/monokai-village/potions-shop.png';
+import VillageGateLabelImage from '@/assets/img/icon/monokai-village/village-gate.png';
+import CombatLabelImage from '@/assets/img/icon/heros-trial.png';
+
 import store from '@/store';
 
 const newGame = (global: GameInterface): any => {
@@ -56,6 +60,8 @@ const newGame = (global: GameInterface): any => {
         _.each([
           { name: 'monokai-bg', type: 'image', src: MonokaiBgImage, spriteDimensions: [] },
           { name: 'potions-shop-label', type: 'image', src: PotionsShopLabelImage, spriteDimensions: [] },
+          { name: 'village-gate-label', type: 'image', src: VillageGateLabelImage, spriteDimensions: [] },
+          { name: 'combat-label', type: 'image', src: CombatLabelImage, spriteDimensions: [] },
         ], (a, i, l) => {
           const { name, src, type, spriteDimensions } = a;
 
@@ -189,6 +195,59 @@ const newGame = (global: GameInterface): any => {
               global.tooltip = {};
               self.scene.pause();
               self.cameras.main.fadeIn(750);
+            });
+          }
+        });
+
+      let gateShopLabel = self.add.image(self.vw('37%'), self.vh('86%'), 'village-gate-label')
+        .setAlpha(0.6)
+        .setDisplaySize(self.vw('20%'), self.vw('20%')*(148/917))
+        .setDepth(8)
+        .setInteractive()
+        .on('pointerover', () => {
+          gateShopLabel.setAlpha(1);
+          global.tooltip = {
+            title: 'Village Gate',
+            description: 'Lorem Ipsum',
+          }
+        })
+        .on('pointerout', () => {
+          gateShopLabel.setAlpha(0.6);
+          global.tooltip = {};
+        })
+        .on('pointerup', (pointer: any) => {
+          if (!pointer.wasCancelled) {
+            self.cameras.main.fadeOut(750);
+            self.cameras.main.once('camerafadeoutcomplete', () => {
+              global.chosenShop = 'monokai-village/village-gate';
+              global.tooltip = {};
+              self.scene.pause();
+              self.cameras.main.fadeIn(750);
+            });
+          }
+        });
+      
+      let combatLabel = self.add.image(self.vw('85%'), self.vh('86%'), 'combat-label')
+        .setAlpha(0.6)
+        .setDisplaySize(self.vw('20%'), self.vw('20%')*(169/821))
+        .setDepth(8)
+        .setInteractive()
+        .on('pointerover', () => {
+          combatLabel.setAlpha(1);
+          global.tooltip = {
+            title: 'Hero\'s Trial',
+            description: 'Lorem Ipsum',
+          }
+        })
+        .on('pointerout', () => {
+          combatLabel.setAlpha(0.6);
+          global.tooltip = {};
+        })
+        .on('pointerup', (pointer: any) => {
+          if (!pointer.wasCancelled) {
+            self.cameras.main.fadeOut(750);
+            self.cameras.main.once('camerafadeoutcomplete', () => {
+              $vm.$router.replace('/world');
             });
           }
         });

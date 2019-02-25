@@ -108,6 +108,38 @@ export default class Shop extends Vue {
         ]
       }
     },
+    'monokai-village/village-gate': {
+      npcName: 'Daelen',
+      npcSpeak: [
+        'I used to be an adventurer like you.',
+        'Are you sure youre supposed to be wandering the village all by yourself?',
+      ],
+      guiMasterObject: {
+        // screens
+        'root': [
+          // options
+          { title: 'Order Caravan', description: 'Send a caravan on an expedition for treasure', to: 'caravan', disabled: false },
+          { title: 'Exit',
+            description: 'Back to the map',
+            to: null,
+            disabled: false,
+            select: () => {
+              this.animateSpeech('See you around, bozo.', () => setTimeout(() => {
+                const shopMainEl = document.querySelector('.shop-main');
+                if (!shopMainEl) {
+                  return;
+                }
+                shopMainEl.classList.add('hide');
+                this.exitShop();
+              }, 1500));
+            },
+          },
+        ],
+        'caravan': [
+          { title: 'Back', description: '', to: 'root', disabled: false, select: null },
+        ],
+      }
+    }
   }
 
   public mounted() {
@@ -335,7 +367,8 @@ export default class Shop extends Vue {
     flex: 1;
     position: relative;
     background-repeat: no-repeat;
-    background-size: contain;
+    background-size: cover;
+    background-position: center;
     height: 100% !important;
     font-size: large;
 
