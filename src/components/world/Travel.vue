@@ -1,6 +1,6 @@
 <template>
     <!-- Change background color (sky) depending on time of day) -->
-  <div class="display" :style="{ backgroundImage: `url(` + require('../../assets/img/backgrounds/monokai-village.png') + `), ${bgColor}` }">
+  <div class="display" :style="{ backgroundImage: `url(` + require('../../assets/img/backgrounds/monokai-village/monokai-village.png') + `), ${bgColor}` }">
     <header>
       <img src="@/assets/img/icon/monokai-village/monokai-village.png" alt="" class="display-title">
     </header>

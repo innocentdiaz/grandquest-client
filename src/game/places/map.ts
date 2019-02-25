@@ -4,7 +4,7 @@ import _ from 'underscore';
 /*
   Assets
 */
-import MonokaiBgImage from '@/assets/img/backgrounds/monokai-village.png';
+import MonokaiBgImage from '@/assets/img/backgrounds/monokai-village/monokai-village.png';
 import PotionsShopLabelImage from '@/assets/img/icon/monokai-village/potions-shop.png';
 import store from '@/store';
 
