@@ -23,8 +23,8 @@
             <li v-on:click="view = 'travel'">
               <img src="@/assets/img/icon/bag.png" alt="Travel">Explore
             </li>
-            <li>
-              <img src="@/assets/img/icon/scroll.png" alt="Character">Character
+            <li class="disabled">
+              <img src="@/assets/img/icon/scroll.png" alt="Leaderboards">Leaderboards
             </li>
             <li v-on:click="view = 'games'">
               <img src="@/assets/img/icon/chest.png" alt="Games">Games
