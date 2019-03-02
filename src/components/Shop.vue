@@ -50,6 +50,7 @@ import { Vue, Component, Watch, Prop } from 'vue-property-decorator';
 import { State, Mutation, Action } from 'vuex-class';
 import { Player, SocketState } from '@/types';
 import AudioManager from '@/game/audio-manager';
+import _ from 'underscore';
 
 @Component
 export default class Shop extends Vue {
@@ -102,6 +103,32 @@ export default class Shop extends Vue {
         ],
         'buy': [
           { title: 'Back', description: '', to: 'root', disabled: false, select: null },
+          ..._.map({
+              'heal-potion': { title: 'Health I', price: 11, description: 'Regenerates 25 health points when consumed' },
+              'energy-potion': { title: 'Energy I', price: 16, description: 'Recharges 15 energy points when consumed' },
+            }, ({ title, description, price }, id) => ({
+              title: `${title} - ${price} gold`,
+              description,
+              to: null,
+              disabled: this.player && this.player.gold < price,
+              select: () => {
+                this.SOCKET_EMIT({
+                  name: 'ITEM_TRANSACTION',
+                  params: [
+                    {
+                      shop: 'potions-shop',
+                      item: id,
+                    },
+                    (err: any) => {
+                      if (err) {
+                        this.animateSpeech(err);
+                      }
+                    }
+                  ]
+                });
+              },
+            })
+          )
         ],
         'sell': [
           { title: 'Back', description: '', to: 'root', disabled: false, select: null },
@@ -112,7 +139,7 @@ export default class Shop extends Vue {
       npcName: 'Daelen',
       npcSpeak: [
         'I used to be an adventurer like you.',
-        'Are you sure youre supposed to be wandering the village all by yourself?',
+        'Are you sure you\'re supposed to be wandering the village all by yourself?',
       ],
       guiMasterObject: {
         // screens
