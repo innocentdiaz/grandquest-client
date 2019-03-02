@@ -1,14 +1,7 @@
-/*
-  TODO:
-  - Work on level scenery
-  - Optimize game loop updating
-  - Add window.on resize events
-  - Add low framerate setting
-*/
-
 import Phaser from 'phaser';
 import _ from 'underscore';
 import AudioManager from '../audio-manager';
+import animations, { connectAnimations } from '@/game/animations';
 import store from '@/store';
 
 /*
@@ -38,27 +31,130 @@ import SlimeSheet from '@/assets/img/spritesheets/slime-sheet.png';
 import graveMarkerImage from'@/assets/img/misc/grave-marker.png';
 import SelectTargetImage from '@/assets/img/icon/select-target.png';
 import healPotionImage from '@/assets/img/items/heal-potion.png';
+import animationsManager from '@/game/animations';
 
 /*
-  Declare definitions
+  Declare types & interfaces
 */
-type PhaserGame = any;
-type GameInstance = any;
+interface PhaserGame {
+  resize: (width: number, height: number) => PhaserGame;
+  scene: {
+    scenes: Scene[];
+  }
+  canvas: HTMLCanvasElement;
+  destroy: () => void;
+}
+type PhaserConfig = {
+  type: any;
+  pixelArt?: boolean;
+  width: number;
+  height: number;
+  backgroundColor?: string;
+  physics: any;
+  parent?: string;
+  scene: {
+    preload?: () => void;
+    create?: () => void;
+    update?: () => void;
+  }
+}
+interface Scene {
+  add: {
+    image: (x: number, y: number, id: string) => any;
+    sprite: (x: number, y: number, id: string) => any;
+    graphics: () => any;
+    rectangle: (x1: number, x2: number, y1: number, y2: number, color: number) => any;
+    text: (x: number, y: number, text: string, styles: any) => any;
+  };
+  game: PhaserGame;
+  tweens: {
+    add: (options: any) => any;
+    createTimeline: () => any;
+  };
+  anims: {
+    create: (config: any) => any;
+    generateFrameNumbers: (key: string, config: { frames: number[] } | { start: number, end: number }) => any;
+  };
+  textures: {
+    addSpriteSheet: (id: string, img: HTMLImageElement, config: any) => void;
+    addImage: (id: string, img: HTMLImageElement) => void;
+  };
+  cameras: {
+    main: {
+      flash: () => void;
+    }
+  }
+};
 
-interface GiActions {
-  [actionName: string]: any,
+interface ControllerActions {
+  [index: string]: any,
+  loadScene: () => void;
+  addBackground: () => void;
+  spawnCharacter: (character: Character) => Character;
+  coordinatesForEntity: (character: Character) => { x: number, y: number };
+  despawnCharacter: (id: string | number) => void;
+  addTargetHand: () => void;
+  removeTargetHand: () => void;
+  moveTargetHandTo: (settings: { index: number, side: number }) => void;
+  animateEvents: (events: CombatEvent[], i?: number) => void;
+  setInterval: (name: string, func: (i: number) => any, interval: number) => void;
+  stopInterval: (name: string) => void;
 }
 
-/*
-  newGame method:
-  Return a new Phaser.Game that makes use of a `global` game interface.
-  This method is called by the GameInterface object (GameInterface.launch())
+/**
+ * The main controller for the Phaser game
+ */
+export interface GameController {
+  gameState: CombatRoom;
+  gameInitialized: boolean;
+  gameIntervals: {
+    [intervalName: string]: number,
+  };
+  currentTargetSide: number;
+  currentTargetIndex: number;
+  _gameClouds: any;
+  _fadeScreen: any;
+  _sceneImg: any[];
+  game: PhaserGame | null;
+  targetHand: any;
+  isAnimating: boolean;
+  showGUI: boolean;
+  playerPlacingLine: PlacingLine;
+  enemyPlacingLine: PlacingLine;
+  launch: () => void;
+  destroyGame: () => void;
+  keyMonitor: (event: any) => void;
+  resizeMonitor: (event: any) => void;
+};
+
+/**
+ * Organizes characters in specific spots of placing lines to be rendered accordingly
+ */
+interface PlacingLine {
+  [placingIndex: string]: {
+    character: Character | null;
+    nextIndex: number;
+    prevIndex: number;
+  };
+}
+
+/**
+  Returns a new Phaser.Game that makes use of a game controller.
+  This method is called by GameController.launch()
 */
-const newGame = (global: GameInterface): PhaserGame => {
-  /*
-    GameInterface.Game
-  */
-  let game: any = new Phaser.Game({
+/*
+  There are three sections to this fuction:
+  1) Phaser config object creation
+  2) Phaser.Game creation
+  3) Game controller actions creation
+  4) Return game
+*/
+const newGame = (global: GameController): PhaserGame => {
+  // -------------------------------------------------
+  //      Configuration for Phaser Game & Game logic
+  //      (I recommend collapsing this entire object when not
+  //       working on the game logic, its a bit big)
+  let config: PhaserConfig = {
     type: Phaser.AUTO,
     pixelArt: true,
     // width set to 98% of window width withing range of 300 and 920 pixels
@@ -73,7 +169,7 @@ const newGame = (global: GameInterface): PhaserGame => {
       }
     },
     scene: {
-      preload: function() {
+      preload() {
         let canvasParent = document.getElementById('canvas-parent');
         if (!canvasParent) {
           throw new Error('Phaser.js expected a parent element for the canvas, but at time of creating got none');
@@ -85,13 +181,12 @@ const newGame = (global: GameInterface): PhaserGame => {
         and adding animation for sprites
       */
       create() {
-        console.log('game create');
-        let self: GameInstance = this;
+        let scene: Scene = game.scene.scenes[0];
         /*
-          Bind gameInterface.actions to `self`
+          Bind GameController.actions to `scene`
         */
         _.each(actions, (func: any, action: string) => {
-          actions[action] = func.bind(self);
+          actions[action] = func.bind(scene);
         });
 
         // Load images asyncronously
@@ -122,11 +217,11 @@ const newGame = (global: GameInterface): PhaserGame => {
           // method to add texture `onload` according to type
           const method = type === 'image'
           ? () => {
-              self.textures.addImage(name, img);
+              scene.textures.addImage(name, img);
             }
           : type === 'spritesheet' && spriteDimensions
           ? () => {
-              self.textures.addSpriteSheet(
+              scene.textures.addSpriteSheet(
                 name,
                 img,
                 { frameWidth: spriteDimensions[0], frameHeight: spriteDimensions[1] }
@@ -144,69 +239,69 @@ const newGame = (global: GameInterface): PhaserGame => {
               /*
                 Add animations
               */
-              self.anims.create({
+              scene.anims.create({
                 key: 'adventurer-idle',
-                frames: self.anims.generateFrameNumbers('adventurer', { start: 0, end: 3 }),
-                frameRate: 3,
+                frames: scene.anims.generateFrameNumbers('adventurer', { start: 0, end: 3 }),
+                frameRate: 4,
                 repeat: -1,
               });
-              self.anims.create({
+              scene.anims.create({
                 key: 'adventurer-hurt',
-                frames: self.anims.generateFrameNumbers('adventurer', { start: 60, end: 64 }),
-                frameRate: 8,
+                frames: scene.anims.generateFrameNumbers('adventurer', { start: 60, end: 64 }),
+                frameRate: 10,
                 repeat: 0,
               });
-              self.anims.create({
+              scene.anims.create({
                 key: 'adventurer-walk',
-                frames: self.anims.generateFrameNumbers('adventurer', { start: 8, end: 14 }),
-                frameRate: 10,
+                frames: scene.anims.generateFrameNumbers('adventurer', { start: 8, end: 14 }),
+                frameRate: 12,
                 repeat: -1,
               });
-              self.anims.create({
+              scene.anims.create({
                 key: 'adventurer-swing',
-                frames: self.anims.generateFrameNumbers('adventurer', { frames:[38, 39, 40, 41, 42, 43, 47, 48, 49, 50, 51, 52] }),
+                frames: scene.anims.generateFrameNumbers('adventurer', { frames:[38, 39, 40, 41, 42, 43, 47, 48, 49, 50, 51, 52] }),
+                frameRate: 15,
+                repeat: 0,
+              });
+              scene.anims.create({
+                key: 'adventurer-up-swing',
+                frames: scene.anims.generateFrameNumbers('adventurer', { start: 38, end: 49 }),
                 frameRate: 12,
                 repeat: 0,
               });
-              self.anims.create({
-                key: 'adventurer-up-swing',
-                frames: self.anims.generateFrameNumbers('adventurer', { start: 38, end: 49 }),
-                frameRate: 11,
-                repeat: 0,
-              });
-              self.anims.create({
+              scene.anims.create({
                 key: 'adventurer-back-swing',
-                frames: self.anims.generateFrameNumbers('adventurer', { start: 53, end: 59 }),
-                frameRate: 8,
+                frames: scene.anims.generateFrameNumbers('adventurer', { start: 53, end: 58 }),
+                frameRate: 9,
                 repeat: 0,
               });
-              self.anims.create({
+              scene.anims.create({
                 key: 'adventurer-spin-swing',
-                frames: self.anims.generateFrameNumbers('adventurer', { start: 45, end: 59 }),
+                frames: scene.anims.generateFrameNumbers('adventurer', { start: 45, end: 59 }),
                 frameRate: 16,
                 repeat: 0,
               });
-              self.anims.create({
+              scene.anims.create({
                 key: 'slime-idle',
-                frames: self.anims.generateFrameNumbers('slime', { start: 0, end: 7 }),
+                frames: scene.anims.generateFrameNumbers('slime', { start: 0, end: 7 }),
                 frameRate: 7,
                 repeat: -1,
               });
-              self.anims.create({
+              scene.anims.create({
                 key: 'slime-bite',
-                frames: self.anims.generateFrameNumbers('slime', { start: 9, end: 16 }),
+                frames: scene.anims.generateFrameNumbers('slime', { start: 9, end: 16 }),
                 frameRate: 8,
                 repeat: 0,
               });
-              self.anims.create({
+              scene.anims.create({
                 key: 'slime-hurt',
-                frames: self.anims.generateFrameNumbers('slime', { start: 12, end: 16 }),
+                frames: scene.anims.generateFrameNumbers('slime', { start: 12, end: 16 }),
                 frameRate: 6,
                 repeat: 0,
               });
-              self.anims.create({
+              scene.anims.create({
                 key: 'grave-marker',
-                frames: self.anims.generateFrameNumbers('grave-marker', { frames: [0] }),
+                frames: scene.anims.generateFrameNumbers('grave-marker', { frames: [0] }),
                 frameRate: 1,
                 repeat: 0,
               });
@@ -216,7 +311,7 @@ const newGame = (global: GameInterface): PhaserGame => {
         });
       },
       update() {
-        let self: GameInstance = this;
+        let scene: Scene = game.scene.scenes[0];
         if (!global.gameInitialized) {
           return;
         }
@@ -226,12 +321,23 @@ const newGame = (global: GameInterface): PhaserGame => {
         /*
           GAME LOGIC
         */
+        /* Level updating / rendering */
+        // if we are on a different level than on the network
+        if (global.gameState.level !== networkGameState.level) {
+          // update the level locally
+          global.gameState.level = networkGameState.level;
+          // despawn all the characters
+          _.forEach({...global.gameState.players, ...global.gameState.enemies}, c => {
+            actions.despawnCharacter(c.id);
+          });
+          // load the scene
+          actions.loadScene();
+        }
 
         // generate player placing line
         if (networkGameState.maxPlayers !== Object.keys(global.playerPlacingLine).length) {
           // reset players on local state
           global.gameState.players = {};
-          console.log('generate player placing line');
           // generate empty placing line withing range
           global.playerPlacingLine = _.reduce(_.range(1, networkGameState.maxPlayers + 1), (memo: object, index: number) => ({
             ...memo,
@@ -246,7 +352,6 @@ const newGame = (global: GameInterface): PhaserGame => {
         // generate enemy placing line
         if (Object.keys(networkGameState.enemies).length !== Object.keys(global.enemyPlacingLine).length) {
           // despawn any players that could be on it
-          console.log('generate enemy placing line');
           global.gameState.enemies = {};
           // generate empty placing line withing range
           global.enemyPlacingLine = _.reduce(_.range(1, Object.keys(networkGameState.enemies).length + 1), (memo: object, index: number) => ({
@@ -268,143 +373,25 @@ const newGame = (global: GameInterface): PhaserGame => {
           }
         });
 
+        // Update Characters States
+        _.forEach({...global.gameState.players, ...global.gameState.enemies}, (characterOnLocal) => {
+          let id: string = String(characterOnLocal.id);
+          let characterOnNetwork = characterOnLocal.enemy
+            ? networkGameState.enemies[id]
+            : networkGameState.players[id];
 
-        /*
-          SCENE RENDERING
-        */
-        // Cloud animation
-        if (global._gameClouds) {
-          global._gameClouds.tilePositionX += 0.072;
-        }
-        // Spawn & Update Characters Graphics
-        _.forEach({...networkGameState.players, ...networkGameState.enemies}, (characterOnNetwork) => {
-          let id: string = String(characterOnNetwork.id);
-          let characterOnLocal = characterOnNetwork.enemy
-           ? global.gameState.enemies[id]
-           : global.gameState.players[id];
-
-          if (characterOnLocal) {
-            if (characterOnNetwork.enemy) {
-              global.gameState.enemies = {
-                ...global.gameState.enemies,
-                [id]: {...characterOnLocal, ...characterOnNetwork},
-              }
-            } else {
-              global.gameState.players = {
-                ...global.gameState.players,
-                [id]: {...characterOnLocal, ...characterOnNetwork},
-              }
-            }
-
-            if (!global.isAnimating) {
-              let coordinates = actions.coordinatesForEntity(characterOnLocal);
-              characterOnLocal.sprite.x = coordinates.x;
-              characterOnLocal.sprite.y = coordinates.y;
+          if (characterOnLocal.enemy) {
+            global.gameState.enemies = {
+              ...global.gameState.enemies,
+              [id]: {...characterOnLocal, ...characterOnNetwork},
             }
           } else {
-            characterOnLocal = actions.spawnCharacter(characterOnNetwork);
-          }
-          // name tag
-          if(!characterOnLocal._nameTag) {
-            characterOnLocal._nameTag = self.add.text(
-              0, 0,
-              characterOnLocal.username,
-              {
-                fontSize: '17px',
-                fill: '#fff',
-                backgroundColor: '#0008',
-                align: 'center',
-              },
-            )
-            .setOrigin(0.5, 0)
-            .setDepth(characterOnLocal.sprite.depth);
-          }
-          characterOnLocal._nameTag.x = characterOnLocal.sprite.x;
-          characterOnLocal._nameTag.y = characterOnLocal.sprite.y - (characterOnLocal.sprite.height * 1.75);
-
-          // health bar background
-          if (!characterOnLocal._healthBarBackground) {
-            characterOnLocal._healthBarBackground = self
-            .add.rectangle(0, 0, 0, 0, 0xBEBEBE)
-            .setDepth(characterOnLocal.sprite.depth)
-            .setOrigin(0, 0);
-          } else if (characterOnLocal._healthBarBackground.visible) {
-            characterOnLocal._healthBarBackground.setSize(characterOnLocal._nameTag.width, 9);
-            characterOnLocal._healthBarBackground.x = characterOnLocal._nameTag.x - (characterOnLocal._nameTag.width / 2);
-            characterOnLocal._healthBarBackground.y = characterOnLocal._nameTag.y + characterOnLocal._nameTag.height;
-          }
-
-          // health bar
-          if (!characterOnLocal._healthBar) {
-            const width = characterOnLocal.entity.health / characterOnLocal.entity.maxHealth * (characterOnLocal._nameTag.displayWidth);
-
-            characterOnLocal._healthBar = self
-            .add.rectangle(0, 0, width, 0, 0x56F33E)
-            .setDepth(characterOnLocal.sprite.depth + 1)
-            .setOrigin(0, 0);
-          } else if (characterOnLocal._healthBar.visible) {
-            if (!global.isAnimating) {
-              const width = characterOnLocal.entity.health / characterOnLocal.entity.maxHealth * (characterOnLocal._nameTag.displayWidth);
-              characterOnLocal._healthBar.setSize(width, 10);
-            }
-            characterOnLocal._healthBar.x = characterOnLocal._nameTag.x - (characterOnLocal._nameTag.width / 2);
-            characterOnLocal._healthBar.y = characterOnLocal._nameTag.y + characterOnLocal._nameTag.height;
-          }
-          // health text
-          if (!characterOnLocal._healthText) {
-            characterOnLocal._healthText = self.add.text(
-              0, 0, '',
-              {
-                fontSize: '8px',
-                fill: '#fff',
-                backgroundColor: '#0000',
-                align: 'center',
-                baselineY: 0.5,
-              },
-            )
-            .setOrigin(0.5, 0.5)
-            .setDepth(characterOnLocal._healthBar.depth + 1);
-          } else if (characterOnLocal._healthText.visible) {
-            let currentDisplayedHealth = Math.round(characterOnLocal.entity.maxHealth * (characterOnLocal._healthBar.width/characterOnLocal._nameTag.displayWidth));
-            characterOnLocal._healthText.text = `${currentDisplayedHealth}/${characterOnLocal.entity.maxHealth}`;
-            characterOnLocal._healthText.x = characterOnLocal._healthBarBackground.getCenter().x;
-            characterOnLocal._healthText.y = characterOnLocal._healthBarBackground.getCenter().y + 2;
-          }
-          // grave marker
-          if (!characterOnLocal._healthBar.width) {
-            characterOnLocal._healthBar.visible = false;
-            characterOnLocal._healthBarBackground.visible = false;
-            characterOnLocal._healthText.visible = false;
-            characterOnLocal.sprite.play('grave-marker');
-            if (characterOnLocal.enemy) {
-              characterOnLocal.sprite.scaleX = -Math.abs(characterOnLocal.sprite.scaleX);
+            global.gameState.players = {
+              ...global.gameState.players,
+              [id]: {...characterOnLocal, ...characterOnNetwork},
             }
           }
         });
-        // target selection hand
-        if (global.targetHand) {
-          const currentPlayer = store.state.player.id ? global.gameState.players[store.state.player.id] : null;
-          // remove the target hand if game is animating or the user already selected the target & action
-          if (currentPlayer && currentPlayer.selectionStatus === 1 || global.isAnimating) {
-            console.log('removed target hand');
-            actions.removeTargetHand();
-          } else {
-            // update selection hand coordinates
-            const placingLine = global.currentTargetSide === 0
-            ? global.playerPlacingLine
-            : global.enemyPlacingLine;
-
-            const { character } = placingLine[global.currentTargetIndex];
-
-            if (character) {
-              global.targetHand.x = character.sprite.getCenter().x;
-              global.targetHand.y = character._nameTag.y - 15;
-              global.targetHand.z = character.sprite.z + 10;
-            }
-          }
-        } else if (store.state.combatGame.selectionMode === 'TARGET' && !global.isAnimating) {
-          actions.addTargetHand();
-        }
 
         // IF the network is at a different turn
         if (global.gameState.turn !== networkGameState.turn && !global.isAnimating) {
@@ -422,126 +409,241 @@ const newGame = (global: GameInterface): PhaserGame => {
           return;
         }
 
-        /* Level updating / rendering */
-        if (global.gameState.level !== networkGameState.level) {
-          global.gameState.level = networkGameState.level;
-          _.forEach({...global.gameState.players, ...global.gameState.enemies}, c => {
-            actions.despawnCharacter(c.id);
-          });
-          actions.loadScene();
+        /*
+          SCENE RENDERING
+        */
+        // Cloud animation
+        if (global._gameClouds) {
+          global._gameClouds.tilePositionX += 0.072;
+        }
+        // Create & Update Characters Graphics
+        _.forEach({...networkGameState.players, ...networkGameState.enemies}, (characterOnNetwork) => {
+          let id: string = String(characterOnNetwork.id);
+          let characterOnLocal = characterOnNetwork.enemy
+           ? global.gameState.enemies[id]
+           : global.gameState.players[id];
+
+          // user does not exist locally, spawn them if game is NOT animating
+          if (!characterOnLocal && !global.isAnimating) {
+            characterOnLocal = actions.spawnCharacter(characterOnNetwork);
+          }
+          // user does not exist locally BUT the game is animating, don't continue
+          else if (!characterOnLocal) {
+            return;
+          }
+
+          // if game is NOT animating, update their position
+          if (!global.isAnimating) {
+            let coordinates = actions.coordinatesForEntity(characterOnLocal);
+            characterOnLocal.sprite.x = coordinates.x;
+            characterOnLocal.sprite.y = coordinates.y;
+          }
+          // name tag
+          if(!characterOnLocal._nameTag) {
+            characterOnLocal._nameTag = scene.add.text(
+              0, 0,
+              characterOnLocal.username,
+              {
+                fontSize: '17px',
+                fill: '#fff',
+                backgroundColor: '#0008',
+                align: 'center',
+              },
+            )
+            .setOrigin(0.5, 0)
+            .setDepth(characterOnLocal.sprite.depth);
+          }
+          characterOnLocal._nameTag.x = characterOnLocal.sprite.x;
+          characterOnLocal._nameTag.y = characterOnLocal.sprite.y - (characterOnLocal.sprite.height * 1.75);
+          characterOnLocal._nameTag.setDepth(characterOnLocal.sprite.depth);
+
+          // health bar background
+          if (!characterOnLocal._healthBarBackground) {
+            characterOnLocal._healthBarBackground = scene.add.rectangle(0, 0, 0, 0, 0xBEBEBE)
+              .setDepth(characterOnLocal.sprite.depth)
+              .setOrigin(0, 0);
+          } else if (characterOnLocal._healthBarBackground.visible) {
+            characterOnLocal._healthBarBackground.setSize(characterOnLocal._nameTag.width, 9);
+            characterOnLocal._healthBarBackground.x = characterOnLocal._nameTag.x - (characterOnLocal._nameTag.width / 2);
+            characterOnLocal._healthBarBackground.y = characterOnLocal._nameTag.y + characterOnLocal._nameTag.height;
+          }
+
+          // health bar
+          if (!characterOnLocal._healthBar) {
+            const width = characterOnLocal.entity.health / characterOnLocal.entity.maxHealth * (characterOnLocal._nameTag.displayWidth);
+
+            characterOnLocal._healthBar = scene
+            .add.rectangle(0, 0, width, 0, 0x56F33E)
+            .setOrigin(0, 0);
+          } else if (characterOnLocal._healthBar.visible) {
+            if (!global.isAnimating) {
+              const width = characterOnLocal.entity.health / characterOnLocal.entity.maxHealth * (characterOnLocal._nameTag.displayWidth);
+              characterOnLocal._healthBar.setSize(width, 10);
+            }
+            characterOnLocal._healthBar.x = characterOnLocal._nameTag.x - (characterOnLocal._nameTag.width / 2);
+            characterOnLocal._healthBar.y = characterOnLocal._nameTag.y + characterOnLocal._nameTag.height;
+            characterOnLocal._healthBar.setDepth(characterOnLocal.sprite.depth + 1);
+          }
+          // health text
+          if (!characterOnLocal._healthText) {
+            characterOnLocal._healthText = scene.add.text(
+              0, 0, '',
+              {
+                fontSize: '8px',
+                fill: '#fff',
+                backgroundColor: '#0000',
+                align: 'center',
+                baselineY: 0.5,
+              },
+            )
+            .setOrigin(0.5, 0.5)
+          } else if (characterOnLocal._healthText.visible) {
+            let currentDisplayedHealth = Math.round(characterOnLocal.entity.maxHealth * (characterOnLocal._healthBar.width/characterOnLocal._nameTag.displayWidth));
+            characterOnLocal._healthText.text = `${currentDisplayedHealth}/${characterOnLocal.entity.maxHealth}`;
+            characterOnLocal._healthText.x = characterOnLocal._healthBarBackground.getCenter().x;
+            characterOnLocal._healthText.y = characterOnLocal._healthBarBackground.getCenter().y + 2;
+            characterOnLocal._healthText.setDepth(characterOnLocal.sprite.depth + 2);
+          }
+          // grave marker
+          if (!characterOnLocal._healthBar.width) {
+            characterOnLocal._healthBar.visible = false;
+            characterOnLocal._healthBarBackground.visible = false;
+            characterOnLocal._healthText.visible = false;
+            characterOnLocal.sprite.play('grave-marker');
+            if (characterOnLocal.enemy) {
+              characterOnLocal.sprite.scaleX = -Math.abs(characterOnLocal.sprite.scaleX);
+            }
+          }
+        });
+        // target selection hand
+        if (global.targetHand) {
+          const currentPlayer = store.state.player.id ? global.gameState.players[store.state.player.id] : null;
+          // remove the target hand if game is animating or the user already selected the target & action
+          if (currentPlayer && currentPlayer.selectionStatus === 1 || global.isAnimating) {
+            actions.removeTargetHand();
+          } else {
+            // update selection hand coordinates
+            const placingLine = global.currentTargetSide === 0
+            ? global.playerPlacingLine
+            : global.enemyPlacingLine;
+
+            const { character } = placingLine[global.currentTargetIndex];
+
+            if (character) {
+              global.targetHand.x = character.sprite.getCenter().x;
+              global.targetHand.y = character._nameTag.y - 15;
+              global.targetHand.setDepth(character.sprite.depth);
+
+              // add fade screen in case we are selecting an action
+              if (store.state.combatGame.selectionMode === 'ACTION') {
+                if (!global._fadeScreen) {
+                  character.sprite.setDepth(15);
+
+                  // add fade screen behind the player
+                  global._fadeScreen = scene.add.rectangle(0, 0, scene.game.canvas.offsetWidth, scene.game.canvas.offsetHeight, 0x000)
+                    .setAlpha(0.5)
+                    .setDepth(14)
+                    .setOrigin(0, 0);
+                }
+                global._fadeScreen
+                  .setSize(scene.game.canvas.offsetWidth, scene.game.canvas.offsetHeight);
+              }
+            }
+          }
+        } else if (store.state.combatGame.selectionMode === 'TARGET' && !global.isAnimating) {
+          actions.addTargetHand();
+        }
+
+        // if there is a fade screen and it should not be here, remove it
+        if (global._fadeScreen && (store.state.combatGame.selectionMode === 'TARGET' || global.isAnimating)) {
+          const { character } = global.currentTargetSide === 0
+            ? global.playerPlacingLine[global.currentTargetIndex]
+            : global.enemyPlacingLine[global.currentTargetIndex];
+          global._fadeScreen.destroy();
+          global._fadeScreen = null;
+          if (!character) {
+            return console.warn('could not find targeted character when removing fade');
+          }
+          character.sprite.setDepth(10);
         }
 
         /*
           GUI rendering
         */
         if (!global.isAnimating) {
-          actions.animateXPBar();
+          animationsManager.animations.GUI.XP();
         }
       },
     },
-  });
+  };
+
+  // -----------------------------------------------------
+  //  Create Phaser Game using config
+  let game: PhaserGame = new Phaser.Game(config);
 
   /*
-    GameInterface.Actions
+    GameController actions
   */
-  const actions: GiActions = {
-    keyMonitor(event: any) {
-      let self: any = this;
-      if (Date.now() - self.cursorMoveDate <= 100) {
-        return;
-      }
-      self.cursorMoveDate = Date.now();
-  
-      switch (event.key.toUpperCase()) {
-        case 'W':
-          actions.moveCursor('up');
-          break;
-        case 'A':
-          actions.moveCursor('left');
-          break;
-        case 'S':
-          actions.moveCursor('down');
-          break;
-        case 'D':
-          actions.moveCursor('right');
-          break;
-        case 'ENTER':
-          AudioManager.playOnce('cursorSelect');
-          store.commit('SET_COMBAT_GAME_SELECTION_MODE', 'ACTION');
-          break;
-      }
-    },
-    moveCursor(direction: string) {
-      let indexDirection = null;
-      let side = null;
-
-      switch (direction.toLowerCase()) {
-        case 'up':
-          indexDirection = 'up';
-          break;
-        case 'down':
-          indexDirection = 'down';
-          break;
-        case 'left':
-          side = 0;
-          break;
-        case 'right':
-          side = 1;
-          break;
-        default:
-          return;
-      }
-
-      if (indexDirection) {
-        let j: any = global.currentTargetIndex;
-
-        const placingLine = global.currentTargetSide == 0
-          ? global.playerPlacingLine
-          : global.enemyPlacingLine;
-
-        for (const key in placingLine) {
-          let position = placingLine[j];
-
-          if (!direction || direction == 'down') {
-            j = position.nextIndex;
-          } else if (direction == 'up') {
-            j = position.prevIndex;
-          }
-          const nextPosition = placingLine[j];
-          if (nextPosition.character) {
-            global.currentTargetIndex = j;
-            break;
-          }
-        }
-      } else if (typeof side === 'number') {
-        if (side === global.currentTargetSide) {
-          return;
-        }
-        // HERE WE USE IT FOR THE SIDE WE WANT TO MOVE OUR CURSOR TO
-        const newPlacingLine = side == 0
-        ? global.playerPlacingLine
-        : global.enemyPlacingLine;
-
-        const newIndex: any = _.findKey({...newPlacingLine}, (p: PlacingLineSpot) => !!p.character);
-
-        if (newIndex) {
-          global.currentTargetSide = side;
-          global.currentTargetIndex = newIndex;
-        }
-      } else {
-        return;
-      }
-
-      AudioManager.playOnce('cursorMove');
-    },
+  const actions: ControllerActions = {
     loadScene() {
+      /*
+        SCENE CONFIGURATION FOR IMAGE & SPRITE Z-DEPTHS
+        -
+        Background images: 1-4
+        Character (idle): 10
+        FadeScreen: 14
+        Character (selected of idle): 15
+        TargetHand: Character.depth
+        NameTag: Character.depth
+        HealthBar: Character.depth + 1
+        HealthText: Character.depth + 2
+      */
+      let scene: Scene = game.scene.scenes[0];
       console.log('load scene ', global.gameState.level);
+
+      global.showGUI = false;
+      global.isAnimating = true;
+
+      // create a cover for the screen
+      var width = scene.game.canvas.offsetWidth + 10;
+      var height = scene.game.canvas.offsetHeight + 10;
+      var slope = 200;
+      var polygon = new Phaser.Geom.Polygon([
+          0-slope, height,
+          0, 0,
+          width, 0,
+          width, height,
+      ]);
+
+      let screenCover = scene.add.graphics()
+        .fillStyle(0x000)
+        .fillPoints(polygon.points, true)
+        .setDepth(100);
+
+      let timeline = scene.tweens.createTimeline();
+      timeline.add({
+        targets: [screenCover],
+        duration: 150,
+        x: width + slope,
+        onComplete() {
+          screenCover.destroy();
+          AudioManager.playOnce('fieldsCombat', true);
+          setTimeout(() => {
+            global.isAnimating = false;
+            global.showGUI = true;
+          }, 500);
+        },
+      });
+
       actions.addBackground();
-      AudioManager.playOnce('fieldsCombat', true);
       store.commit('SET_COMBAT_GAME_SELECTION_MODE', 'TARGET');
+      setTimeout(() => {
+        AudioManager.playOnce('cursorSelect');
+        timeline.play();
+      }, 2000);
     },
     addBackground() {
-      let self: any = this;
+      let scene: any = this;
       /*
         Wipe the old scene if it exists
       */
@@ -554,8 +656,8 @@ const newGame = (global: GameInterface): PhaserGame => {
       /*
         Handy dimensions
       */
-      const canvasWidth = self.game.canvas.offsetWidth;
-      const canvasHeight = self.game.canvas.offsetHeight;
+      const canvasWidth = scene.game.canvas.offsetWidth;
+      const canvasHeight = scene.game.canvas.offsetHeight;
       let imagePixelHeight = 0;
       let scaleRatio = 0;
 
@@ -573,7 +675,7 @@ const newGame = (global: GameInterface): PhaserGame => {
           ], (name, i) => {
             // clouds are parallax
             const img =
-              self.add.tileSprite(0, 0, canvasWidth, canvasHeight, name)
+              scene.add.tileSprite(0, 0, canvasWidth, canvasHeight, name)
               // z-axis
               .setDepth(i)
               // pixelHeight of each image in tileset
@@ -600,7 +702,7 @@ const newGame = (global: GameInterface): PhaserGame => {
           ], (name, i) => {
             // clouds are parallax
             const img =
-              self.add.tileSprite(0, 0, canvasWidth, canvasHeight, name)
+              scene.add.tileSprite(0, 0, canvasWidth, canvasHeight, name)
               // z-axis
               .setDepth(i)
               // pixelHeight of each image in tileset
@@ -617,8 +719,8 @@ const newGame = (global: GameInterface): PhaserGame => {
           throw new Error('Scene not configured for level ' + global.gameState.level);
       }
     },
-    spawnCharacter(character: Character): Character {
-      let self: GameInstance = this;
+    spawnCharacter(character): Character {
+      let scene: Scene = game.scene.scenes[0];
 
       let { entity } = character;
 
@@ -628,7 +730,7 @@ const newGame = (global: GameInterface): PhaserGame => {
         : global.playerPlacingLine;
 
       // find empty spot in line
-      let emptySpotInLine = _.findKey({...placingLine}, (spot: PlacingLineSpot) => {
+      let emptySpotInLine = _.findKey({...placingLine}, (spot) => {
         return spot.character === null;
       });
 
@@ -641,12 +743,11 @@ const newGame = (global: GameInterface): PhaserGame => {
 
       // create game sprite
       let sprite =
-        self.add.sprite(0, 0, entity.name)
-        .setScale(self.game.canvas.offsetHeight / 210)
-        .setDepth(10 + emptySpotInLine)
+        scene.add.sprite(-20, 0, entity.name)
+        .setScale(scene.game.canvas.offsetHeight / 210)
+        .setDepth(10)
         .setOrigin(0.5)
         .play(`${entity.name}-idle`, false, Math.floor(Math.random() * 3));
-
       let characterId: string = String(character.id);
       // add character with sprite to the global game state!
       global.gameState[cat] = {
@@ -665,18 +766,38 @@ const newGame = (global: GameInterface): PhaserGame => {
           character: global.gameState[cat][character.id],
         },
       };
+
+      // animate spawning
+      if (!character.enemy) {
+        global.isAnimating = true;
+        const coordinates = actions.coordinatesForEntity(character);
+        sprite.setPosition(-20, coordinates.y);
+        scene.tweens.add({
+          targets: [sprite],
+          x: coordinates.x,
+          duration: 375,
+          onStart() {
+            sprite.play(`${character.entity.name}-walk`);
+          },
+          onComplete() {
+            sprite.play(`${character.entity.name}-idle`);
+            global.isAnimating = false;
+          },
+        });
+      }
+
       return global.gameState[cat][character.id];
     },
-    coordinatesForEntity(character: Character): { x: number, y: number } {
-      let self: any = this;
+    coordinatesForEntity(character): { x: number, y: number } {
+      let scene: any = this;
       // place them in our game state
       let placingLine = character.enemy
         ? global.enemyPlacingLine
         : global.playerPlacingLine;
-      let spotInLine: string = _.findKey({...placingLine}, (spot: PlacingLineSpot) => !!spot.character && spot.character.id === character.id);
+      let spotInLine: string = _.findKey({...placingLine}, (spot) => !!spot.character && spot.character.id === character.id);
 
-      const canvasWidth = self.game.canvas.offsetWidth;
-      const canvasHeight = self.game.canvas.offsetHeight;
+      const canvasWidth = scene.game.canvas.offsetWidth;
+      const canvasHeight = scene.game.canvas.offsetHeight;
 
       let b = character.enemy ? 0.6 : 0.35;
       let c = global.gameState.level === 0
@@ -704,7 +825,7 @@ const newGame = (global: GameInterface): PhaserGame => {
         y: canvasHeight * ((Number(spotInLine) * yDelta) + c),
       }
     },
-    despawnCharacter(id: string) {
+    despawnCharacter(id) {
       let character: Character = global.gameState.players[id] || global.gameState.enemies[id];
 
       if (!character) {
@@ -750,13 +871,13 @@ const newGame = (global: GameInterface): PhaserGame => {
       }
     },
     addTargetHand() {
-      let self: GameInstance = this;
+      let scene: Scene = game.scene.scenes[0];
 
       if (global.targetHand) {
         return console.warn('target hand already added')
       };
 
-      let key = _.findKey({...global.playerPlacingLine}, (index: PlacingLineSpot) => !!index.character);
+      let key = _.findKey({...global.playerPlacingLine}, (index) => !!index.character);
       let spot = global.playerPlacingLine[key];
 
       if (!spot || !spot.character) {
@@ -768,9 +889,9 @@ const newGame = (global: GameInterface): PhaserGame => {
 
       global.currentTargetIndex = Number(key);
       global.targetHand =
-        self.add.image(character.sprite.x, character.sprite.y, 'select-target')
-        .setScale(self.game.canvas.offsetHeight / 17500)
-        .setDepth(character.sprite.depth + 5); // z-coordinate above the player
+        scene.add.image(character.sprite.x, character.sprite.y, 'select-target')
+        .setScale(scene.game.canvas.offsetHeight / 17500)
+        .setDepth(character.sprite.depth); // z-coordinate above the player
     },
     removeTargetHand() {
       if (!global.targetHand) {
@@ -793,26 +914,28 @@ const newGame = (global: GameInterface): PhaserGame => {
       }
 
       if (!global.targetHand) {
-        throw new Error('No target hand in game interface');
+        throw new Error('No target hand in game controller');
       }
 
       global.targetHand.x = character.sprite.x - character.sprite.width
       global.targetHand.y = character.sprite.y
     },
-    animateEvents(events: [], i = 0) {
+    animateEvents(events: CombatEvent[], i = 0) {
       global.isAnimating = true;
       const event = events[i];
       const next = events[i + 1];
 
       if (!event) return global.isAnimating = false;
-      actions.animateEvent(event).then(() => {
+
+      animations.animateEvent(event)
+      .then(() => {
         if (!!next) {
           actions.animateEvents(events, i + 1);
         } else {
           let aliveEnemies = _.filter(global.gameState.enemies, e => e.entity.health > 0);
           let alivePlayers = _.filter(global.gameState.players, p => p.entity.health > 0);
 
-          if (!aliveEnemies.length || !alivePlayers.length) {
+          if (!aliveEnemies.length || !alivePlayers.length && global.gameState.turn % 2 == 0) {
             AudioManager.stopAll();
             AudioManager.playOnce(alivePlayers.length ? 'combatSuccess' : 'combatFail');
             setTimeout(() => {
@@ -827,122 +950,9 @@ const newGame = (global: GameInterface): PhaserGame => {
             }, 1000);
           }
         }
-      });
-    },
-    animateEvent(event: CombatEvent) {
-      let self: GameInstance = this;
-
-      return new Promise((ok) => {
-        let timeline = self.tweens.createTimeline();
-        const character = {...global.gameState.players, ...global.gameState.enemies}[event.characterId];
-        const receiver = {...global.gameState.players, ...global.gameState.enemies}[event.receiverId];
-
-        // attack animation
-        const originalPosition = character.sprite.x;
-        const atkPosition = character.enemy
-          ? character.sprite.x - (self.game.canvas.offsetWidth * 0.1)
-          : character.sprite.x + (self.game.canvas.offsetWidth * 0.1);
-
-        if (character && receiver) {
-          /*
-            Parallel anims:
-            - Timeline anims
-            - Sprite anims
-          */
-         if (event.action.type === 'attack') {
-            timeline.add({ // move closer to enemy
-              targets: [character.sprite],
-              duration: 800,
-              x: atkPosition,
-              onStart() {
-                character.sprite.play(`${character.entity.name}-walk`);
-              },
-            });
-            timeline.add({ // stay there shortly
-              targets: [character.sprite],
-              duration: 1000,
-              x: atkPosition,
-              onStart() {
-                character.sprite.play(event.action.id);
-                setTimeout(() => {
-                  receiver.sprite.play(`${receiver.entity.name}-hurt`)
-                  AudioManager.playOnce('combatHit');
-                  // update sprite health bar
-                  if (!event.outcome.damage) return;
-                  const damagePercentage = (event.outcome.damage / receiver.entity.maxHealth);
-                  const totalWidth = receiver._nameTag.displayWidth;
-                  const currentWidth = receiver._healthBar.width;
-                  const newWidth = currentWidth - (totalWidth * damagePercentage);
-                  self.tweens.add({
-                    targets: receiver._healthBar,
-                    width: newWidth <= 0 ? 0 : newWidth, // avoid negative health bar
-                    duration: 250,
-                  });
-
-                  // animate XP bar for the current player
-                  if (store.state.player.id === character.id) {
-                    actions.animateXPBar(event.outcome.xp);
-                  }
-                }, 290);
-              },
-            });
-            timeline.add({ // walk back
-              targets: [character.sprite],
-              duration: 800,
-              x: originalPosition,
-              onStart() {
-                character.sprite.scaleX *= -1;
-                character.sprite.play(`${character.entity.name}-walk`);
-                setTimeout(() => receiver.sprite.play(`${receiver.entity.name}-idle`));
-              },
-              onComplete() {
-                character.sprite.scaleX *= -1;
-                character.sprite.play(`${character.entity.name}-idle`);
-                ok();
-              },
-            });
-            timeline.play();
-          } else if (event.action.type === 'item') {
-            switch(event.action.id) {
-              case 'heal-potion':
-                let itemImg = self.add.image(character.sprite.x, character.sprite.y, `item-${event.action.id}`);
-                itemImg.setDepth(character.sprite.depth + 1);
-                timeline.add({
-                  targets: itemImg,
-                  y: character.sprite.y,
-                  duration: 250,
-                  onStart() {
-                    // update sprite health bar
-                    if (!event.outcome.heal) return;
-                    const healPercentage = (event.outcome.heal / receiver.entity.maxHealth);
-                    const totalWidth = receiver._nameTag.displayWidth;
-                    const currentWidth = receiver._healthBar.width;
-                    const newWidth = currentWidth + (totalWidth * healPercentage);
-                    self.tweens.add({
-                      targets: receiver._healthBar,
-                      width: newWidth >= totalWidth ? totalWidth : newWidth,
-                      duration: 250,
-                    });
-                  },
-                });
-                timeline.add({
-                  targets: itemImg,
-                  y: character.sprite.y - 50,
-                  alpha: { value: 0, duration: 500 },
-                  ease: 'Power1',
-                  duration: 500,
-                  onComplete() {
-                    itemImg.destroy();
-                    ok();
-                  },
-                });
-                timeline.play();
-                break;
-              default:
-                console.error('unknown item', event.action.id);
-            }
-          }
-        }
+      })
+      .catch((err: string) => {
+        console.warn(err);
       });
     },
     setInterval(name: string, func: (i: number) => () => void, interval: number) {
@@ -962,121 +972,15 @@ const newGame = (global: GameInterface): PhaserGame => {
         delete global.gameIntervals[name];
       }
     },
-    animateXPBar(amount?: number) {
-      if (!store.state.player.id) {
-        return;
-      }
-      const currentPlayer = global.gameState.players[store.state.player.id];
-      if (!currentPlayer) {
-        return;
-      }
-      let XP = currentPlayer.xp;
-      let level = currentPlayer.level;
-      const max = level === 1
-        ? 55
-        : level === 2
-        ? 175
-        : 0;
-      // elements
-      const barElement = document.querySelector('.level .bar');
-      const barJuiceElement = document.getElementById('xp-juice');
-      const barLabelElement = document.getElementById('xp-label');
-      const levelLabelElement = document.getElementById('level-label');
-      
-      if (!barElement || !barJuiceElement || !barLabelElement || !levelLabelElement) {
-        return;
-      }
-
-      barLabelElement.innerHTML = `${XP}/${max} xp`;
-
-      if (!amount) {
-        levelLabelElement.innerHTML = String(level);
-        barJuiceElement.style.width = `${(XP/max) * 100}%`;
-        return;
-      }
-      let barWidth = Number((barJuiceElement.clientWidth / (barElement.clientWidth - 2)).toFixed(2));
-      const lvlShown = Number(levelLabelElement.innerHTML);
-      const shownXP = barWidth*max;
-
-      // maths
-      const totalXP = shownXP+amount;
-      const leveled = Math.floor(totalXP/max); // 0
-      const remainder = totalXP%max;
-      let j = leveled-lvlShown > 0 ? leveled-lvlShown : 0;
-      actions.setInterval('xpBar', (i: number) => {
-        barWidth = Number((barJuiceElement.clientWidth / (barElement.clientWidth - 2)).toFixed(2));
-        let newWidth = 0;
-        barJuiceElement.setAttribute('class', '');
-        // if we animated the parents to 100% last animation
-        if (barWidth >= 1) {
-          barWidth = 0;
-          barJuiceElement.style.width = '0%';
-          level++;
-          levelLabelElement.innerHTML = String(level);
-        }
-        if (i < j) {
-          newWidth = 1;
-        }
-        else if (i === j) // ANIMATE LAST ONE
-        {
-          newWidth = (remainder/max)+barWidth;
-        }
-        else // ALL ANIMATIONS ARE COMPLETE
-        {
-          if (i === 1) {
-            barJuiceElement.style.width = `${remainder/max*100}%`;
-          }
-          return actions.stopInterval('xpBar');
-        }
-        barJuiceElement.setAttribute('class', 'animated');
-        barJuiceElement.style.width = `${newWidth*100}%`;
-      }, 300);
-    }
   };
-  // Bind key monitor to game interface
-  global.keyMonitor = actions.keyMonitor;
-  global.resizeMonitor = actions.resizeMonitor;
   return game;
-}
-export interface GameInterface {
-  gameState: CombatRoom;
-  gameInitialized: boolean;
-  gameIntervals: {
-    [intervalName: string]: number,
-  }
-  currentTargetSide: number;
-  currentTargetIndex: number;
-  _gameClouds: any;
-  _sceneImg: any[];
-  targetHand: any;
-  isAnimating: boolean;
-  playerPlacingLine: PlacingLine;
-  enemyPlacingLine:  PlacingLine;
-  launch: () => void;
-  destroyGame: () => void;
-  keyMonitor: (event: any) => void;
-  resizeMonitor: (event: any) => void;
-};
-interface PlacingLine {
-  [index: string]: PlacingLineSpot;
-}
-interface PlacingLineSpot {
-  character: Character|null;
-  nextIndex: number;
-  prevIndex: number;
 }
 
 /*
-  Launch function
-  Will return a GameInterface.Global object
+  GameController generator function
 */
-function CombatInterface(): GameInterface {
-  let game: any = null;
-  /*
-    GameInterface.Global
-  */
-  let global: GameInterface = {
-    // state from the server
+export default function (): GameController {
+  let gameController: GameController = {
     gameState: {
       id: '',
       title: '',
@@ -1091,50 +995,131 @@ function CombatInterface(): GameInterface {
       levelRecord: {},
       readyToContinue: {},
     },
+    game: null,
     gameInitialized: false,
     currentTargetSide: 0,
     currentTargetIndex: 1,
     _gameClouds: null,
+    _fadeScreen: null,
     _sceneImg: [],
     targetHand: null,
+    showGUI: false,
     isAnimating: false,
     playerPlacingLine: {},
     enemyPlacingLine: {},
     gameIntervals: {},
-    launch: () => {
-      if (!game) {
-        game = newGame(global);
+    launch() {
+      if (!this.game) {
+        this.game = newGame(this);
       }
     },
-    destroyGame: () => {
+    destroyGame() {
       // stop any audio playing
       AudioManager.stopAll();
       // stop any intervals set
-      _.forEach(global.gameIntervals, (i) => {
+      _.forEach(gameController.gameIntervals, (i: number) => {
         clearInterval(i);
       });
       // destroy the phaser game instance
-      if (game) {
-        game = game.destroy();
+      if (gameController.game) {
+        gameController.game.destroy();
+        gameController.game = null;
       }
-
-      global.gameInitialized = false;
+  
+      this.gameInitialized = false;
     },
     // this will be binded to the game on launch
-    keyMonitor: () => {
+    keyMonitor(event: KeyboardEvent) {
+      if (!gameController.game) {
+        return console.warn('Key monitor attempted to run but no game has been initialized');
+      }
+
+      let scene: any = gameController.game.scene.scenes[0];
+      if (Date.now() - scene.cursorMoveDate <= 100) {
+        return;
+      }
+      scene.cursorMoveDate = Date.now();
+
+      let indexDirection: string | null = null;
+      let side: number | null = null;
+
+      switch (event.key.toUpperCase()) {
+        case 'W':
+          indexDirection = 'up';
+          break;
+        case 'S':
+          indexDirection = 'down';
+          break;
+        case 'A':
+          side = 0;
+          break;
+        case 'D':
+          side = 1;
+          break;
+      }
+
+      /* user is moving up/down */
+      if (indexDirection) {
+        const placingLine = gameController.currentTargetSide == 0
+          ? this.playerPlacingLine
+          : this.enemyPlacingLine;
+        
+        // algorith to find next occupied spot in the specified direction (up or down)
+        let j = this.currentTargetIndex;
+        for (const key in placingLine) {
+          let p = placingLine[j];
+          if (indexDirection == 'down') {
+            j = p.nextIndex;
+          } else {
+            j = p.prevIndex;
+          }
+          // if found (new) next occupied spot
+          if (placingLine[j].character && this.currentTargetIndex !== j) {
+            this.currentTargetIndex = j;
+            // sounds effect
+            AudioManager.playOnce('cursorMove');
+            break;
+          }
+        }
+      }
+      // user is moving left/right
+      else if (typeof side === 'number') {
+        if (side === this.currentTargetSide) {
+          return;
+        }
+        const newPlacingLine = side == 0
+          ? this.playerPlacingLine
+          : this.enemyPlacingLine;
+
+        const newIndex = _.findKey({...newPlacingLine}, (p) => !!p.character);
+        if (newIndex) {
+          this.currentTargetSide = Number(side);
+          this.currentTargetIndex = Number(newIndex);
+        }
+        // sound effect
+        AudioManager.playOnce('cursorMove');
+      }
+      // user is making a selection
+      else if (event.key.toUpperCase() === 'ENTER') {
+        store.commit('SET_COMBAT_GAME_SELECTION_MODE', 'ACTION');
+        // sound effect
+        AudioManager.playOnce('cursorSelect');
+      }
     },
     resizeMonitor() {
-      if (!game || !global.gameInitialized) {
+      if (!gameController.game || !gameController.gameInitialized) {
         return;
       }
       const width = window.innerWidth * .98;
       const height = window.innerHeight * .68;
-      game.resize(width > 920 ? 920 : width < 300 ? 300 : width, height);
-    },
-  };
+      gameController.game.resize(width > 920 ? 920 : width < 300 ? 300 : width, height);
+    }
+  }
+  
+  /*
+    Connect the animations manager to the game controller
+  */
+  connectAnimations(gameController);
 
-  console.log('new global');
-  return global;
-}
-
-export default CombatInterface;
+  return gameController;
+};
