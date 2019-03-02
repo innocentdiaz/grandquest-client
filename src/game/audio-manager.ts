@@ -9,7 +9,15 @@ import CombatHitAudio from '@/assets/audio/combat-hit.mp3';
 import CombatSuccessAudio from '@/assets/audio/combat-success.mp3';
 import CombatFailAudio from '@/assets/audio/combat-fail.mp3';
 
-let AudioManager: { [sound: string]: any } = {
+interface AudioManager {
+  sounds: {
+    [soundName: string]: any;
+  };
+  playOnce: (name: string, stop?: boolean) => void;
+  stopAll: () => void;
+}
+
+let audioManager: AudioManager = {
   sounds: {
     goldDrop: new Howler.Howl({ src: [ GoldDropFX ] }),
     cursorSelect: new Howler.Howl({ src: [ CursorSelectFX ], volume: 0.65 }),
@@ -19,11 +27,11 @@ let AudioManager: { [sound: string]: any } = {
     combatSuccess: new Howler.Howl({ src: [ CombatSuccessAudio ], volume: 0.6 }),
     combatFail: new Howler.Howl({ src: [ CombatFailAudio ], volume: 0.6 }),
   },
-  playOnce(name: string, stop: boolean) {
-    if (!AudioManager.sounds.hasOwnProperty(name)) {
+  playOnce(name, stop) {
+    if (!audioManager.sounds.hasOwnProperty(name)) {
       console.error('AudioManager does not know sound: ', name);
     } else {
-      let Howl = AudioManager.sounds[name];
+      let Howl = audioManager.sounds[name];
       if (stop) {
         Howl.stop();
       }
@@ -31,10 +39,10 @@ let AudioManager: { [sound: string]: any } = {
     }
   },
   stopAll() {
-    for (let name in AudioManager.sounds) {
-      AudioManager.sounds[name].stop();
+    for (let name in audioManager.sounds) {
+      audioManager.sounds[name].stop();
     }
   },
 }
 
-export default AudioManager;
+export default audioManager;
