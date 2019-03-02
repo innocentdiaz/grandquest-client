@@ -1,6 +1,6 @@
 <template>
   <div class="combat-root" v-on:keydown="keyMonitor">
-    <header>
+    <header v-if="gameInterface.showGUI">
       <ul>
         <router-link to="/world">Exit</router-link>
         <div class="level" v-if="gameInterface.gameState.playState && currentPlayer">
@@ -14,7 +14,7 @@
         </div>
       </ul>
       <h1 id="title" v-if="gameInterface.gameInitialized && !gameInterface.isAnimating && gameInterface.gameState.playState">
-        Combat - {{ combatGame.gameState.title }}, Level - {{ gameInterface.gameState.level }}, Turn - {{ gameInterface.gameState.turn }}
+        {{ combatGame.gameState.title }}, level {{ gameInterface.gameState.level }}
       </h1>
     </header>
     <!-- Main screen -->
@@ -27,9 +27,10 @@
       <div class="display" v-else-if="!socket.connected">
         <p>You are not connected to the server</p>
       </div>
-      <!-- GUI -->
-      <ActivityIndicator v-if="!gameInterface.gameInitialized"/>
-      <div v-else-if="currentPlayerSelectionStatus === 1" class="GUI">
+      <div class="display" v-else-if="!gameInterface.gameInitialized">
+        <ActivityIndicator/>
+      </div>
+      <div v-else-if="gameInterface.showGUI && currentPlayerSelectionStatus === 1" class="GUI">
         <p>OK! Waiting for other players...</p>
       </div>
       <div
@@ -76,7 +77,7 @@
       </div>
     </div>
     <!-- Outcomes screen -->
-    <div id="outcomes" v-if="gameInterface.gameInitialized && !gameInterface.gameState.playState">
+    <div id="outcomes" v-if="gameInterface.gameInitialized && !gameInterface.gameState.playState && currentLevelRecord && !gameInterface.isAnimating">
       <div class="content">
         <aside>
           <div class="player-container" v-for="(player, id) in currentLevelRecord.players" v-bind:key="id">
@@ -115,7 +116,7 @@ import { Character, Attack, InventoryItem } from '@/game/types';
 import _ from 'underscore';
 import io from 'socket.io-client';
 import api from '@/api';
-import CombatInterface, { GameInterface } from '@/game/places/combat';
+import GameController from '@/game/places/combat';
 import AudioManager from '@/game/audio-manager';
 
 interface MasterObjectOption {
@@ -153,7 +154,7 @@ export default class CombatRoom extends Vue {
 
   public description: string = '';
 
-  public gameInterface: GameInterface = CombatInterface();
+  public gameInterface = GameController();
   public currentScreen = 'root';
   public currentCursorIndex = 0;
   public cursorMoveDate = Date.now();
@@ -434,7 +435,9 @@ $mainGreen: #9dff5c;
     background: linear-gradient(to bottom, rgb(22, 22, 22), rgba(24, 24, 24, 0.6), rgba(24, 24, 24, 0.4), rgba(0, 0, 0, 0));
     color: white;
     z-index: 15;
+    animation: fade-in 0.5s forwards;
     #title {
+      font-family: 'Lora', serif;
       margin-left: 10px;
     }
     ul {
@@ -503,6 +506,12 @@ $mainGreen: #9dff5c;
         }
       }
     }
+  }
+
+  .GUI {
+    animation-name: slide-up;
+    animation-duration: 0.5s;
+    animation-fill-mode: forwards;
   }
   #main {
     height: 100vh;
@@ -598,7 +607,16 @@ $mainGreen: #9dff5c;
     display: flex;
     align-items: center;
     justify-content: center;
+    color: white;
     font-family: 'Press Start 2P', monospace;
+  }
+}
+@keyframes slide-up {
+  from {
+    transform: translateY(80vh);
+  }
+  to {
+    transform: translateY(0px);
   }
 }
 @keyframes outcomes-fadein {
