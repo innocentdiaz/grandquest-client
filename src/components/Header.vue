@@ -2,7 +2,7 @@
   <div class="main-header">
     <div class="header-main">
       <div class="title-container">
-        <h1>GRANDQUEST</h1>
+        <img src="../assets/img/icon/grandquest.png" alt="GrandQuest">
       </div>
       <div class="auth-container">
         <div v-if="player.loading">
@@ -11,8 +11,20 @@
         <div v-else-if="player.authenticated">
           <div class="sign">
             <h2>{{player.username}}</h2>
+            <hr>
             <div>
-              <p>Connection: {{socket.connected ? 'OK!' : socket.loading ? 'Attempting' : 'Not connected'}}</p>
+              <p>{{socket.connected ? '' : socket.loading ? 'Connecting to server...' : 'Disconnected from server'}}</p>
+              <p class="gold"><img src="../assets/img/items/coins.png" alt="">{{player.gold.toLocaleString()}}</p>
+              <div class="level-container">
+                <div class="level">
+                  <span>lvl</span>
+                  <p>{{player.level}}</p>
+                </div>
+                <div class="progress">
+                  <span class="label">100/200</span>
+                  <div class="juice"></div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -93,9 +105,14 @@ $mainGreen: #9dff5c;
       align-items: center;
       justify-content: center;
 
-      padding: 1em 2em 1em .75em;
+      padding: 1em 5em 1em .75em;
       color: white;
-      background: #111;
+      font-family: 'Lora', serif;
+      background-image: linear-gradient(to right, white 30%, rgba(255, 255, 255, 0.5) 70%,transparent 90%);
+
+      img {
+        height: 70px;
+      }
     }
 
     .auth-container {
@@ -103,8 +120,8 @@ $mainGreen: #9dff5c;
       flex-direction: row;
       align-items: center;
       justify-content: center;
-      margin-right: 1.5em;
-
+      padding: 1em 0.75em 1em 6em;
+      background-image: linear-gradient(to left, white 70%, transparent);
       .banner {
         align-self: flex-start;
 
@@ -129,16 +146,83 @@ $mainGreen: #9dff5c;
         }
       }
       .sign {
-        text-align: right;
         min-width: 180px;
         height: 100%;
         padding: 10px;
 
-        color: white;
-        background: saddlebrown;
+        color: #bbbdaf;
         border-radius: 1em;
+        hr {
+          border: 0.5px solid #bbbdaf;
+        }
         h2 {
-          margin: 5px;
+          font-weight: normal;
+          margin: 5px 0;
+        }
+        p {
+          margin: 5px 0;
+        }
+        .gold {
+          height: 1em;
+          color: #d6ce59;
+          display: flex;
+          flex-direction: row;
+          align-items: center;
+          img {
+            height: 1.5em;
+            margin-right: 0.75em;
+          }
+        }
+        .level-container {
+          display: flex;
+          flex-direction: row;
+          align-items: center;
+          .level {
+            background: #56720c;
+            color: white;
+            border-radius: 5px;
+            height: 1.8em;
+            width: 1.8em;
+            margin-right: 0.25em;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            span {
+              font-size: smaller;
+            }
+            p {
+              font-size: medium;
+              margin: 0;
+            }
+          }
+          .progress {
+            flex: 1;
+            position: relative;
+            background: #5e9531;
+            border: 2px solid #426922;
+            height: 1.5em;
+            border-radius: 2px;
+
+            .label {
+              position: absolute;
+              display: flex;
+              justify-content: center;
+              align-items: center;
+              top: 0;
+              bottom: 0;
+              left: 0;
+              right: 0;
+              color: #4e6c36;
+              font-size: 0.8em;
+              text-shadow: 0 0px 2px #b1d48b;
+            }
+            .juice {
+              background-image: linear-gradient(to bottom, #adf54d 80%, #a1e44a);
+              height: 100%;
+              width: 50%;
+            }
+          }
         }
       }
     }

@@ -3,7 +3,7 @@
     <div id="combat-img"></div>
     <div class="container">
       <aside>
-        <img :src="require('@/assets/img/logo.png')" id="logo">
+        <img :src="require('@/assets/img/icon/gq.png')" id="logo">
         <p>
           You've stumbled onto a great quest. Mountains range as far as 
           the eye can see. Ahead of you stand walls of a great empire,
@@ -63,7 +63,7 @@ $mainGrey: rgb(179, 179, 179);
     position: absolute;
   }
   #logo {
-    height: 5.75em;
+    height:100px;
     border-radius: 5px;
   }
 
