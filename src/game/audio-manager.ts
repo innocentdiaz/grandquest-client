@@ -2,8 +2,10 @@ import Howler from 'howler';
 
 // import sounds
 import GoldDropFX from '@/assets/audio/money-drop.mp3';
+import XPGainFX from '@/assets/audio/xp-gain.mp3';
 import CursorSelectFX from '@/assets/audio/cursor-select.mp3';
 import CursorMoveFX from '@/assets/audio/cursor-move.mp3';
+import CursorBackFX from '@/assets/audio/cursor-back.mp3';
 import FieldsCombatAudio from '@/assets/audio/fields-music1.mp3';
 import CombatHitAudio from '@/assets/audio/combat-hit.mp3';
 import CombatSuccessAudio from '@/assets/audio/combat-success.mp3';
@@ -22,10 +24,12 @@ let audioManager: AudioManager = {
     goldDrop: new Howler.Howl({ src: [ GoldDropFX ] }),
     cursorSelect: new Howler.Howl({ src: [ CursorSelectFX ], volume: 0.65 }),
     cursorMove: new Howler.Howl({ src: [ CursorMoveFX ], volume: 0.65 }),
+    cursorBack: new Howler.Howl({ src: [ CursorBackFX ], volume: 0.7 }),
     fieldsCombat: new Howler.Howl({ src: [ FieldsCombatAudio ], volume: 0.5, loop: true }),
     combatHit: new Howler.Howl({ src: [ CombatHitAudio ], volume: 0.6 }),
     combatSuccess: new Howler.Howl({ src: [ CombatSuccessAudio ], volume: 0.6 }),
     combatFail: new Howler.Howl({ src: [ CombatFailAudio ], volume: 0.6 }),
+    xpGain: new Howler.Howl({ src: [ XPGainFX ], colum: 0.5 }),
   },
   playOnce(name, stop) {
     if (!audioManager.sounds.hasOwnProperty(name)) {
