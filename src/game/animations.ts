@@ -1,3 +1,4 @@
+import Phaser from 'phaser';
 import { GameController } from './places/combat';
 import { CombatEvent } from './types';
 import AudioManager from '@/game/audio-manager';
@@ -17,6 +18,9 @@ interface Animations {
   };
   GUI: {
     XP: (amount?: number) => void;
+  };
+  misc: {
+    XP :(event: CombatEvent) => void;
   };
 }
 
@@ -91,8 +95,9 @@ const animations: Animations = {
             AudioManager.playOnce('combatHit');
 
             // animate XP bar for the current player
-            if (store.state.player.id === character.id) {
+            if (store.state.player.id === character.id && event.outcome.xp) {
               animationsManager.animations.GUI.XP(event.outcome.xp);
+              animationsManager.animations.misc.XP(event);
             }
           }, 585);
         },
@@ -173,8 +178,9 @@ const animations: Animations = {
             AudioManager.playOnce('combatHit');
 
             // animate XP bar for the current player
-            if (store.state.player.id === character.id) {
+            if (store.state.player.id === character.id && event.outcome.xp) {
               animationsManager.animations.GUI.XP(event.outcome.xp);
+              animationsManager.animations.misc.XP(event);
             }
           }, 580);
         },
@@ -259,8 +265,9 @@ const animations: Animations = {
             AudioManager.playOnce('combatHit');
 
             // animate XP bar for the current player
-            if (store.state.player.id === character.id) {
+            if (store.state.player.id === character.id && event.outcome.xp) {
               animationsManager.animations.GUI.XP(event.outcome.xp);
+              animationsManager.animations.misc.XP(event);
             }
           }, 470);
         },
@@ -492,6 +499,37 @@ const animations: Animations = {
       }, 300);
     },
   },
+  misc: {
+    XP: (event) => {
+      if (!animationsManager.gameController || !animationsManager.gameController.game) {
+        return;
+      }
+      const { gameController } = animationsManager;
+      const scene = animationsManager.gameController.game.scene.scenes[0];
+
+      const character = gameController.gameState.players[event.characterId];
+      const receiver = gameController.gameState.enemies[event.receiverId];
+
+      AudioManager.playOnce('xpGain');
+
+      const particles = scene.add.particles('xp-orb').setDepth(15);
+      const emitter = particles.createEmitter({
+        scale: 0.75,
+        timeScale: 2.75,
+        moveToX: character.sprite.x,
+        moveToY: character.sprite.y - 10,
+        x: receiver.sprite.x,
+        y: receiver.sprite.y,
+        emitZone:{ source: new Phaser.Geom.Circle(0,0,50), type :"random" },
+      });
+      scene.time.delayedCall(200, () => {
+          emitter.stop();
+          scene.time.delayedCall(500, () => {
+              particles.destroy();
+          });
+      });
+    }
+  }
 };
 
 const animationsManager: AnimationsManager = {
