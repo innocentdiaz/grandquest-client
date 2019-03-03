@@ -4,44 +4,61 @@
       <ActivityIndicator size=36 />
     </div>
     <form v-on:submit.prevent="onSubmit" v-else>
-      <p class="display">{{ displayMessage() }}</p>
+      <p class="form-error" v-if="apiError">
+        {{ apiError }}
+      </p>
       <label>Email: </label>
-      <input type="email"    name="email"    placeholder="Your GrandQuest email"    v-model='email'/>
-      
+      <input type="email" name="email" placeholder="Your GrandQuest email" v-model='email' v-on:change="inputChange('email')"/>
+      <div class="input-sub">
+        <p v-if="!inputDirty.email"></p>
+        <p class="error" v-else-if="isInvalid('email')">
+          {{ isInvalid('email') }}
+        </p>
+        <p v-else>
+          Cool email. Thanks!
+        </p>
+      </div>
+
       <label>Username: </label>
-      <input :disabled='disabledInput("username")' type="text"     name="username" placeholder="Your GrandQuest username" v-model='username'/>
-      
+      <input :disabled='isInvalid("email")' type="text" name="username" placeholder="Your GrandQuest username" v-model='username' v-on:change="inputChange('username')"/>
+      <div class="input-sub">
+        <p v-if="!inputDirty.username"></p>
+        <p class="error" v-else-if="isInvalid('username')">
+          {{ isInvalid('username') }}
+        </p>
+        <p v-else>
+          Best username ever!
+        </p>
+      </div>
+
       <label>Password: </label>
-      <input :disabled='disabledInput("password")' type="password" name="password" placeholder="Your GrandQuest password" v-model='password'/>
-      
+      <input :disabled='isInvalid("username") || isInvalid("email")' type="password" name="password" placeholder="Your GrandQuest password" v-model='password' v-on:change="inputChange('password')"/>
+      <div class="input-sub">
+        <p v-if="!inputDirty.password"></p>
+        <p class="error" v-else-if="isInvalid('password')">
+          {{ isInvalid('password') }}
+        </p>
+        <p v-else>
+          Good job! Your password is OK.
+        </p>
+      </div>
+
       <label>Gender: </label>
-      <select :disabled='disabledInput("gender")' name="gender" v-model='gender'>
+      <select :disabled='isInvalid("password") || isInvalid("username") || isInvalid("email")' name="gender" v-model='gender'>
         <option value="male">Male</option>
         <option value="female">Female</option>
       </select>
-      <button :disabled='displayMessage() !== "All set!"'>
+      <button :disabled='isInvalid("password") || isInvalid("username") || isInvalid("email")'>
         Sign Up
       </button>
-      <p class="error">
-        {{ apiError }}
-      </p>
     </form>
   </div>
 </template>
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator';
 import ActivityIndicator from '@/components/ActivityIndicator.vue';
-import passwordValidator from 'password-validator';
 import { ApiResponse } from 'apisauce';
-import api from '@/api';
-
-const passSchema = new passwordValidator()
-  .is().min(8)                                    // Minimum length 8
-  .is().max(100)                                  // Maximum length 100
-  .has().uppercase()                              // Must have uppercase letters
-  .has().lowercase()                              // Must have lowercase letters
-  .has().digits()                                 // Must have digits
-  .has().not().spaces();                          // No spaces
+import api from '@/api';                     // No spaces
 
 @Component({
   components: { ActivityIndicator },
@@ -54,13 +71,27 @@ export default class Home extends Vue {
   public username = '';
 
   public formLoading = false;
-  public apiError = '';
+  public apiError: string | null = null;
 
+  // keeps track of inputs and wether they are dirty or not
+  public inputDirty: { [ref: string]: boolean } = {
+    email: false,
+    username: false,
+    password: false,
+  }
+
+  public mounted() {
+    this.resetInputDirty();
+    this.apiError = null;
+  }
+  public destroyed() {
+    this.resetInputDirty();
+  }
   public onSubmit() {
     const { email, username, password, gender } = this.$data;
 
     this.formLoading = true;
-    this.apiError = '';
+    this.apiError = null;
 
     api.post('/auth/default', { email, username, password, gender })
     .then((res: ApiResponse<any>) => {
@@ -77,54 +108,51 @@ export default class Home extends Vue {
       this.formLoading = false;
     });
   }
-  public displayMessage() {
-    const refs = [
-      'email',
-      'username',
-      'password',
-      'gender',
-      'submit',
-    ];
-
-    for (const ref of refs) {
-      const message = this.disabledInput(ref);
-
-      if (message) {
-        return message;
-      }
+  public inputChange(ref: string) {
+    if (this.inputDirty.hasOwnProperty(ref) && !this.inputDirty[ref]) {
+      this.inputDirty[ref] = true;
     }
-
-    return 'All set!';
   }
-  public disabledInput(ref: string) {
+  public resetInputDirty() {
+    console.log('reset dirt');
+    this.inputDirty = {
+      email: false,
+      username: false,
+      password: false,
+    }
+  }
+  public isInvalid(ref: string) {
     switch (ref.toLowerCase()) {
       case 'email':
-        return '';
-      case 'username':
         const email = this.$data.email;
-        const validEmail = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/.test(email);
+        const r = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
 
-        return validEmail
+        return r.test(email)
           ? false
-          : 'Please enter a correctly formatted email address';
-      case 'password':
+          : 'That doesn\'t seem like a valid email';
+      case 'username':
         const username = this.$data.username;
 
-        return username.trim().length > 5
+        return username.trim().length >= 6
           ? false
           : 'Username must be at least 6 characters long';
-      case 'gender':
+      case 'password':
         const password = this.$data.password;
-        const validPasword = passSchema.validate(password);
+        const passwordContainsUppercase = /[A-Z]/.test(password);
+        const passwordContainsLowercase = /[a-z]/.test(password);
+        const passwordIsLongEnough = password.trim().length >= 8;
 
-        return validPasword
-          ? false
-          : `Password must be between 8 to 80 characters,
-              contain at least one digit,
-              and upper and lowercase letters and no spaces`;
-      case 'submit':
+        if (!passwordIsLongEnough) {
+          return `Password must be at least 8 characters long. ${8 - password.trim().length} more to go`;
+        } else if (!passwordContainsUppercase) {
+          return 'Password must contain at least one uppercase letter';
+        } else if (!passwordContainsLowercase) {
+          return 'Password must contains at least one lowercase letter';
+        } else {
+          return false;
+        }
+      case 'gender':
         const gender = this.$data.gender;
-
         return gender === 'male' || gender === 'female'
           ? false
           : 'Please select a gender';

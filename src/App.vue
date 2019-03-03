@@ -97,15 +97,20 @@ form {
   flex-direction: column;
   align-items: left;
   text-align: left;
+
+  .form-error {
+    background: rgb(255, 49, 49);
+    color: white;
+    padding: 1em;
+    border-radius: 5px;
+  }
   label {
     color: $mainBlue;
     font-size: medium;
   }
-
   input {
     border: 0px;
     padding: .5rem .25rem .5rem .1rem;
-    margin-bottom: 1.8em;
     font-size: 1rem;
 
     transition: .2s all ease-in-out;
@@ -116,6 +121,16 @@ form {
     &:invalid {
       border-bottom: 2px solid red;
       box-shadow: none;
+    }
+  }
+  .input-sub {
+    margin-bottom: 1.8em;
+    p {
+      margin: 0;
+      color: $mainGrey;
+      &.error {
+        color: rgb(255, 49, 49);
+      }
     }
   }
   textarea {
@@ -151,9 +166,6 @@ form {
       cursor: default !important;
       background: $mainGrey;
     }
-  }
-  .error {
-    color: rgb(255, 49, 49);
   }
 }
 span, p {

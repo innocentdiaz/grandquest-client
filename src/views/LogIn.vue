@@ -2,7 +2,6 @@
   <div class="log-in" v-if="!player.authenticated">
     <aside>
       <h1>GrandQuest: live feed!</h1>
-
       [ Feed coming soon ]
     </aside>
     <div class="content">
@@ -12,16 +11,20 @@
         <ActivityIndicator />
       </div>
       <form v-on:submit.prevent="onSubmit" v-else>
+        <p class="form-error" v-if="apiError">
+          {{ apiError }}
+        </p>
         <label>Email</label>
         <input type="email" placeholder="GrandQuest email" v-model="email">
+        <div class="input-sub"></div>
+
         <label>Password</label>
         <input type="password" placeholder="GrandQuest password" v-model="password">
+        <div class="input-sub"></div>
+
         <button :disabled="formLoading">
           Log In
         </button>
-        <p class="error">
-          {{ apiError }}
-        </p>
       </form>
     </div>
   </div>
@@ -54,13 +57,16 @@ export default class LogIn extends Vue {
   public password = '';
 
   public formLoading = false;
-  public apiError = '';
+  public apiError: string | null = null;
 
+  public mounted() {
+    this.apiError = null;
+  }
   public onSubmit() {
     const { email, password } = this;
 
     this.formLoading = true;
-    this.apiError = '';
+    this.apiError = null;
 
     // request creation of new JWT token
     api.post('/auth', { email, password })
