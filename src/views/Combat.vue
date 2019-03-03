@@ -495,7 +495,7 @@ $mainGreen: #9dff5c;
             left: 0;
             top: 0;
             bottom: 0;
-            background-color: rgb(167, 0, 167);
+            background-image: linear-gradient(to bottom, #a700a7 80%, #800080);
             width: 0;
             z-index: 5;
             &.animated {

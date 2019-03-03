@@ -16,10 +16,9 @@
               <p>{{socket.connected ? '' : socket.loading ? 'Connecting to server...' : 'Disconnected from server'}}</p>
               <p class="gold"><img src="../assets/img/items/coins.png" alt="">{{player.gold.toLocaleString()}}</p>
               <div class="level-container">
-                <div class="level">
-                  <span>lvl</span>
-                  <p>{{player.level}}</p>
-                </div>
+                <span class="icon">
+                  {{player.level}}
+                </span>
                 <div class="progress">
                   <span class="label">100/200</span>
                   <div class="juice"></div>
@@ -177,30 +176,27 @@ $mainGreen: #9dff5c;
           display: flex;
           flex-direction: row;
           align-items: center;
-          .level {
-            background: #56720c;
-            color: white;
-            border-radius: 5px;
-            height: 1.8em;
-            width: 1.8em;
-            margin-right: 0.25em;
+          .icon {
+            height: 20px;
+            width: 20px;
             display: flex;
-            flex-direction: column;
-            justify-content: center;
             align-items: center;
-            span {
-              font-size: smaller;
-            }
-            p {
-              font-size: medium;
-              margin: 0;
-            }
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            background-image: url('../assets/img/misc/gold-frame.png');
+            background-position: center center;
+            background-repeat: no-repeat;
+            background-size: contain;
+            height: 45px;
+            font-size: 15px;
+            margin-right: 10px;
           }
           .progress {
             flex: 1;
             position: relative;
-            background: #5e9531;
-            border: 2px solid #426922;
+            background: #424242;
+            border: 2px solid #3b3b3b;
             height: 1.5em;
             border-radius: 2px;
 
@@ -213,12 +209,12 @@ $mainGreen: #9dff5c;
               bottom: 0;
               left: 0;
               right: 0;
-              color: #4e6c36;
+              color: white;
               font-size: 0.8em;
-              text-shadow: 0 0px 2px #b1d48b;
+              text-shadow: 0 0px 2px #d401d4;
             }
             .juice {
-              background-image: linear-gradient(to bottom, #adf54d 80%, #a1e44a);
+              background-image: linear-gradient(to bottom, #a700a7 80%, #800080);
               height: 100%;
               width: 50%;
             }
