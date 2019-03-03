@@ -17,21 +17,19 @@ import { Player } from '@/types';
 export default class LogOut extends Vue {
   @State public player!: Player;
 
-  public async mounted() {
-    const jwt = this.player.token;
+  public mounted() {
+    const jwt = this.player.token || localStorage.getItem('grandquest:jwt');
 
     if (jwt) {
       console.log('delete auth using jwt ', api.headers)
-      const res = await api.delete(`/auth/${jwt}`);
-      
-      // if (!res.ok) {
-      //   console.log('there is a pending logout request');
-      //   localStorage.setItem('grandquest:pending_logout', jwt);
-      // }
-
-      localStorage.removeItem('grandquest:jwt');
-      location.reload();
+      api.delete(`/auth/${jwt}`).then(res => {
+        if (res.ok) {
+          localStorage.removeItem('grandquest:jwt');
+        }
+        location.reload();
+      });
     } else {
+      console.log('no player token!');
       this.$router.replace('/');
     }
   }
