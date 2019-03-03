@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import _ from 'underscore';
 import AudioManager from '../audio-manager';
+import animationsManager from '@/game/animations';
 import animations, { connectAnimations } from '@/game/animations';
 import store from '@/store';
 
@@ -23,15 +24,15 @@ import grassyMountainsImage from '@/assets/img/landscapes/mountains/grassy_mount
 import grassyMountainsFarImage from '@/assets/img/landscapes/mountains/far_mountains.png';
 import grassyMountainsClouds from '@/assets/img/landscapes/mountains/clouds.png';
 import grassyMountainsHill from '@/assets/img/landscapes/mountains/hill.png';
-
 // spritesheets
 import AdventurerSheet from '@/assets/img/spritesheets/adventurer-sheet.png';
 import SlimeSheet from '@/assets/img/spritesheets/slime-sheet.png';
+// items
+import healPotionImage from '@/assets/img/items/heal-potion.png';
 // misc
 import graveMarkerImage from'@/assets/img/misc/grave-marker.png';
 import SelectTargetImage from '@/assets/img/icon/select-target.png';
-import healPotionImage from '@/assets/img/items/heal-potion.png';
-import animationsManager from '@/game/animations';
+import xpOrbImage from '@/assets/img/misc/xp-orb.png';
 
 /*
   Declare types & interfaces
@@ -65,6 +66,7 @@ interface Scene {
     graphics: () => any;
     rectangle: (x1: number, x2: number, y1: number, y2: number, color: number) => any;
     text: (x: number, y: number, text: string, styles: any) => any;
+    particles: (name: string) => any;
   };
   game: PhaserGame;
   tweens: {
@@ -83,6 +85,9 @@ interface Scene {
     main: {
       flash: () => void;
     }
+  };
+  time: {
+    delayedCall: (time: number, cb: () => any) => void;
   }
 };
 
@@ -202,12 +207,15 @@ const newGame = (global: GameController): PhaserGame => {
           { name: 'grassy-mountains-far-bg', src: grassyMountainsFarImage, type: 'image' },
           { name: 'grassy-mountains-clouds-bg', src: grassyMountainsClouds, type: 'image' },
           { name: 'grassy-mountains-hill', src: grassyMountainsHill, type: 'image' },
-          // misc
-          { name: 'item-heal-potion', src: healPotionImage, type: 'image' },
-          { name: 'select-target', src: SelectTargetImage, type: 'image' },
+          // entities
           { name: 'adventurer', src: AdventurerSheet, type: 'spritesheet', spriteDimensions: [ 50, 37 ] },
           { name: 'slime', src: SlimeSheet, type: 'spritesheet', spriteDimensions: [32, 25] },
+          // items
+          { name: 'item-heal-potion', src: healPotionImage, type: 'image' },
+          // misc
+          { name: 'select-target', src: SelectTargetImage, type: 'image' },
           { name: 'grave-marker', src: graveMarkerImage, type: 'spritesheet', spriteDimensions: [29, 20] },
+          { name: 'xp-orb', src: xpOrbImage, type: 'image' },
         ], (a, i, l) => {
           const { name, src, type, spriteDimensions } = a;
 
