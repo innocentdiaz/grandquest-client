@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { GameController } from './places/combat';
-import { CombatEvent } from './types';
+import { CombatEvent, Character } from './types';
 import AudioManager from '@/game/audio-manager';
 import store from '@/store';
 import _ from 'underscore';
@@ -21,6 +21,7 @@ interface Animations {
   };
   misc: {
     XP :(event: CombatEvent) => void;
+    damageText: (damagedCharacter: Character, damage: number) => void;
   };
 }
 
@@ -93,6 +94,9 @@ const animations: Animations = {
               receiver.sprite.play(`${receiver.entity.name}-hurt`);
             }
             AudioManager.playOnce('combatHit');
+
+            // damage text
+            animationsManager.animations.misc.damageText(receiver, event.outcome.damage);
 
             // animate XP bar for the current player
             if (store.state.player.id === character.id && event.outcome.xp) {
@@ -176,6 +180,9 @@ const animations: Animations = {
               receiver.sprite.play(`${receiver.entity.name}-hurt`);
             }
             AudioManager.playOnce('combatHit');
+
+            // damage text
+            animationsManager.animations.misc.damageText(receiver, event.outcome.damage);
 
             // animate XP bar for the current player
             if (store.state.player.id === character.id && event.outcome.xp) {
@@ -263,6 +270,8 @@ const animations: Animations = {
               receiver.sprite.play(`${receiver.entity.name}-hurt`);
             }
             AudioManager.playOnce('combatHit');
+            // damage text
+            animationsManager.animations.misc.damageText(receiver, event.outcome.damage);
 
             // animate XP bar for the current player
             if (store.state.player.id === character.id && event.outcome.xp) {
@@ -349,6 +358,8 @@ const animations: Animations = {
               receiver.sprite.play(`${receiver.entity.name}-hurt`);
             }
             AudioManager.playOnce('combatHit');
+            // damage text
+            animationsManager.animations.misc.damageText(receiver, event.outcome.damage);
           }, 200);
         },
       });
@@ -528,7 +539,47 @@ const animations: Animations = {
               particles.destroy();
           });
       });
-    }
+    },
+    damageText: (damagedCharacter, damage) => {
+      const { gameController } = animationsManager;
+      if (!gameController || !gameController.game) {
+        return;
+      }
+      const scene = gameController.game.scene.scenes[0];
+
+      const damageText = scene.add.text(
+        damagedCharacter.sprite.x,
+        damagedCharacter.sprite.y + damagedCharacter.sprite.displayHeight,
+        `-${damage}`,
+        {
+          fontSize: '20px',
+          color: '#d30938',
+          textAlign: 'center',
+        },
+      )
+      .setOrigin(0.5, 1)
+      .setAlpha(0)
+      .setDepth(15);
+      scene.tweens.add({
+        targets: damageText,
+        y: damagedCharacter.sprite.y - damagedCharacter.sprite.displayHeight,
+        alpha: 1,
+        duration: 250,
+        onComplete() {
+          setTimeout(() => {
+            scene.tweens.add({
+              targets: damageText,
+              y: damageText.y - 30,
+              alpha: 0,
+              duration: 700,
+              onComplete() {
+                damageText.destroy();
+              },
+            });
+          }, 2000);
+        }
+      });
+    },
   }
 };
 
