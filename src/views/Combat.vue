@@ -206,6 +206,7 @@ export default class CombatRoom extends Vue {
           this.currentScreen = 'root';
           this.currentCursorIndex = 0;
           this.SET_COMBAT_GAME_SELECTION_MODE('TARGET');
+          AudioManager.playOnce('cursorBack');
           break;
       }
     } else {
@@ -235,7 +236,7 @@ export default class CombatRoom extends Vue {
       return;
     }
 
-    AudioManager.playOnce('cursorMove', true);
+    AudioManager.playOnce('cursorMove');
 
     this.description = options[j].description;
 
