@@ -16,11 +16,6 @@ declare module 'howler' {
   export default howler;
 }
 
-declare module 'password-validator' {
-  const passwordValidator: any;
-  export default passwordValidator;
-}
-
 declare module 'phaser' {
   const Phaser: any;
   export default Phaser;
