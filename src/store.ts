@@ -25,11 +25,11 @@ const initialState = {
     level: 0,
     authenticated: false,
     currentJWT: '',
-    created_at: '',
+    createdAt: '',
     token: null,
-    is_admin: false,
-    weapon_health: 0,
-    weapon_id: '',
+    isAdmin: false,
+    xp: 0,
+    nextLevelXp: 200,
   },
   world: {
     timeOfDay: 0,
@@ -65,15 +65,6 @@ const initialState = {
 
 const state: State = {...initialState};
 
-const getters = {
-  playerJoinDate: (s: State) => {
-    if (!s.player.authenticated) {
-      return null;
-    } else {
-      return moment(s.player.created_at).fromNow();
-    }
-  },
-};
 const mutations = {
   SET_HEADER_VISIBILITY(s: State, b: boolean) {
     s.headerVisibility = b;
@@ -224,7 +215,6 @@ const actions = {
 
 export default new Vuex.Store({
   state,
-  getters,
   mutations,
   actions,
 });

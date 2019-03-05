@@ -22,13 +22,13 @@ export interface Player {
     username: string;
     role: string;
     gold: number;
-    created_at: string;
-    is_admin: boolean;
+    createdAt: string;
+    isAdmin: boolean;
     token: string|null;
     authenticated: boolean;
-    weapon_id: string;
-    weapon_health: number;
     level: number;
+    xp: number;
+    nextLevelXp: number;
 }
 export interface World {
     timeOfDay: number;
