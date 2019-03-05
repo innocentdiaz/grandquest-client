@@ -3,8 +3,6 @@ export interface Character {
   username: string;
   enemy: boolean;
   selectionStatus: number;
-  xp: number;
-  level: number;
   entity: {
     name: string;
     energy: number;

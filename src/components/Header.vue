@@ -20,8 +20,8 @@
                   {{player.level}}
                 </span>
                 <div class="progress">
-                  <span class="label">100/200</span>
-                  <div class="juice"></div>
+                  <span class="label">{{player.xp}}/{{player.nextLevelXp}}</span>
+                  <div class="juice" :style="`width: ${(player.xp / player.nextLevelXp) * 100}%;`"></div>
                 </div>
               </div>
             </div>

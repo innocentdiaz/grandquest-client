@@ -440,17 +440,13 @@ const animations: Animations = {
       if (!store.state.player.id) {
         return;
       }
-      const currentPlayer = gameController.gameState.players[store.state.player.id];
+      const currentPlayer = store.state.player;
+
       if (!currentPlayer) {
         return;
       }
       let XP = currentPlayer.xp;
       let level = currentPlayer.level;
-      const max = level === 1
-        ? 55
-        : level === 2
-        ? 175
-        : 0;
       // elements
       const barElement = document.querySelector('.level .bar');
       const barJuiceElement = document.getElementById('xp-juice');
@@ -461,21 +457,22 @@ const animations: Animations = {
         return;
       }
 
-      barLabelElement.innerHTML = `${XP}/${max} xp`;
+      barLabelElement.innerHTML = `${XP}/${currentPlayer.nextLevelXp} xp`;
 
       if (!amount) {
         levelLabelElement.innerHTML = String(level);
-        barJuiceElement.style.width = `${(XP/max) * 100}%`;
+        barJuiceElement.style.width = `${(XP/currentPlayer.nextLevelXp) * 100}%`;
         return;
       }
+      console.log(currentPlayer);
       let barWidth = Number((barJuiceElement.clientWidth / (barElement.clientWidth - 2)).toFixed(2));
       const lvlShown = Number(levelLabelElement.innerHTML);
-      const shownXP = barWidth*max;
+      const shownXP = barWidth*currentPlayer.nextLevelXp;
 
       // maths
       const totalXP = shownXP+amount;
-      const leveled = Math.floor(totalXP/max); // 0
-      const remainder = totalXP%max;
+      const leveled = Math.floor(totalXP/currentPlayer.nextLevelXp); // 0
+      const newXp = totalXP%currentPlayer.nextLevelXp;
       let j = leveled-lvlShown > 0 ? leveled-lvlShown : 0;
 
       let i = 0;
@@ -495,12 +492,12 @@ const animations: Animations = {
         }
         // animate last increase
         else if (i === j) {
-          newWidth = (remainder/max) + barWidth;
+          newWidth = (newXp/currentPlayer.nextLevelXp) + barWidth;
         }
         // all animations are complete
         else {
           if (i === 1) {
-            barJuiceElement.style.width = `${remainder/max*100}%`;
+            barJuiceElement.style.width = `${newXp/currentPlayer.nextLevelXp*100}%`;
           }
           return clearInterval(interval);
         }
