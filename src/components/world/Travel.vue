@@ -5,13 +5,13 @@
       <img src="@/assets/img/icon/monokai-village/monokai-village.png" alt="" class="display-title">
     </header>
     <div class="body">
-      <div class="panel">
+      <div class="panel" v-if="player.authenticated">
         <section>
           <p>{{player.username}}'s travel log: </p>
         </section>
       </div>
       <div class="buttons">
-        <button class="play-multiplayer" :disabled="!socket.connected || !player.authenticated" v-on:click="() => $router.replace({ name: 'map' })">
+        <button :class="`${player.authenticated ? '' : 'need-auth'} main-start`" :disabled="!socket.connected || !player.authenticated" v-on:click="() => $router.replace({ name: 'map' })">
           EXPLORE MONOKAI
         </button>
       </div>

@@ -4,7 +4,7 @@
       <img src="@/assets/img/icon/heros-trial.png" alt="" class="display-title">
     </header>
     <div class="body">
-      <div class="panel">
+      <div class="panel" v-if="player.authenticated">
         <section>
           <h3>{{player.username}}'s battle information:</h3>
         </section>
@@ -49,7 +49,7 @@
         </section> -->
       </div>
       <div class="buttons">
-        <button class="play-multiplayer" :disabled="!socket.connected || !player.authenticated" v-on:click="startMultiplayer">
+        <button :class="`${player.authenticated ? '' : 'need-auth'} main-start`" :disabled="!socket.connected || !player.authenticated" v-on:click="startMultiplayer">
           PLAY MULTIPLAYER
         </button>
         <div class="hr-text">
