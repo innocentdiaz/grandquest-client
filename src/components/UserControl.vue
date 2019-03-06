@@ -25,10 +25,7 @@ export default class UserControl extends Vue {
   @State public player!: Player;
 
   public userJoinDate() {
-    return moment(this.player.created_at).fromNow();
-  }
-  get weapon() {
-    return items[this.player.weapon_id];
+    return moment(this.player.createdAt).fromNow();
   }
 }
 </script>
