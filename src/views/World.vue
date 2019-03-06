@@ -15,6 +15,13 @@
           <h3>You are currently offline</h3>
         </div>
       </header> -->
+      <div v-if="!player.authenticated" class="auth-banner">
+        <h2 class="main-title">In order to browse GrandQuest you should sign in!</h2>
+        <div class="auth">
+          <h2>Are you new to GrandQuest?</h2>
+          <router-link to='/signup'>Join for free!</router-link>
+        </div>
+      </div>
       <div class="content">
         <Games v-if="view==='games'"/>
         <Travel v-if="view==='travel'"/>
@@ -34,6 +41,12 @@
             </li>
           </ul>
         </div>
+      </div>
+      <div v-if="socket.loading">
+        <h2 class="subtitle">Connecting to the world <ActivityIndicator /></h2>
+      </div>
+      <div class="stats" v-else-if="socket.connected">
+        <h3 class="subtitle">There are {{ world.connections }} currently online.</h3>
       </div>
     </div>
   </div>
@@ -86,6 +99,34 @@ export default class Main extends Vue {
     align-items: flex-start;
     padding: 1em 2em;
 
+    .auth-banner {
+      width: 100%;
+      padding: 2em;
+      border-radius: 5px 5px 0 0;
+      border-bottom: 5px solid #8a4f34;
+      background-image: linear-gradient(to bottom, #bdedff 80%, #5bd0ff);
+      color: #006e9c;
+      text-align: center;
+      font-size: small;
+      .main-title {
+        color: black;
+        margin: 0;
+      }
+      a {
+        box-shadow: inset 0px 1px 0px 0px #b8fff2;
+        border-radius: .5rem;
+        border: 1px solid #4355b0;
+        font-size: 12px;
+        font-weight: bold;
+        padding: 14px 7px;
+        text-shadow: 1px 1px 0px #154682;
+        background-image: linear-gradient(to bottom, #6ebee7, #29489e);
+        color: white;
+        &:hover {
+          background-image: linear-gradient(to top, #6ebee7, #29489e);
+        }
+      }
+    }
     .container {
       max-width: 900px;
       width: 100%;
@@ -187,7 +228,7 @@ export default class Main extends Vue {
             display: flex;
             flex-direction: row;
             align-items: stretch;
-            justify-content: space-between;
+            justify-content: center;
             padding-bottom: 2em;
             .panel {
               background: rgba(27, 27, 27, 0.9);
@@ -304,7 +345,7 @@ export default class Main extends Vue {
               display: flex;
               flex-direction: column;
               justify-content: center;
-              .play-multiplayer {
+              .main-start {
                 font-family: 'Lora', serif;
                 font-size: larger;
                 background: #d30938;
@@ -313,6 +354,7 @@ export default class Main extends Vue {
                 border: none;
                 box-shadow: 0px 0px 5px white;
                 padding: 1em 1em;
+                position: relative;
                 transition: .2s all ease-in-out;
                 &[disabled] {
                   background: grey;
@@ -324,6 +366,19 @@ export default class Main extends Vue {
                 }
                 &:hover {
                   box-shadow: 0px 0px 10px white;
+                }
+                &.need-auth {
+                  &::after {
+                    content: 'Log in to play!';
+                    font-size: small;
+                    position: absolute;
+                    top: -1em;
+                    right: -1em;
+                    background: #d30938;
+                    text-shadow: none;
+                    border-radius: 2px;
+                    padding: 2px 5px;
+                  }
                 }
               }
               .play-singleplayer {
