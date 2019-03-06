@@ -1,7 +1,10 @@
 <template>
   <div class="root">
     <Header v-if="headerVisibility"/>
-    <router-view/>
+    <div id="app-body">
+      <router-view/>
+    </div>
+    <Footer v-if="headerVisibility"/>
   </div>
 </template>
 
@@ -9,12 +12,14 @@
 import { Component, Vue } from 'vue-property-decorator';
 import { State, Action, Mutation } from 'vuex-class';
 import Header from './components/Header.vue';
+import Footer from '@/components/Footer.vue';
 import api from '@/api';
 import store from '@/store.ts';
 
 @Component({
   components: {
     Header,
+    Footer,
   },
 })
 export default class App extends Vue {
