@@ -123,6 +123,7 @@ export interface GameController {
   game: PhaserGame | null;
   targetHand: any;
   isAnimating: boolean;
+  selectedAction: null | { id: string; type: string };
   showGUI: boolean;
   playerPlacingLine: PlacingLine;
   enemyPlacingLine: PlacingLine;
@@ -130,6 +131,8 @@ export interface GameController {
   destroyGame: () => void;
   keyMonitor: (event: any) => void;
   resizeMonitor: (event: any) => void;
+  highlightCharacters: (category: boolean | 'enemies' | 'players') => void;
+  selectAction: (selectedAction: { id: string; type: string }) => void;
 };
 
 /**
@@ -537,42 +540,34 @@ const newGame = (global: GameController): PhaserGame => {
 
             const { character } = placingLine[global.currentTargetIndex];
 
-            if (character) {
+            if (character && character.sprite.depth === 15) {
               global.targetHand.x = character.sprite.getCenter().x;
               global.targetHand.y = character._nameTag.y - 15;
               global.targetHand.setDepth(character.sprite.depth);
-
-              // add fade screen in case we are selecting an action
-              if (store.state.combatGame.selectionMode === 'ACTION') {
-                if (!global._fadeScreen) {
-                  character.sprite.setDepth(15);
-
-                  // add fade screen behind the player
-                  global._fadeScreen = scene.add.rectangle(0, 0, scene.game.canvas.offsetWidth, scene.game.canvas.offsetHeight, 0x000)
-                    .setAlpha(0.5)
-                    .setDepth(14)
-                    .setOrigin(0, 0);
-                }
-                global._fadeScreen
-                  .setSize(scene.game.canvas.offsetWidth, scene.game.canvas.offsetHeight);
-              }
+            } else {
+              actions.removeTargetHand();
             }
           }
         } else if (store.state.combatGame.selectionMode === 'TARGET' && !global.isAnimating) {
           actions.addTargetHand();
         }
-
-        // if there is a fade screen and it should not be here, remove it
-        if (global._fadeScreen && (store.state.combatGame.selectionMode === 'TARGET' || global.isAnimating)) {
-          const { character } = global.currentTargetSide === 0
-            ? global.playerPlacingLine[global.currentTargetIndex]
-            : global.enemyPlacingLine[global.currentTargetIndex];
-          global._fadeScreen.destroy();
-          global._fadeScreen = null;
-          if (!character) {
-            return console.warn('could not find targeted character when removing fade');
+        // update fadeScreen size
+        if (global._fadeScreen) {
+          if (global.isAnimating) {
+            global.highlightCharacters(false);
+            scene.tweens.add({
+              targets: global._fadeScreen,
+              alpha: { value: 0, duration: 100 },
+              duration: 100,
+              onComplete() {
+                global._fadeScreen.destroy();
+              },
+            });
+            global._fadeScreen = null;
+          } else {
+            global._fadeScreen
+              .setSize(scene.game.canvas.offsetWidth, scene.game.canvas.offsetHeight);
           }
-          character.sprite.setDepth(10);
         }
 
         /*
@@ -600,7 +595,7 @@ const newGame = (global: GameController): PhaserGame => {
         Background images: 1-4
         Character (idle): 10
         FadeScreen: 14
-        Character (selected of idle): 15
+        Character (selected or animating): 15
         TargetHand: Character.depth
         NameTag: Character.depth
         HealthBar: Character.depth + 1
@@ -644,7 +639,7 @@ const newGame = (global: GameController): PhaserGame => {
       });
 
       actions.addBackground();
-      store.commit('SET_COMBAT_GAME_SELECTION_MODE', 'TARGET');
+      store.commit('SET_COMBAT_GAME_SELECTION_MODE', 'ACTION');
       setTimeout(() => {
         AudioManager.playOnce('cursorSelect');
         timeline.play();
@@ -885,21 +880,37 @@ const newGame = (global: GameController): PhaserGame => {
         return console.warn('target hand already added')
       };
 
-      let key = _.findKey({...global.playerPlacingLine}, (index) => !!index.character);
-      let spot = global.playerPlacingLine[key];
+      let config!: { index: number; side: number };
+      // find a valid spot withing both placing lines to place the target hand in
+      _.each(
+        [..._.pairs(global.playerPlacingLine), ..._.pairs(global.enemyPlacingLine)],
+        (pair) => {
+        if (config) {
+          return console.log('there is a config!');
+        }
+        const key = pair[0];
+        const character: Character | null = pair[1].character;
+        if (!character) {
+          return;
+        }
+        if (character && character.sprite.depth === 15) {
+          config = {
+            index: Number(key),
+            side: character.enemy ? 1 : 0,
+          };
+        }
+      });
 
-      if (!spot || !spot.character) {
-        console.warn('No player to add target hand to');
-        return
+      if (!config) {
+        console.warn('No config to add target hand');
+        return;
       }
 
-      const { character } = spot;
+      global.currentTargetIndex = config.index;
+      global.currentTargetSide = config.side;
 
-      global.currentTargetIndex = Number(key);
-      global.targetHand =
-        scene.add.image(character.sprite.x, character.sprite.y, 'select-target')
-        .setScale(scene.game.canvas.offsetHeight / 17500)
-        .setDepth(character.sprite.depth); // z-coordinate above the player
+      global.targetHand = scene.add.image(0, 0, 'select-target')
+        .setScale(scene.game.canvas.offsetHeight / 17500);
     },
     removeTargetHand() {
       if (!global.targetHand) {
@@ -953,7 +964,7 @@ const newGame = (global: GameController): PhaserGame => {
             setTimeout(() => {
               global.isAnimating = false;
               if (global.gameState.turn % 2 === 0) {
-                store.commit('SET_COMBAT_GAME_SELECTION_MODE', 'TARGET');
+                store.commit('SET_COMBAT_GAME_SELECTION_MODE', 'ACTION');
               }
             }, 1000);
           }
@@ -1011,6 +1022,7 @@ export default function (): GameController {
     _fadeScreen: null,
     _sceneImg: [],
     targetHand: null,
+    selectedAction: null,
     showGUI: false,
     isAnimating: false,
     playerPlacingLine: {},
@@ -1064,6 +1076,10 @@ export default function (): GameController {
         case 'D':
           side = 1;
           break;
+        case 'ESCAPE':
+          store.commit('SET_COMBAT_GAME_SELECTION_MODE', 'ACTION');
+          AudioManager.playOnce('cursorBack');
+          return;
       }
 
       /* user is moving up/down */
@@ -1081,8 +1097,13 @@ export default function (): GameController {
           } else {
             j = p.prevIndex;
           }
+          const characterInSpot = placingLine[j].character;
           // if found (new) next occupied spot
-          if (placingLine[j].character && this.currentTargetIndex !== j) {
+          if (
+            characterInSpot &&
+            characterInSpot.sprite.depth === 15 &&
+            this.currentTargetIndex !== j
+          ) {
             this.currentTargetIndex = j;
             // sounds effect
             AudioManager.playOnce('cursorMove');
@@ -1099,7 +1120,9 @@ export default function (): GameController {
           ? this.playerPlacingLine
           : this.enemyPlacingLine;
 
-        const newIndex = _.findKey({...newPlacingLine}, (p) => !!p.character);
+        const newIndex = _.findKey({...newPlacingLine}, ({ character}) => {
+          return !!character && character.sprite.depth === 15;
+        });
         if (newIndex) {
           this.currentTargetSide = Number(side);
           this.currentTargetIndex = Number(newIndex);
@@ -1109,9 +1132,26 @@ export default function (): GameController {
       }
       // user is making a selection
       else if (event.key.toUpperCase() === 'ENTER') {
-        store.commit('SET_COMBAT_GAME_SELECTION_MODE', 'ACTION');
         // sound effect
         AudioManager.playOnce('cursorSelect');
+        const placingLine = gameController.currentTargetSide == 0
+          ? gameController.playerPlacingLine
+          : gameController.enemyPlacingLine;
+
+        const target = placingLine[gameController.currentTargetIndex].character;
+
+        if (!target) {
+          return console.warn('Null character selected as target');
+        }
+        if (!gameController.selectedAction) {
+          return console.warn('Null selectedAction provided when selecting target');
+        }
+        store.dispatch('SOCKET_EMIT', [
+          'COMBAT_ROOM_ACTION', {
+            receiverId: target.id,
+            action: gameController.selectedAction,
+          }
+        ]);
       }
     },
     resizeMonitor() {
@@ -1121,6 +1161,60 @@ export default function (): GameController {
       const width = window.innerWidth * .98;
       const height = window.innerHeight * .68;
       gameController.game.resize(width > 920 ? 920 : width < 300 ? 300 : width, height);
+    },
+    highlightCharacters(category) {
+      if (!gameController.gameInitialized || !gameController.game) {
+        return;
+      }
+      const scene = gameController.game.scene.scenes[0];
+
+      // ADD fade screen ...
+      if (!gameController._fadeScreen) {
+        gameController._fadeScreen = scene.add.rectangle(0, 0, scene.game.canvas.offsetWidth, scene.game.canvas.offsetHeight, 0x000)
+          .setAlpha(0.25)
+          .setDepth(14)
+          .setOrigin(0, 0);
+      }
+
+      // category = true
+      // ADD highlight all characters
+      if (category === true) {
+        _.each({...gameController.gameState.players, ...gameController.gameState.enemies}, (character) => {
+          if (character.sprite.depth != 15) {
+            character.sprite.setDepth(15);
+          }
+        });
+      }
+      // category = false
+      // REMOVE highlights all characters
+      else if (category === false) {
+        _.each({...gameController.gameState.players, ...gameController.gameState.enemies}, (character) => {
+          if (character.sprite.depth != 10){
+            character.sprite.setDepth(10);
+          }
+        });
+      }
+      // category = 'players' / 'enemies'
+      // ADD highlight all category
+      else if (typeof category === 'string') {
+        const oppositeCategory = category === 'enemies'
+          ? 'players'
+          : 'enemies';
+        _.each(gameController.gameState[category], (character) => {
+          if (character.sprite.depth != 15) {
+            character.sprite.setDepth(15);
+          }
+        });
+        _.each(gameController.gameState[oppositeCategory], (character) => {
+          if (character.sprite.depth != 10) {
+            character.sprite.setDepth(10);
+          }
+        });
+      }
+    },
+    selectAction(action) {
+      gameController.selectedAction = action;
+      store.commit('SET_COMBAT_GAME_SELECTION_MODE', 'TARGET');
     }
   }
   

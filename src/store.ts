@@ -54,7 +54,7 @@ const initialState = {
       readyToContinue: {},
       levelRecord: {},
     },
-    selectionMode: 'TARGET',
+    selectionMode: 'ACTION'
   },
   socket: {
     connected: false,
@@ -178,10 +178,11 @@ const actions = {
       });
     };
   },
-  SOCKET_EMIT(ac: any, info: { name: string, params: object|undefined }) {
-    const params = Array.isArray(info.params) ? info.params : [];
-
-    socket.emit(info.name, ...params);
+  SOCKET_EMIT(ac: any, params: [string, ...any[]]) {
+    if (params.length === 0) {
+      return;
+    }
+    socket.emit(...params);
   },
   /*
     Provides a way to be 'connect' to rooms on the

@@ -120,6 +120,7 @@ import GameController from '@/game/places/combat';
 import AudioManager from '@/game/audio-manager';
 
 interface MasterObjectOption {
+  id: string;
   title: string;
   description: string;
   to: null|string;
@@ -174,7 +175,7 @@ export default class CombatRoom extends Vue {
       this.gameInterface.destroyGame();
     }
     this.SET_HEADER_VISIBILITY(true);
-    this.SOCKET_EMIT({ name: 'COMBAT_ROOM_LEAVE'});
+    this.SOCKET_EMIT(['COMBAT_ROOM_LEAVE']);
     this.RESET_GAME_STATE('COMBAT_ROOM');
     document.removeEventListener('keydown', this.keyMonitor, true);
     window.removeEventListener('resize', this.gameInterface.resizeMonitor, true);
@@ -201,12 +202,6 @@ export default class CombatRoom extends Vue {
           break;
         case 'ENTER':
           this.selectOption();
-          break;
-        case 'ESCAPE':
-          this.currentScreen = 'root';
-          this.currentCursorIndex = 0;
-          this.SET_COMBAT_GAME_SELECTION_MODE('TARGET');
-          AudioManager.playOnce('cursorBack');
           break;
       }
     } else {
@@ -239,7 +234,6 @@ export default class CombatRoom extends Vue {
     AudioManager.playOnce('cursorMove');
 
     this.description = options[j].description;
-
     this.currentCursorIndex = j;
   }
   public selectOption() {
@@ -256,28 +250,10 @@ export default class CombatRoom extends Vue {
       this.currentScreen = selectedOption.to;
       this.currentCursorIndex = 0;
     } else if (selectedOption.select) {
-      // remove and update index if player is removed / changed
-      const placingLine = this.gameInterface.currentTargetSide == 0
-        ? this.gameInterface.playerPlacingLine
-        : this.gameInterface.enemyPlacingLine;
-
-      const target = placingLine[this.gameInterface.currentTargetIndex].character;
-
-      // TODO: player.onDisconnect => IF player is target THEN setSelectionMode('TARGET');
-      if (!target) {
-        return console.error('No target available');
-      }
-
-      this.SOCKET_EMIT({
-        name: 'COMBAT_ROOM_ACTION',
-        params: [{
-          receiverId: target.id,
-          action: selectedOption.select
-        }],
-      });
+      this.gameInterface.selectAction(selectedOption.select);
     }
   }
-  get guiMasterObject(): GuiMasterObject {
+  get guiMasterObject() {
     let guiMasterObject: GuiMasterObject = {
       root: [],
       potions: [
@@ -291,30 +267,19 @@ export default class CombatRoom extends Vue {
       return guiMasterObject
     }
 
-    const selectedTarget = this.gameInterface.currentTargetSide === 0
-    ? this.gameInterface.playerPlacingLine[this.gameInterface.currentTargetIndex]
-    : this.gameInterface.enemyPlacingLine[this.gameInterface.currentTargetIndex];
-
     const currentPlayer: Character | null = this.currentPlayer;
 
     if (!currentPlayer) {
       console.warn('No current player');
       return guiMasterObject;
     }
-    if (!selectedTarget || !selectedTarget.character) {
-      return guiMasterObject;
-    }
 
     // PARSE ROOT
     const parsedRoot: MasterObjectOption[] = [
-      { title: 'Attacks', description: '', to: 'attacks', disabled: false, select: null },
-      { title: 'Potions', description: '', to: 'potions', disabled: false, select: null },
+      { id: 'attacks', title: 'Attacks', description: '', to: 'attacks', disabled: false, select: null },
+      { id: 'potions', title: 'Potions', description: '', to: 'potions', disabled: false, select: null },
     ];
 
-    // enable options based on external conditions
-    if (!selectedTarget.character.enemy) {
-      parsedRoot[0].disabled = true;
-    }
     // push them to the guiMasterObject
     guiMasterObject.root = parsedRoot;
 
@@ -322,6 +287,7 @@ export default class CombatRoom extends Vue {
     const attacks = currentPlayer.entity.attacks;
 
     guiMasterObject.attacks.push({
+      id: 'back',
       title: 'Back',
       to: 'root',
       description: '',
@@ -334,6 +300,7 @@ export default class CombatRoom extends Vue {
       const attackInfo = pair[1];
       const disabled = attackInfo.stats.energy > currentPlayer.entity.energy;
       guiMasterObject.attacks.push({
+        id: attackInfo.name,
         title: attackInfo.name,
         description: !disabled
           ?
@@ -354,6 +321,7 @@ export default class CombatRoom extends Vue {
     });
     // PARSE POTIONS
     guiMasterObject.potions.push({
+      id: 'back',
       title: 'Back',
       to: 'root',
       description: '',
@@ -362,9 +330,10 @@ export default class CombatRoom extends Vue {
     });
     const potions = _.filter(currentPlayer.entity.inventory, (i: InventoryItem) => i.type === 'potion');
 
-    potions.forEach((item: InventoryItem) => {
+    potions.forEach((item) => {
       guiMasterObject.potions.push({
-        title: item.amount > 1 ? `${item.name} x${item.amount}` : item.name,
+        id: item.id,
+        title: item.amount > 1 ? `${item.name} (${item.amount})` : item.name,
         description: `
           Name: ${item.name} <br/>
           Quantity: ${item.amount}
@@ -377,7 +346,28 @@ export default class CombatRoom extends Vue {
         },
       });
     });
-    // PARSE ACTIONS
+
+    if (this.combatGame.selectionMode === 'ACTION') {
+      let selectedOption = guiMasterObject[this.currentScreen][this.currentCursorIndex];
+      if (!selectedOption) {
+        this.currentScreen = 'root';
+        this.currentCursorIndex = 0;
+        selectedOption = guiMasterObject.root[0];
+      }
+
+      if (selectedOption.disabled) {
+        this.gameInterface.highlightCharacters(false);
+      } else if (
+        this.currentScreen === 'attacks' ||
+        selectedOption.id === 'attacks'
+      ) {
+        this.gameInterface.highlightCharacters('enemies');
+      } else if (selectedOption.id === 'heal-potion') {
+        this.gameInterface.highlightCharacters('players');
+      } else {
+        this.gameInterface.highlightCharacters(true);
+      }
+    }
     return guiMasterObject;
   }
   get currentPlayer(): Character | null {
