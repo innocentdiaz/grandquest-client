@@ -117,22 +117,19 @@ export default class Hub extends Vue {
     }
   }
   public startMultiplayer() {
-    this.SOCKET_EMIT({
-      name: 'COMBAT_ROOM_CONNECT',
-      params: [(err: any, roomID?: string) => {
-        if (err || !roomID) {
-          console.log('Combat room connect err ', err);
-        } else {
-          console.log('Connected to ', roomID);
-          this.$router.replace({
-            name: 'combatRoom',
-            params: {
-              roomID,
-            },
-          });
-        }
-      }],
-    });
+    this.SOCKET_EMIT(['COMBAT_ROOM_CONNECT', (err: any, roomID?: string) => {
+      if (err || !roomID) {
+        console.log('Combat room connect err ', err);
+      } else {
+        console.log('Connected to ', roomID);
+        this.$router.replace({
+          name: 'combatRoom',
+          params: {
+            roomID,
+          },
+        });
+      }
+    }]);
   }
   public moveSelection(direction: number) {
     if (this.availableCharacters[this.currentCharacterIndex + direction]) {

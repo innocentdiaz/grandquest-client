@@ -56,7 +56,7 @@ import _ from 'underscore';
 export default class Shop extends Vue {
   @State public player!: Player;
   @State public socket!: SocketState;
-  @Action public SOCKET_EMIT: any;
+  @Action public SOCKET_EMIT!: any;
   @Mutation public SET_HEADER_VISIBILITY!: any;
 
   @Prop()
@@ -112,20 +112,11 @@ export default class Shop extends Vue {
               to: null,
               disabled: this.player && this.player.gold < price,
               select: () => {
-                this.SOCKET_EMIT({
-                  name: 'ITEM_TRANSACTION',
-                  params: [
-                    {
-                      shop: 'potions-shop',
-                      item: id,
-                    },
-                    (err: any) => {
-                      if (err) {
-                        this.animateSpeech(err);
-                      }
-                    }
-                  ]
-                });
+                this.SOCKET_EMIT(['ITEM_TRANSACTION', { shop: 'potions-shop', item: id }, (err: any) => {
+                  if (err) {
+                    this.animateSpeech(err);
+                  }
+                }]);
               },
             })
           )
