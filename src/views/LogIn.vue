@@ -24,6 +24,9 @@
     </form>
   </div>
   <div class="log-in" v-else>
+    <router-link to="/">
+      <img src="@/assets/img/icon/grandquest.png" id="icon" alt="GrandQuest">
+    </router-link>
     <div class="content">
       <h1>Congrats!</h1>
       <h2 class="subtitle">You're already authenticated! Go and have some fun.</h2>
@@ -104,7 +107,7 @@ export default class LogIn extends Vue {
     height: 4em;
     margin: 5em auto 3em auto;
   }
-  form {
+  form, .content {
     padding: 1em;
     margin: auto auto;
     width: 75%;
