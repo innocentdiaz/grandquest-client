@@ -464,7 +464,6 @@ const animations: Animations = {
         barJuiceElement.style.width = `${(XP/currentPlayer.nextLevelXp) * 100}%`;
         return;
       }
-      console.log(currentPlayer);
       let barWidth = Number((barJuiceElement.clientWidth / (barElement.clientWidth - 2)).toFixed(2));
       const lvlShown = Number(levelLabelElement.innerHTML);
       const shownXP = barWidth*currentPlayer.nextLevelXp;
