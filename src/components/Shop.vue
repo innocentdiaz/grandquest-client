@@ -51,6 +51,7 @@ import { State, Mutation, Action } from 'vuex-class';
 import { Player, SocketState } from '@/types';
 import AudioManager from '@/game/audio-manager';
 import _ from 'underscore';
+import audioManager from '@/game/audio-manager';
 
 @Component
 export default class Shop extends Vue {
@@ -85,6 +86,24 @@ export default class Shop extends Vue {
           // options
           { title: 'Buy', description: 'Buy from Even\'s potions', to: 'buy', disabled: false },
           { title: 'Sell', description: 'Sell potions from your own inventory', to: 'sell', disabled: false, select: null },
+          {
+            title: 'Heal',
+            description: 'Heal your combat health to the maximum',
+            to: null,
+            disabled: false,
+            select: () => {
+              this.SOCKET_EMIT(['SHOP_TRANSACTION', { shop: 'potions-shop', action: 'heal' }, (err?: string) => {
+                if (err) {
+                  audioManager.playOnce('cursorBack');
+                  this.animateSpeech(err);
+                } else {
+                  audioManager.playOnce('heal');
+                  // show healing
+                  this.animateSpeech('That will leave a scar.');
+                }
+              }]);
+            }
+          },
           { title: 'Exit',
             description: 'Back to the map',
             to: null,
@@ -112,8 +131,9 @@ export default class Shop extends Vue {
               to: null,
               disabled: this.player && this.player.gold < price,
               select: () => {
-                this.SOCKET_EMIT(['ITEM_TRANSACTION', { shop: 'potions-shop', item: id }, (err: any) => {
+                this.SOCKET_EMIT(['SHOP_TRANSACTION', { shop: 'potions-shop', item: id }, (err: any) => {
                   if (err) {
+                    audioManager.playOnce('cursorBack');
                     this.animateSpeech(err);
                   }
                 }]);
@@ -220,6 +240,9 @@ export default class Shop extends Vue {
           charEl.innerHTML = s;
           speechBubble.appendChild(charEl);
           charEl.classList.add('fade-in');
+          if (s !== ' ' && s !== '.' && Math.random() <= 0.5) {
+            audioManager.playOnce('npcBubble');
+          }
           if (i === a.length - 1) {
             this.speechAnimationInterval = '';
             if (typeof cb === 'function') {
