@@ -128,11 +128,12 @@ export default class Main extends Vue {
       }
     }
     .container {
-      max-width: 900px;
+      max-width: 1080px;
       width: 100%;
       color: white;
       overflow: hidden;
       border-radius: 5px;
+      margin: 0 auto;
 
       .content {
         padding: 10px;
@@ -370,6 +371,19 @@ export default class Main extends Vue {
                 &.need-auth {
                   &::after {
                     content: 'Log in to play!';
+                    font-size: small;
+                    position: absolute;
+                    top: -1em;
+                    right: -1em;
+                    background: #d30938;
+                    text-shadow: none;
+                    border-radius: 2px;
+                    padding: 2px 5px;
+                  }
+                }
+                &.need-health {
+                  &::after {
+                    content: 'Heal at the Potions Shop!';
                     font-size: small;
                     position: absolute;
                     top: -1em;
