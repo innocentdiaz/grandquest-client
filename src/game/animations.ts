@@ -92,6 +92,7 @@ const animations: Animations = {
               AudioManager.stopAll();
             } else {
               receiver.sprite.play(`${receiver.entity.name}-hurt`);
+              AudioManager.playOnce(`enemyHurt`);
             }
             AudioManager.playOnce('combatHit');
 
@@ -178,6 +179,7 @@ const animations: Animations = {
               AudioManager.stopAll();
             } else {
               receiver.sprite.play(`${receiver.entity.name}-hurt`);
+              AudioManager.playOnce(`enemyHurt`);
             }
             AudioManager.playOnce('combatHit');
 
@@ -246,6 +248,7 @@ const animations: Animations = {
           character.sprite.play('adventurer-back-swing');
           setTimeout(() => {
             receiver.sprite.play(`${receiver.entity.name}-hurt`);
+            AudioManager.playOnce(`enemyHurt`);
 
             if (!event.outcome.damage) return;
 
@@ -266,7 +269,6 @@ const animations: Animations = {
               scene.cameras.main.flash();
               AudioManager.stopAll();
             } else {
-              console.log('still have ', !newWidth, ' and ', !aliveEnemies.length);
               receiver.sprite.play(`${receiver.entity.name}-hurt`);
             }
             AudioManager.playOnce('combatHit');
@@ -395,11 +397,12 @@ const animations: Animations = {
       const character = {...gameController.gameState.players, ...gameController.gameState.enemies}[event.characterId];
       const receiver = {...gameController.gameState.players, ...gameController.gameState.enemies}[event.receiverId];
   
-      let itemImg = scene.add.image(character.sprite.x, character.sprite.y, `item-${event.action.id}`);
+      let potionImg = scene.add.image(character.sprite.x, character.sprite.y, `item-${event.action.id}`);
 
-      itemImg.setDepth(character.sprite.depth + 1);
+      potionImg.setDepth(character.sprite.depth + 1);
+
       timeline.add({
-        targets: itemImg,
+        targets: potionImg,
         y: character.sprite.y,
         duration: 250,
         onStart() {
@@ -414,17 +417,54 @@ const animations: Animations = {
             targets: receiver._healthBar,
             width: newWidth >= totalWidth ? totalWidth : newWidth,
             duration: 250,
+            onStart() {
+              AudioManager.playOnce('heal');
+            }
+          });
+
+          // animate healing text
+          const healText = scene.add.text(
+            receiver.sprite.x,
+            receiver.sprite.y + receiver.sprite.displayHeight,
+            `+${event.outcome.heal}`,
+            {
+              fontSize: '20px',
+              color: '#56f33e',
+              textAlign: 'center',
+            },
+          )
+          .setOrigin(0.5, 1)
+          .setAlpha(0)
+          .setDepth(15);
+          scene.tweens.add({
+            targets: healText,
+            y: receiver.sprite.y - receiver.sprite.displayHeight,
+            alpha: 1,
+            duration: 250,
+            onComplete() {
+              setTimeout(() => {
+                scene.tweens.add({
+                  targets: healText,
+                  y: healText.y - 30,
+                  alpha: 0,
+                  duration: 700,
+                  onComplete() {
+                    healText.destroy();
+                  },
+                });
+              }, 1500);
+            }
           });
         },
       });
       timeline.add({
-        targets: itemImg,
+        targets: potionImg,
         y: character.sprite.y - 50,
         alpha: { value: 0, duration: 500 },
         ease: 'Power1',
-        duration: 500,
+        duration: 700,
         onComplete() {
-          itemImg.destroy();
+          potionImg.destroy();
           resolve();
         },
       });
@@ -517,8 +557,6 @@ const animations: Animations = {
       const character = gameController.gameState.players[event.characterId];
       const receiver = gameController.gameState.enemies[event.receiverId];
 
-      AudioManager.playOnce('xpGain');
-
       const particles = scene.add.particles('xp-orb').setDepth(15);
       const emitter = particles.createEmitter({
         scale: 0.75,
@@ -531,6 +569,7 @@ const animations: Animations = {
       });
       scene.time.delayedCall(200, () => {
           emitter.stop();
+          AudioManager.playOnce('xpGain');
           scene.time.delayedCall(500, () => {
               particles.destroy();
           });
