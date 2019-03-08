@@ -43,6 +43,16 @@
         </ul>
       </div>
     </div>
+    <!-- HP bar -->
+    <div class="hp-container">
+      <header>
+        <span>HP</span>
+        <span id="hp-label">0/0</span>
+      </header>
+      <div class="bar">
+        <div class="juice"></div>
+      </div>
+    </div>
   </div> 
 </template>
 <script lang="ts">
@@ -464,6 +474,16 @@ export default class Shop extends Vue {
         display: block;
       }
     }
+  }
+  .hp-container {
+    position: absolute;
+    top: -10%;
+    right: 0;
+    color: white;
+    background: rgba(0,0,0,0.75);
+    border-radius: 2px;
+    min-width: 200px;
+    padding: 1em;
   }
 
   @keyframes fade-in {
