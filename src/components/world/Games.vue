@@ -132,12 +132,7 @@ export default class Hub extends Vue {
         console.log('Combat room connect err ', err);
       } else {
         console.log('Connected to ', roomID);
-        this.$router.replace({
-          name: 'combatRoom',
-          params: {
-            roomID,
-          },
-        });
+        this.$router.push(`/combat/${roomID}`);
       }
     }]);
   }
