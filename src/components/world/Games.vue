@@ -24,7 +24,10 @@
               </div>
               <p>{{player.level >= currentCharacter.level ? currentCharacter.description : ''}}</p>
             </div>
-            <div class="info" v-if="combatData.loaded">
+            <div class="info" v-if="combatData.loaded === 0">
+              <ActivityIndicator />
+            </div>
+            <div class="info" v-else-if="combatData.loaded === 1">
               <div class="hp-container">
                 <header>
                   <p>HP</p><p>{{combatData.health}}/{{combatData.max_health}}</p>
@@ -49,7 +52,10 @@
         </section> -->
       </div>
       <div class="buttons">
-        <button :class="`${player.authenticated ? '' : 'need-auth'} main-start`" :disabled="!socket.connected || !player.authenticated" v-on:click="startMultiplayer">
+        <button v-if="combatData.loaded && combatData.health === 0" class="need-health main-start" disabled="true">
+          PLAY MULTIPLAYER
+        </button>
+        <button v-else :class="`${player.authenticated ? '' : 'need-auth'} main-start`" :disabled="!socket.connected || !player.authenticated" v-on:click="startMultiplayer">
           PLAY MULTIPLAYER
         </button>
         <div class="hr-text">
@@ -100,21 +106,25 @@ export default class Hub extends Vue {
   ];
   public currentCharacterIndex = 0;
   public combatData = {
-    loaded: false,
+    loaded: -1, // 1 = ok, 0 = pending, -1 = failed
   };
 
-  public mounted() {
-    if (this.player.authenticated) {
+  public updated() {
+    if (this.player.authenticated && this.combatData.loaded === -1) {
+      this.combatData = { loaded: 0 };
       api.get(`player/${this.player.id}/combat`)
       .then((res: ApiResponse<any>) => {
         const body = res.data;
         if (res.ok) {
-          this.combatData = {...body.data, loaded: true};
+          this.combatData = { ...body.data, loaded: 1 };
         } else {
-          console.log('err');
+          this.combatData = { loaded: -1 };
         }
       });
     }
+  }
+  public destroyed() {
+    this.combatData = { loaded: -1 };
   }
   public startMultiplayer() {
     this.SOCKET_EMIT(['COMBAT_ROOM_CONNECT', (err: any, roomID?: string) => {
