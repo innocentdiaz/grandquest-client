@@ -179,7 +179,7 @@ const newGame = (global: GameInterface): any => {
           potionsShopLabel.setAlpha(1);
           global.tooltip = {
             title: 'Potions Shop',
-            description: 'Lorem Ipsum',
+            description: 'Monokai Village\'s finest alchemy shop.',
           }
         })
         .on('pointerout', () => {
@@ -208,7 +208,7 @@ const newGame = (global: GameInterface): any => {
           gateShopLabel.setAlpha(1);
           global.tooltip = {
             title: 'Village Gate',
-            description: 'Lorem Ipsum',
+            description: 'Visit the gates of the Monokai Village.',
           }
         })
         .on('pointerout', () => {
@@ -236,7 +236,7 @@ const newGame = (global: GameInterface): any => {
           combatLabel.setAlpha(1);
           global.tooltip = {
             title: 'Hero\'s Trial',
-            description: 'Lorem Ipsum',
+            description: 'Feeling brave? Venture into the unknowns of the Monokai landscapes and slay monsters for great rewards!',
           }
         })
         .on('pointerout', () => {
@@ -247,7 +247,7 @@ const newGame = (global: GameInterface): any => {
           if (!pointer.wasCancelled) {
             self.cameras.main.fadeOut(750);
             self.cameras.main.once('camerafadeoutcomplete', () => {
-              $vm.$router.replace('/world');
+              $vm.$router.push('/world/games');
             });
           }
         });

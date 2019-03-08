@@ -27,13 +27,13 @@
         <Travel v-if="view==='travel'"/>
         <div class="side-menu">
           <ul>
-            <li v-on:click="view = 'travel'">
+            <li v-on:click="setView('travel')">
               <img src="@/assets/img/icon/bag.png" alt="Travel">Explore
             </li>
             <li class="disabled">
               <img src="@/assets/img/icon/scroll.png" alt="Leaderboards">Leaderboards
             </li>
-            <li v-on:click="view = 'games'">
+            <li v-on:click="setView('games')">
               <img src="@/assets/img/icon/chest.png" alt="Games">Games
             </li>
             <li class="disabled">
@@ -73,10 +73,25 @@ export default class Main extends Vue {
   @State public world!: World;
   @State public player!: Player;
 
-  public view = 'games';
+  public view = '';
 
+  public mounted() {
+    const { view } = this.$route.params;
+    console.log('view is ', view);
+    if (view === 'games' || view === 'travel') {
+      console.log('valid');
+      this.view = view;
+    } else {
+      this.setView('travel');
+    }
+  }
+  public setView(view: string) {
+    console.log('set view ', view);
+    this.$router.replace(`/world/${view}`);
+    this.view = view;
+  }
   public setGame(name: string) {
-    this.$router.replace(name);
+    this.$router.push(name);
   }
   get readableTimeOfDay() {
     return moment(this.world.timeOfDay).format('LT'); ;

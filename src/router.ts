@@ -73,7 +73,7 @@ export default new Router({
       component: LogOut,
     },
     {
-      path: '/world',
+      path: '/world/:view?',
       name: 'world',
       component: World,
     },
