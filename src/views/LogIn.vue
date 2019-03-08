@@ -101,7 +101,7 @@ export default class LogIn extends Vue {
 .log-in {
   height: 100vh;
   width: 100%;
-  background-image: linear-gradient(to bottom, rgba(116, 0, 154, 0.4) 10%,rgba(76, 116, 138, 0) 40%), linear-gradient(to bottom, rgba(0, 31, 106, 0.85) 0%,rgba(0, 102, 255, 0.4) 100%), linear-gradient(135deg, #ffffff 0%,#00d0ff 100%);
+  background-image: linear-gradient(to bottom, #5bd0ff 20%, #bdedff 80%, #5bd0ff);
   text-align: center;
   #icon {
     height: 4em;
@@ -117,7 +117,7 @@ export default class LogIn extends Vue {
     input {
       padding: 6px 8px;
       color: white;
-      background: #265FA7;
+      background: #006e9c;
       border: 1px solid #000527;
       border-radius: 5px;
     }
