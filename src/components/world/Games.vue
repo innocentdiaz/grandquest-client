@@ -1,6 +1,6 @@
 <template>
   <div class="display">
-    <header>
+    <header class="display-header">
       <img src="@/assets/img/icon/heros-trial.png" alt="" class="display-title">
     </header>
     <div class="body">
@@ -30,7 +30,7 @@
             <div class="info" v-else-if="combatData.loaded === 1">
               <div class="hp-container">
                 <header>
-                  <p>HP</p><p>{{combatData.health}}/{{combatData.max_health}}</p>
+                  <span>HP</span><span>{{combatData.health}}/{{combatData.max_health}}</span>
                 </header>
                 <div class="bar">
                   <div class="juice" :style="{width:`${(combatData.health/combatData.max_health)*100}%`}"></div>

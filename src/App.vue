@@ -238,6 +238,30 @@ span, p {
 .GUI.hidden {
   opacity: 0;
 }
+.hp-container {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 5px;
+
+  header {
+    display: inline-flex;
+    justify-content: space-between;
+    margin-bottom: 2px;
+  }
+  .bar {
+    background: black;
+    height: 1.5em;
+    border: 1px solid white;
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+
+    .juice {
+      width: 80%;
+      background: #56F33E;
+    }
+  }
+}
 // canvas {
 //   cursor: url('./assets/img/icon/select-target-hand.png'), auto;
 // }

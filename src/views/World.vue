@@ -231,7 +231,7 @@ export default class Main extends Vue {
           left: 0;
           right: 0;
 
-          header {
+          .display-header {
             display: block;
             text-align: center;
             .display-title {
@@ -325,31 +325,6 @@ export default class Main extends Vue {
                   }
                   .info {
                     flex: 1;
-                    .hp-container {
-                      display: flex;
-                      flex-direction: column;
-                      align-items: stretch;
-                      margin-bottom: 5px;
-                      header {
-                        display: flex;
-                        flex-direction: row;
-                        justify-content: space-between;
-                        margin-bottom: 2px;
-                      }
-                      .bar {
-                        background: black;
-                        height: 1.5em;
-                        border: 1px solid white;
-                        display: flex;
-                        flex-direction: row;
-                        align-items: stretch;
-
-                        .juice {
-                          width: 80%;
-                          background: #56F33E;
-                        }
-                      }
-                    }
                   }
                 }
                 p {
