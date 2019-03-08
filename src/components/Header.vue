@@ -119,25 +119,24 @@ $mainGreen: #9dff5c;
       flex-direction: row;
       align-items: center;
       justify-content: center;
-      padding: 1em 0.75em 1em 6em;
+      padding: 0 0.75em 1em 6em;
       background-image: linear-gradient(to left, white 70%, transparent);
       .banner {
         align-self: flex-start;
-
+        display: flex;
+        flex-direction: row;
+        align-items: stretch;
         a {
-          background-color: $mainGreen;
+          padding: 0.75em 1em;
+          box-shadow: inset 0px 1px 0px 0px #b8fff2;
+          border-radius: 0 0 .5rem .5rem;
+          border: 1px solid #4355b0;
+          font-weight: bold;
+          text-shadow: 1px 1px 0px #154682;
+          background-image: linear-gradient(to bottom, #6ebee7, #29489e);
           color: white;
-          text-decoration: none;
-          display: inline-block;
-          padding: 8px;
-          font-size: large;
-          border-radius: 0 0 5px 5px;
-          border: none;
-          transition: .2s all ease-in-out;
-
           &:hover {
-            opacity: .9;
-            cursor: pointer;
+            background-image: linear-gradient(to top, #6ebee7, #29489e);
           }
           &:last-of-type {
             margin-left: 1em;
