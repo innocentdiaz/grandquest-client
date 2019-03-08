@@ -182,6 +182,10 @@ const newGame = (global: GameController): PhaserGame => {
         if (!canvasParent) {
           throw new Error('Phaser.js expected a parent element for the canvas, but at time of creating got none');
         }
+        /*
+          Connect the animations manager to the game controller
+        */
+        connectAnimations(global);
       },
       /*
         Game.create();
@@ -530,7 +534,7 @@ const newGame = (global: GameController): PhaserGame => {
         if (global.targetHand) {
           const currentPlayer = store.state.player.id ? global.gameState.players[store.state.player.id] : null;
           // remove the target hand if game is animating or the user already selected the target & action
-          if (currentPlayer && currentPlayer.selectionStatus === 1 || global.isAnimating) {
+          if (currentPlayer && currentPlayer.selectionStatus === 1 || global.isAnimating || store.state.combatGame.selectionMode !== 'TARGET') {
             actions.removeTargetHand();
           } else {
             // update selection hand coordinates
@@ -555,14 +559,7 @@ const newGame = (global: GameController): PhaserGame => {
         if (global._fadeScreen) {
           if (global.isAnimating) {
             global.highlightCharacters(false);
-            scene.tweens.add({
-              targets: global._fadeScreen,
-              alpha: { value: 0, duration: 100 },
-              duration: 100,
-              onComplete() {
-                global._fadeScreen.destroy();
-              },
-            });
+            global._fadeScreen.destroy();
             global._fadeScreen = null;
           } else {
             global._fadeScreen
@@ -1171,7 +1168,7 @@ export default function (): GameController {
       // ADD fade screen ...
       if (!gameController._fadeScreen) {
         gameController._fadeScreen = scene.add.rectangle(0, 0, scene.game.canvas.offsetWidth, scene.game.canvas.offsetHeight, 0x000)
-          .setAlpha(0.25)
+          .setAlpha(0.5)
           .setDepth(14)
           .setOrigin(0, 0);
       }
@@ -1217,11 +1214,6 @@ export default function (): GameController {
       store.commit('SET_COMBAT_GAME_SELECTION_MODE', 'TARGET');
     }
   }
-  
-  /*
-    Connect the animations manager to the game controller
-  */
-  connectAnimations(gameController);
 
   return gameController;
 };
