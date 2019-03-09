@@ -101,19 +101,21 @@ const newGame = (global: GameInterface): any => {
           return
         }
         
+        var pointer = self.input.activePointer;
         // move camera
-        if (self.input.x < self.game.canvas.offsetWidth * 0.25) {
+        if (pointer.x < self.game.canvas.offsetWidth * 0.25) {
           self.cameras.main.scrollX -= 5.5;
         }
-        if (self.input.x > self.game.canvas.offsetWidth * 0.75) {
+        if (pointer.x > self.game.canvas.offsetWidth * 0.75) {
           self.cameras.main.scrollX += 5.5;
         }
-        if (self.input.y < self.game.canvas.offsetHeight * 0.25) {
+        if (pointer.y < self.game.canvas.offsetHeight * 0.25) {
           self.cameras.main.scrollY -= 5.5;
         }
-        if (self.input.y > self.game.canvas.offsetHeight * 0.75) {
+        if (pointer.y > self.game.canvas.offsetHeight * 0.75) {
           self.cameras.main.scrollY += 5.5;
         }
+        
 
         // update sky colors
         global._skyGradient.clear();
