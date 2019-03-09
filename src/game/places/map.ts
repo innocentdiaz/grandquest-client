@@ -319,7 +319,7 @@ export default (): GameInterface => {
         return;
       }
       global.chosenShop = null;
-      console.log(game.scene.scenes[0].scene.resume())
+      game.scene.scenes[0].scene.resume()
     }
   };
 
