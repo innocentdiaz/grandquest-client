@@ -44,13 +44,13 @@
       </div>
     </div>
     <!-- HP bar -->
-    <div class="hp-container">
+    <div class="hp-container" id="hp">
       <header>
         <span>HP</span>
-        <span id="hp-label">0/0</span>
+        <span id="hp-label"></span>
       </header>
-      <div class="bar">
-        <div class="juice"></div>
+      <div class="bar" id="hp-bar">
+        <div class="juice" id="hp-juice"></div>
       </div>
     </div>
   </div> 
@@ -61,6 +61,7 @@ import { State, Mutation, Action } from 'vuex-class';
 import { Player, SocketState } from '@/types';
 import AudioManager from '@/game/audio-manager';
 import _ from 'underscore';
+import { TimelineLite, TweenMax } from 'gsap';
 import audioManager from '@/game/audio-manager';
 
 @Component
@@ -80,6 +81,7 @@ export default class Shop extends Vue {
   public currentScreen: string = 'root';
 
   public speechAnimationInterval: any = null;
+
   public shops: { [shopName: string]: any } = {
     'monokai-village/potions-shop': {
       npcName: 'Even',
@@ -102,14 +104,46 @@ export default class Shop extends Vue {
             to: null,
             disabled: false,
             select: () => {
-              this.SOCKET_EMIT(['SHOP_TRANSACTION', { shop: 'potions-shop', action: 'heal' }, (err?: string) => {
+              this.SOCKET_EMIT(['SHOP_TRANSACTION', { shop: 'potions-shop', action: 'heal' }, (err: any, results: { before: number, after: number, max: number }) => {
                 if (err) {
                   audioManager.playOnce('cursorBack');
                   this.animateSpeech(err);
                 } else {
-                  audioManager.playOnce('heal');
-                  // show healing
                   this.animateSpeech('That will leave a scar.');
+
+                  const hpContainer = document.getElementById('hp');
+                  const hpJuice = document.getElementById('hp-juice');
+                  const hpLabel = document.getElementById('hp-label');
+                  if (!hpContainer || !hpJuice || !hpLabel) {
+                    throw new Error('Missing HP elements to animate');
+                  }
+                  let target = { hp: results.before };
+                  const tl = new TimelineLite();
+                  tl.to(hpContainer, 0.5, {
+                    top: 0,
+                    onStart() {
+                      hpJuice.style.width = `${target.hp / results.max * 100}%`;
+                      hpLabel.innerHTML = `${target.hp}/${results.max}`;
+                    }
+                  });
+                  tl.add(
+                    TweenMax.to(
+                      target,
+                      0.5,
+                      {
+                        hp: results.max,
+                        roundProps: 'hp',
+                        onStart() {
+                          audioManager.playOnce('heal');
+                        },
+                        onUpdate() {
+                          hpJuice.style.width = `${target.hp / results.max * 100}%`;
+                          hpLabel.innerHTML = `${target.hp}/${results.max}`;
+                        },
+                      }
+                    )
+                  )
+                  tl.to(hpContainer, 0.25, { top: '-100px' }, '+=1');
                 }
               }]);
             }
@@ -233,6 +267,7 @@ export default class Shop extends Vue {
     if (!speechBubble) {
       return;
     }
+    const bubbleScaling = TweenMax.fromTo(speechBubble, 1, { scale: 1 }, { scale: 1.1, repeat: -1, yoyo: true });
     while (speechBubble.firstChild) {
       speechBubble.removeChild(speechBubble.firstChild);
     }
@@ -255,6 +290,7 @@ export default class Shop extends Vue {
           }
           if (i === a.length - 1) {
             this.speechAnimationInterval = '';
+            bubbleScaling.kill();
             if (typeof cb === 'function') {
               cb();
             }
@@ -477,7 +513,7 @@ export default class Shop extends Vue {
   }
   .hp-container {
     position: absolute;
-    top: -10%;
+    top: -100px;
     right: 0;
     color: white;
     background: rgba(0,0,0,0.75);
@@ -485,12 +521,18 @@ export default class Shop extends Vue {
     min-width: 200px;
     padding: 1em;
   }
+  span.fade-in {
+    animation: fade-in;
+    animation-duration: 0.25s;
+  }
 
   @keyframes fade-in {
     from {
+      transform: translateY(-8px);
       opacity: 0;
     }
     to {
+      transform: translateY(0);
       opacity: 1;
     }
   }
