@@ -166,12 +166,8 @@ const actions = {
       socket.emit('AUTHENTICATE_SOCKET', JWT, (err: any, player: Player) => {
         if (!err && player) {
           commit('UPDATE_SOCKET_PLAYER', { ...player, authenticated: true, token: JWT });
-          // join disconnected rooms IF they exist
-          if (state.socket.room) {
-            console.log('vuex > initializeSocket > "joining disconnected rooms"');
-            dispatch('socketJoinRoom', state.socket.room);
-          }
         } else {
+          commit('UPDATE_SOCKET_PLAYER', { ...player, authenticated: false, token: null });
           console.log(`vuex > initializeSocket > "socket auth error = '${err}'"`);
           localStorage.removeItem('grandquest:jwt');
         }
@@ -189,23 +185,25 @@ const actions = {
     socket and be reconnected in the case the socket
     goes off and back on
   */
-  socketJoinRoom({ commit }: ActionContext, name: string, id?: string) {
-    if (!socket.connected) console.warn('Attempted to join room before socket connected');
-    console.log(`vuex > socketJoinRoom > "attempting to join room '${name}'..."`);
+  // socketJoinRoom({ commit }: ActionContext, name: string, id?: string) {
+  //   if (!socket.connected) console.warn('Attempted to join room before socket connected');
+  //   console.log(`vuex > socketJoinRoom > "attempting to join room '${name}'..."`);
 
-    const cb = (err: any) => {
-      if   (err) console.log(`vuex > socketJoinRoom > "room '${name}' join error = ${err} "`);
-      else commit(`SET_SOCKET_ROOM`, { name, id });
-    }
-    
-    const event = `${name.toUpperCase()}_CONNECT`;
-    // if we have a parameter
-    if (id) {
-      socket.emit(event, id, cb);
-    } else {
-      socket.emit(event, cb);
-    }
-  },
+  //   const cb = (err: any) => {
+  //     if (err) {
+  //       console.log(`vuex > socketJoinRoom > "room '${name}' join error = ${err} "`);
+  //     } else {
+  //       commit(`SET_SOCKET_ROOM`, { name, id });
+  //     }
+  //   }
+
+  //   // if a room id is present
+  //   if (id) {
+  //     socket.emit(`${name.toUpperCase()}_CONNECT`, id, cb);
+  //   } else {
+  //     socket.emit(`${name.toUpperCase()}_CONNECT`, cb);
+  //   }
+  // },
   socketLeaveRoom({ commit }: ActionContext, room: string) {
     if (!socket.connected) console.warn('vuex > socketLeaveRoom > "Attempted to leave room before socket connected"');
 

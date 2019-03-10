@@ -25,7 +25,7 @@
       <div class="content">
         <Games v-if="view==='games'"/>
         <Travel v-if="view==='travel'"/>
-        <div class="side-menu">
+        <div id="side-menu">
           <ul>
             <li v-on:click="setView('travel')">
               <img src="@/assets/img/icon/bag.png" alt="Travel">Explore
@@ -60,6 +60,7 @@ import api from '@/api';
 import ActivityIndicator from '@/components/ActivityIndicator.vue';
 import Travel from '@/components/world/Travel.vue';
 import Games from '@/components/world/Games.vue';
+import { TweenLite, Elastic } from 'gsap';
 
 @Component({
   components: {
@@ -73,22 +74,41 @@ export default class Main extends Vue {
   @State public world!: World;
   @State public player!: Player;
 
-  public view = '';
+  public view = 'travel';
 
   public mounted() {
     const { view } = this.$route.params;
-    console.log('view is ', view);
     if (view === 'games' || view === 'travel') {
-      console.log('valid');
       this.view = view;
     } else {
-      this.setView('travel');
+      this.$router.replace('/world/travel');
+      this.view = 'travel';
     }
+
+    // fade in
+    TweenLite.fromTo(document.getElementById('side-menu'), 1.5, { x: '150%' }, { x: '0%', ease: Elastic.easeOut.config(1, 0.5), });
+    TweenLite.fromTo(document.getElementById('display'), 1, { opacity: 0 }, { opacity: 1 });
   }
   public setView(view: string) {
-    console.log('set view ', view);
-    this.$router.replace(`/world/${view}`);
-    this.view = view;
+    if (this.view === view) {
+      return;
+    }
+    // fade out
+    TweenLite.fromTo(document.getElementById('side-menu'), 0.75, { x: '0%' }, { x: '150%', ease: Elastic.easeIn.config(0.5, 0.5), });
+    TweenLite.fromTo(
+      document.getElementById('display'),
+      1,
+      { opacity: 1 },
+      { opacity: 0,
+        onComplete: () => {
+          this.view = view;
+          this.$router.replace(`/world/${view}`);
+          // fade in
+          TweenLite.fromTo(document.getElementById('side-menu'), 1.5, { x: '150%' }, { x: '0%', ease: Elastic.easeOut.config(1, 0.5), });
+          TweenLite.fromTo(document.getElementById('display'), 1, { opacity: 0 }, { opacity: 1 });
+        }
+      }
+    );
   }
   public setGame(name: string) {
     this.$router.push(name);
@@ -151,16 +171,18 @@ export default class Main extends Vue {
       margin: 0 auto;
 
       .content {
+        background: black;
+        overflow: hidden;
         padding: 10px;
         border-radius: 5px;
-        // same height as .display (absolutely positioned child element)
+        // same height as #display (absolutely positioned child element)
         height: 500px;
         position: relative;
         display: flex;
         flex-direction: row;
         justify-content: flex-end;
 
-        .side-menu {
+        #side-menu {
           z-index: 10;
           float: right;
           font-family: 'Lora', serif;
@@ -219,8 +241,8 @@ export default class Main extends Vue {
         /*
           Styles for display components
         */
-        .display {
-          z-index: 5;
+        #display {
+          // z-index: 5;
           // same height as .content (parent element)
           height: 500px;
           display: flex;
@@ -402,13 +424,13 @@ export default class Main extends Vue {
   }
   @media screen and (max-width: 800px) {
     .container {
-      .display {
+      #display {
         margin-top: 5em;
         width: 100%;
         position: static !important;
         padding: 0 3em !important;
       }
-      .side-menu {
+      #side-menu {
         float: none;
         display: block;
         position: absolute;
