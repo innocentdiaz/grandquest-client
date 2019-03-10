@@ -303,7 +303,9 @@ export default (): GameInterface => {
       }
     },
     resizeMonitor() {
-      game.resize(window.innerWidth, window.innerHeight);
+      if (game) {
+        game.resize(window.innerWidth, window.innerHeight);
+      }
     },
     scrollMonitor(event) {
       if (!game) {
