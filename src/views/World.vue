@@ -27,13 +27,13 @@
         <Travel v-if="view==='travel'"/>
         <div id="side-menu">
           <ul>
-            <li v-on:click="setView('travel')">
+            <li v-on:click="setView('travel')" :class="view === 'travel' ? 'active' : ''">
               <img src="@/assets/img/icon/bag.png" alt="Travel">Explore
             </li>
             <li class="disabled">
               <img src="@/assets/img/icon/scroll.png" alt="Leaderboards">Leaderboards
             </li>
-            <li v-on:click="setView('games')">
+            <li v-on:click="setView('games')" :class="view === 'games' ? 'active' : ''">
               <img src="@/assets/img/icon/chest.png" alt="Games">Games
             </li>
             <li class="disabled">
@@ -202,7 +202,7 @@ export default class Main extends Vue {
               display: flex;
               flex-direction: row;
               align-items: center;
-              color: rgb(243, 243, 243);
+              color: rgb(236, 236, 236);
               font-size: x-large;
               font-weight: bold;
               padding: 10px;
@@ -211,6 +211,9 @@ export default class Main extends Vue {
               text-shadow: 1px 1px rgb(73, 73, 73);
               cursor: pointer;
               &:hover {
+                color: white;
+              }
+              &.active {
                 color: white;
               }
               &.disabled {

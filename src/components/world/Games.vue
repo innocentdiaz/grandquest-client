@@ -130,10 +130,6 @@ export default class Hub extends Vue {
     loaded: -1, // 1 = ok, 0 = pending, -1 = failed
   };
 
-  public mounted() {
-    this.SOCKET_EMIT(['COMBAT_HUB_CONNECT']);
-  }
-
   public updated() {
     const { player, combatData, socket } = this;
 
@@ -182,12 +178,12 @@ export default class Hub extends Vue {
     }
 
     if (visibility) {
-      TweenLite.fromTo(roomsContainerEl, 0.5, { display: 'none', opacity: 0 }, { display: 'flex', opacity: 1 });
-      TweenLite.fromTo(roomsEl, 1.5, { scale: 0 }, { scale: 1, ease: Elastic.easeOut.config(1, 0.5) });
+      TweenLite.fromTo(roomsContainerEl, 0.2, { display: 'none', opacity: 0 }, { display: 'flex', opacity: 1 });
+      TweenLite.fromTo(roomsEl, 1.2, { scale: 0 }, { scale: 1, ease: Elastic.easeOut.config(0.5, 0.5) });
     } else {
       TweenLite.fromTo(
         roomsContainerEl,
-        0.5,
+        0.25,
         { opacity: 1 },
         {
           opacity: 0,
@@ -196,7 +192,7 @@ export default class Hub extends Vue {
           },
         }
       );
-      TweenLite.fromTo(roomsEl, 1, { scale: 1 }, { scale: 0 });
+      TweenLite.fromTo(roomsEl, 0.25, { scale: 1 }, { scale: 0 });
     }
   }
   public joinRoom(id: string) {
@@ -272,19 +268,19 @@ export default class Hub extends Vue {
         align-items: center;
         justify-content: flex-start;
         color: white;
-        background-image: linear-gradient(to bottom, #597dce 80%, #6188e2);
+        background-image: linear-gradient(to bottom, #6188e2 80%, #597dce);
         border-radius: 5px;
         min-height: 3em;
-        border-bottom: 1px solid rgb(177, 177, 177);
         margin: 5px 1em;
         padding: 0 1em;
         box-shadow: inset 1px 1px 1px #6dc2ca;
         cursor: pointer;
         transition: .2s all ease-in-out;
+        transform-style: preserve-3d;
+        perspective: 100px;
         &:hover {
-          box-shadow: inset 2px 2px 2px #62b5bd;
-          transform: translateX(5px);
-          padding: 0.5em 1em;
+          background-image: linear-gradient(to bottom, #597dce 80%, #6188e2);
+          color: rgb(247, 247, 247);
         }
         &.disabled {
           .status-indicator {
@@ -292,9 +288,7 @@ export default class Hub extends Vue {
             text-shadow: 0 1px 0 rgb(255, 0, 0);
           }
           &:hover {
-            box-shadow: inset 1px 1px 1px #6dc2ca;
-            transform: translateX(0);
-            padding: 0 1em;
+            background-image: linear-gradient(to bottom, #6188e2 80%, #597dce);
           }
         }
         .status-indicator {
