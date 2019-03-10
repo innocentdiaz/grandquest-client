@@ -274,8 +274,6 @@ interface GameInterface {
   launch: () => void;
   exitShop: () => void;
   destroyGame: () => void;
-
-  resizeMonitor: () => void;
   scrollMonitor: (event: WheelEvent) => void;
 }
 
@@ -300,11 +298,6 @@ export default (): GameInterface => {
     destroyGame() {
       if (game) {
         game.destroy();
-      }
-    },
-    resizeMonitor() {
-      if (game) {
-        game.resize(window.innerWidth, window.innerHeight);
       }
     },
     scrollMonitor(event) {
