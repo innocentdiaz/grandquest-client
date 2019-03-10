@@ -72,6 +72,7 @@ export default new Router({
       name: 'logout',
       component: LogOut,
     },
+    { path: '/world', redirect: '/world/travel' },
     {
       path: '/world/:view?',
       name: 'world',
