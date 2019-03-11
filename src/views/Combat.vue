@@ -1,107 +1,126 @@
 <template>
-  <div class="combat-root" v-on:keydown="keyMonitor">
-    <header v-if="gameInterface.showGUI">
-      <ul>
-        <router-link to="/world">Exit</router-link>
-        <div class="level" v-if="gameInterface.gameState.playState && currentPlayer">
-          <div class="icon">
-            <span id="level-label">{{currentPlayer.level}}</span>
-          </div>
-          <div class="bar">
-            <p id="xp-label"></p>
-            <div id="xp-juice"></div>
-          </div>
-        </div>
-      </ul>
-      <h1 id="title" v-if="gameInterface.gameInitialized && !gameInterface.isAnimating && gameInterface.gameState.playState">
-        {{ combatGame.gameState.title }}, level {{ gameInterface.gameState.level }}
-      </h1>
-    </header>
-    <!-- Main screen -->
-    <div id="main">
-      <div id="canvas-parent"></div>
-      <!-- Display -->
-      <div class="display" v-if="socket.loading">
-        <p>Connecting to server</p>
-      </div>
-      <div class="display" v-else-if="!socket.connected">
-        <p>You are not connected to the server</p>
-      </div>
-      <div class="display" v-else-if="!gameInterface.gameInitialized">
-        <ActivityIndicator/>
-      </div>
-      <div v-else-if="gameInterface.showGUI && currentPlayerSelectionStatus === 1" class="GUI">
-        <p>OK! Waiting for other players...</p>
-      </div>
-      <div
-        v-else-if="currentPlayer" 
-        :class="
-          gameInterface.isAnimating || currentPlayerSelectionStatus === -1
-            ? 'GUI hidden'
-            : combatGame.selectionMode === 'TARGET' && currentPlayerSelectionStatus === 0
-            ? 'GUI faded'
-            : 'GUI'
-        "
-      >
-        <div>
-          <h2 class="health" v-if="currentPlayer">
-            HP {{currentPlayer.entity.health}}/{{currentPlayer.entity.maxHealth}}
-          </h2>
-          <h2 class="health" v-else>HP ...</h2>
-          <div class="bar-container" v-if="currentPlayer">
-            <div id="health-bar" v-bind:style="{ width: `${currentPlayer.entity.health / currentPlayer.entity.maxHealth * 100}%` }"></div>
-          </div>
-          <h2 class="energy" v-if="currentPlayer">
-            EP {{currentPlayer.entity.energy}}/{{currentPlayer.entity.maxEnergy}}
-          </h2>
-          <h2 v-else>EP ...</h2>
-          <div class="bar-container" v-if="currentPlayer">
-            <div id="energy-bar" v-bind:style="{ width: `${currentPlayer.entity.energy / currentPlayer.entity.maxEnergy * 100}%` }"></div>
-          </div>
-          <h3>Players: {{ combatGame.gameState.playerCount }} / {{ combatGame.gameState.maxPlayers }}</h3>
-        </div>
-        <div>
-          <ul id="gui-selection-list">
-            <li
-              v-for="(option, index) in currentScreenObject"
-              :key="option.title"
-              :class="`${option.disabled ? 'disabled' : ''} ${combatGame.selectionMode !== 'TARGET' && combatGame.selectionMode !== 'HIDDEN' && currentCursorIndex == index ? 'active' : ''}`"
-            >
-              {{ option.title }}
-            </li>
-          </ul>
-        </div>
-        <div id="gui-description-container">
-          <p v-html="description"></p>
+  <div v-on:keydown="keyMonitor" class="combat-root">
+    <!-- LOADING SCREEN -->
+    <div v-if="roomConnection !== 1" id="loading-screen" :class="`${typeof roomConnection === 'string' ? 'blur' : ''}`">
+      <img src="@/assets/img/icon/heros-trial.png" alt="Hero's Trial" class="icon">
+      <div class="tip">Fun fact: <br/> Lorem Ipsum this is some sample text for tips</div>
+      <div id="loading-error-container" v-if="typeof roomConnection === 'string'">
+        <div id="loading-error">
+          <h1>Error</h1>
+          <p id="loading-error-text">{{roomConnection}}</p>
+          <button v-on:click="$router.replace('/world/games')">{{
+            (['Whatevs', '>:(', 'RAGE QUIT', 'GO BACK', 'Back'])[Math.floor(Math.random() * 5)]  
+          }}</button>
         </div>
       </div>
+      <div v-else class="loading-text">Joining room {{player.authenticated ? ' as ' + player.username : ''}} <ActivityIndicator/></div>
     </div>
-    <!-- Outcomes screen -->
-    <div id="outcomes" v-if="gameInterface.gameInitialized && !gameInterface.gameState.playState && currentLevelRecord && !gameInterface.isAnimating">
-      <div class="content">
-        <aside>
-          <div class="player-container" v-for="(player, id) in currentLevelRecord.players" v-bind:key="id">
-            <img v-bind:src="require(`../assets/img/icon/people/${gameInterface.gameState.players[id].entity.name}.png`)" class="avatar" alt="Player entity">
-            <div class="grid">
-              <h3 class="title">{{gameInterface.gameState.players[id].username}}</h3>
-              <h2 v-if="combatGame.gameState.readyToContinue[id]">Ready!</h2>
-              <div v-else>
-                <p>Dmg: {{player.damageDealt}}</p>
-                <p>Gold: {{player.gold}}</p>
-                <p>XP: {{player.xp}}</p>
-              </div>
+    <!-- COMBAT GAME -->
+    <div class="combat-game">
+      <!-- header -->
+      <header v-if="gameInterface.showGUI">
+        <ul>
+          <router-link to="/world">Exit</router-link>
+          <div class="level" v-if="gameInterface.gameState.playState && currentPlayer">
+            <div class="icon">
+              <span id="level-label">{{currentPlayer.level}}</span>
+            </div>
+            <div class="bar">
+              <p id="xp-label"></p>
+              <div id="xp-juice"></div>
             </div>
           </div>
-        </aside>
-        <div class="main">
-          <h1>Level {{gameInterface.gameState.level}} {{currentLevelRecord.won ? 'completed' : 'lost'}}!</h1>
-          <h2 class="subtitle">Level completed in {{gameInterface.gameState.turn}} turns</h2>
-          <p>Damage dealt: {{currentLevelRecord.players[this.player.id].damageDealt}}</p>
-          <p>Gold Earned: {{currentLevelRecord.players[this.player.id].gold}}</p>
-          <p>XP Gained: {{currentLevelRecord.players[this.player.id].xp}}</p>
-          <button>
-            Ready!
-          </button>
+        </ul>
+        <h1 id="title" v-if="gameInterface.gameInitialized && !gameInterface.isAnimating && gameInterface.gameState.playState">
+          {{ combatGame.gameState.title }}, level {{ gameInterface.gameState.level }}
+        </h1>
+      </header>
+      <!-- Main screen -->
+      <div id="main">
+        <div id="canvas-parent"></div>
+        <!-- Display -->
+        <div class="display" v-if="socket.loading">
+          <p>Connecting to server</p>
+        </div>
+        <div class="display" v-else-if="!socket.connected">
+          <p>You are not connected to the server</p>
+        </div>
+        <div class="display" v-else-if="!gameInterface.gameInitialized">
+          <ActivityIndicator/>
+        </div>
+        <div v-else-if="gameInterface.showGUI && currentPlayerSelectionStatus === 1" class="GUI">
+          <p>OK! Waiting for other players...</p>
+        </div>
+        <div
+          v-else-if="currentPlayer" 
+          :class="
+            gameInterface.isAnimating || currentPlayerSelectionStatus === -1
+              ? 'GUI hidden'
+              : combatGame.selectionMode === 'TARGET' && currentPlayerSelectionStatus === 0
+              ? 'GUI faded'
+              : 'GUI'
+          "
+        >
+          <div>
+            <h2 class="health" v-if="currentPlayer">
+              HP {{currentPlayer.entity.health}}/{{currentPlayer.entity.maxHealth}}
+            </h2>
+            <h2 class="health" v-else>HP ...</h2>
+            <div class="bar-container" v-if="currentPlayer">
+              <div id="health-bar" v-bind:style="{ width: `${currentPlayer.entity.health / currentPlayer.entity.maxHealth * 100}%` }"></div>
+            </div>
+            <h2 class="energy" v-if="currentPlayer">
+              EP {{currentPlayer.entity.energy}}/{{currentPlayer.entity.maxEnergy}}
+            </h2>
+            <h2 v-else>EP ...</h2>
+            <div class="bar-container" v-if="currentPlayer">
+              <div id="energy-bar" v-bind:style="{ width: `${currentPlayer.entity.energy / currentPlayer.entity.maxEnergy * 100}%` }"></div>
+            </div>
+            <h3>Players: {{ combatGame.gameState.playerCount }} / {{ combatGame.gameState.maxPlayers }}</h3>
+          </div>
+          <div>
+            <ul id="gui-selection-list">
+              <li
+                v-for="(option, index) in currentScreenObject"
+                :key="option.title"
+                :class="`${option.disabled ? 'disabled' : ''} ${combatGame.selectionMode !== 'TARGET' && combatGame.selectionMode !== 'HIDDEN' && currentCursorIndex == index ? 'active' : ''}`"
+              >
+                {{ option.title }}
+              </li>
+            </ul>
+          </div>
+          <div id="gui-description-container">
+            <p v-html="description"></p>
+          </div>
+        </div>
+      </div>
+      <!-- Outcomes screen -->
+      <div id="outcomes" v-if="gameInterface.gameInitialized && !gameInterface.gameState.playState && currentLevelRecord && !gameInterface.isAnimating">
+        <div class="content">
+          <aside>
+            <div class="player-container" v-for="(player, id) in currentLevelRecord.players" v-bind:key="id">
+              <img v-bind:src="require(`../assets/img/icon/people/${gameInterface.gameState.players[id].entity.name}.png`)" class="avatar" alt="Player entity">
+              <div class="grid">
+                <h3 class="title">{{gameInterface.gameState.players[id].username}}</h3>
+                <h2 v-if="combatGame.gameState.readyToContinue[id]">Ready!</h2>
+                <div v-else>
+                  <p>Dmg: {{player.damageDealt}}</p>
+                  <p>Gold: {{player.gold}}</p>
+                  <p>XP: {{player.xp}}</p>
+                </div>
+              </div>
+            </div>
+          </aside>
+          <div class="main">
+            <h1>Level {{gameInterface.gameState.level}} {{currentLevelRecord.won ? 'completed' : 'lost'}}!</h1>
+            <h2 class="subtitle">Level completed in {{gameInterface.gameState.turn}} turns</h2>
+            <p>Damage dealt: {{currentLevelRecord.players[this.player.id].damageDealt}}</p>
+            <p>Gold Earned: {{currentLevelRecord.players[this.player.id].gold}}</p>
+            <p>XP Gained: {{currentLevelRecord.players[this.player.id].xp}}</p>
+            <button>
+              Ready!
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -153,6 +172,8 @@ export default class CombatRoom extends Vue {
   @Mutation public RESET_GAME_STATE: any;
   @Mutation public SET_SOCKET_ROOM: any;
 
+  public roomConnection: -1 | 0 | 1 | string = -1; // -1 = not pending, 0 = pending, 1 = ok, 'string' = error
+
   public description: string = '';
 
   public gameInterface = GameController();
@@ -161,14 +182,30 @@ export default class CombatRoom extends Vue {
   public cursorMoveDate = Date.now();
 
   public mounted() {
-    const { roomID } = this.$route.params;
-    if (!this.socket.connected || !this.player.authenticated) {
-      return this.$router.replace({ name: 'world' });
-    }
     this.SET_HEADER_VISIBILITY(false);
+
+    // add event listeners
     document.addEventListener('keydown', this.keyMonitor, true);
     window.addEventListener('resize', this.gameInterface.resizeMonitor, true);
-    this.gameInterface.launch();
+
+    // combat hub connection attempt
+    if (this.socket.connected && this.player.authenticated) {
+      console.log('attempt connections attempt from mount');
+      this.attemptConnection();
+    }
+  }
+  public updated() {
+    const { player, socket, roomConnection } = this;
+    // on disconnect socket
+    if (!socket.connected && roomConnection !== -1) {
+      console.log('disconnect');
+      this.roomConnection = -1;
+    }
+    // combat hub connection attempt
+    if (socket.connected && player.authenticated && roomConnection === -1) {
+      console.log('attempt connections attempt from update');
+      this.attemptConnection();
+    }
   }
   public destroyed() {
     if (this.gameInterface) {
@@ -179,6 +216,28 @@ export default class CombatRoom extends Vue {
     this.RESET_GAME_STATE('COMBAT_ROOM');
     document.removeEventListener('keydown', this.keyMonitor, true);
     window.removeEventListener('resize', this.gameInterface.resizeMonitor, true);
+  }
+  public attemptConnection() {
+    if (!this.socket.connected) {
+      return console.warn('Attempted connection but socket is not connected');
+    }
+    if (this.roomConnection !== -1) {
+      return console.warn('Attempted connection when roomConnection is not -1');
+    }
+
+    const { roomID } = this.$route.params;
+    this.roomConnection = 0;
+    console.log('Joining combat room');
+    this.SOCKET_EMIT(['COMBAT_ROOM_CONNECT', roomID, (err?: string) => {
+      if (!err) {
+        this.roomConnection = 1;
+        if (!this.gameInterface.game) {
+          this.gameInterface.launch();
+        }
+      } else {
+        this.roomConnection = err;
+      }
+    }]);
   }
   public keyMonitor(event: any) {
     if (Date.now() - this.cursorMoveDate <= 100 || this.gameInterface.isAnimating) {
@@ -407,6 +466,76 @@ export default class CombatRoom extends Vue {
 </script>
 <style lang="scss" scoped>
 $mainGreen: #9dff5c;
+#loading-screen {
+  background: rgb(19, 19, 19);
+  color: white;
+  position: absolute;
+  width: 100%;
+  height: 100vh;
+  z-index: 50;
+  &.blur {
+    .icon {
+      filter: blur(20px);
+    }
+    .tip {
+      filter: blur(20px);
+    }
+    .loading-text {
+      filter: blur(20px);
+    }
+  }
+  .icon {
+    position: absolute;
+    top: 1em;
+    left: 1em;
+    height: 3rem;
+  }
+  .tip {
+    position: absolute;
+    top: 1em;
+    right: 1em;
+    max-width: 30%;
+    font-size: larger;
+    font-weight: bold;
+  }
+  .loading-text {
+    position: absolute;
+    bottom: 1em;
+    left: 1em;
+    display: inline-flex;
+    align-items: center;
+  }
+  #loading-error-container {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: black;
+    #loading-error {
+      padding: 1em;
+      background: white;
+      text-align: center;
+      border-radius: 1em;
+      width: 50%;
+      button {
+        font-family: 'Press Start 2P', monospace;
+        background: #d30938;
+        color: white;
+        border: none;
+        box-shadow: 0px 0px 5px white;
+        padding: 1em 2em;
+        border-radius: 5px;
+        &:hover {
+          transform: scale(1.1);
+        }
+      }
+    }
+  }
+}
 .combat-root {
   height: 100vh;
   width: 100%;

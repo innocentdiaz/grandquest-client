@@ -338,7 +338,7 @@ const newGame = (global: GameController): PhaserGame => {
         */
         /* Level updating / rendering */
         // if we are on a different level than on the network
-        if (global.gameState.level !== networkGameState.level) {
+        if (global.gameState.level !== networkGameState.level && networkGameState.level !== -1) {
           // update the level locally
           global.gameState.level = networkGameState.level;
           // despawn all the characters
@@ -411,8 +411,8 @@ const newGame = (global: GameController): PhaserGame => {
         // IF the network is at a different turn
         if (global.gameState.turn !== networkGameState.turn && !global.isAnimating) {
           // IF we have NOT just joined the match
-          if (global.gameState.turn !== -1) {
-            let appliedEvents = networkGameState.turnEvents[global.gameState.turn];
+          let appliedEvents = networkGameState.turnEvents[global.gameState.turn];
+          if (appliedEvents && global.gameState.turn !== -1) {
             actions.animateEvents(appliedEvents);
           }
           global.gameState.turn = networkGameState.turn;
