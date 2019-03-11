@@ -79,11 +79,6 @@ const mutations = {
   SET_SOCKET_LOADING (s: State) {
     s.socket.loading = true;
   },
-  SET_INITIAL_STATES(s: State) {
-    s.world = {...initialState.world};
-    s.combatGame = {...initialState.combatGame};
-    s.combatHub = {...initialState.combatHub};
-  },
   UPDATE_SOCKET_PLAYER (s: State, player: Player) {
     s.player = { ...s.player, ...player };
   },
@@ -123,11 +118,11 @@ const actions = {
     */
     socket.on('connect', () => {
       commit('SET_SOCKET_CONNECTION', true);
-      commit('SET_INITIAL_STATES');
       dispatch('INIT_SOCKET');
     });
     socket.on('disconnect', () => {
       commit('SET_SOCKET_CONNECTION', false);
+      commit('UPDATE_SOCKET_PLAYER', { authenticated: false })
     });
     socket.on('connect_error', () => {
       commit('SET_SOCKET_CONNECTION', false);
@@ -157,13 +152,13 @@ const actions = {
       commit('SET_COMBAT_GAME_STATE', combatRoomState);
     });
   },
-  INIT_SOCKET({ state, dispatch, commit }: ActionContext) {
+  INIT_SOCKET({ commit }: ActionContext) {
     /*
       Authenticate socket
     */
     const JWT = localStorage.getItem('grandquest:jwt');
     if (JWT) {
-      socket.emit('AUTHENTICATE_SOCKET', JWT, (err: any, player: Player) => {
+      socket.emit('AUTHENTICATE_SOCKET', JWT, (err: string | null, player?: Player) => {
         if (!err && player) {
           commit('UPDATE_SOCKET_PLAYER', { ...player, authenticated: true, token: JWT });
         } else {
