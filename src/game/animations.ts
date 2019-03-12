@@ -21,7 +21,7 @@ interface Animations {
   };
   misc: {
     XP :(event: CombatEvent) => void;
-    damageText: (damagedCharacter: Character, damage: number) => void;
+    damageText: (event: CombatEvent) => void;
   };
 }
 
@@ -70,8 +70,6 @@ const animations: Animations = {
         onStart() {
           character.sprite.play('adventurer-swing');
           setTimeout(() => {
-            if (!event.outcome.damage) return;
-
             receiver.sprite.play(`${receiver.entity.name}-hurt`);
 
             const damagePercentage = (event.outcome.damage / receiver.entity.maxHealth);
@@ -92,12 +90,16 @@ const animations: Animations = {
               AudioManager.stopAll();
             } else {
               receiver.sprite.play(`${receiver.entity.name}-hurt`);
-              AudioManager.playOnce(`enemyHurt`);
+              if (event.outcome.damage === 0) {
+                AudioManager.playOnce('attackMiss');
+              } else {
+                AudioManager.playOnce(`enemyHurt`);
+                AudioManager.playOnce('combatHit');
+              }
             }
-            AudioManager.playOnce('combatHit');
 
             // damage text
-            animationsManager.animations.misc.damageText(receiver, event.outcome.damage);
+            animationsManager.animations.misc.damageText(event);
 
             // animate XP bar for the current player
             if (store.state.player.id === character.id && event.outcome.xp) {
@@ -159,8 +161,6 @@ const animations: Animations = {
         onStart() {
           character.sprite.play('adventurer-up-swing');
           setTimeout(() => {
-            if (!event.outcome.damage) return;
-
             const damagePercentage = (event.outcome.damage / receiver.entity.maxHealth);
             const totalWidth = receiver._nameTag.displayWidth;
             const currentWidth = receiver._healthBar.width;
@@ -179,12 +179,16 @@ const animations: Animations = {
               AudioManager.stopAll();
             } else {
               receiver.sprite.play(`${receiver.entity.name}-hurt`);
-              AudioManager.playOnce(`enemyHurt`);
+              if (event.outcome.damage === 0) {
+                AudioManager.playOnce('attackMiss');
+              } else {
+                AudioManager.playOnce(`enemyHurt`);
+                AudioManager.playOnce('combatHit');
+              }
             }
-            AudioManager.playOnce('combatHit');
 
             // damage text
-            animationsManager.animations.misc.damageText(receiver, event.outcome.damage);
+            animationsManager.animations.misc.damageText(event);
 
             // animate XP bar for the current player
             if (store.state.player.id === character.id && event.outcome.xp) {
@@ -250,8 +254,6 @@ const animations: Animations = {
             receiver.sprite.play(`${receiver.entity.name}-hurt`);
             AudioManager.playOnce(`enemyHurt`);
 
-            if (!event.outcome.damage) return;
-
             const damagePercentage = (event.outcome.damage / receiver.entity.maxHealth);
             const totalWidth = receiver._nameTag.displayWidth;
             const currentWidth = receiver._healthBar.width;
@@ -270,10 +272,16 @@ const animations: Animations = {
               AudioManager.stopAll();
             } else {
               receiver.sprite.play(`${receiver.entity.name}-hurt`);
+              if (event.outcome.damage === 0) {
+                AudioManager.playOnce('attackMiss');
+              } else {
+                AudioManager.playOnce(`enemyHurt`);
+                AudioManager.playOnce('combatHit');
+              }
             }
-            AudioManager.playOnce('combatHit');
+
             // damage text
-            animationsManager.animations.misc.damageText(receiver, event.outcome.damage);
+            animationsManager.animations.misc.damageText(event);
 
             // animate XP bar for the current player
             if (store.state.player.id === character.id && event.outcome.xp) {
@@ -337,8 +345,6 @@ const animations: Animations = {
         onStart() {
           character.sprite.play('slime-bite');
           setTimeout(() => {
-            if (!event.outcome.damage) return;
-
             const damagePercentage = event.outcome.damage / receiver.entity.maxHealth;
             const totalWidth = receiver._nameTag.displayWidth;
             const currentWidth = receiver._healthBar.width;
@@ -358,10 +364,16 @@ const animations: Animations = {
               AudioManager.stopAll();
             } else {
               receiver.sprite.play(`${receiver.entity.name}-hurt`);
+              if (event.outcome.damage === 0) {
+                AudioManager.playOnce('attackMiss');
+              } else {
+                AudioManager.playOnce(`enemyHurt`);
+                AudioManager.playOnce('combatHit');
+              }
             }
-            AudioManager.playOnce('combatHit');
+
             // damage text
-            animationsManager.animations.misc.damageText(receiver, event.outcome.damage);
+            animationsManager.animations.misc.damageText(event);
           }, 200);
         },
       });
@@ -406,9 +418,6 @@ const animations: Animations = {
         y: character.sprite.y,
         duration: 250,
         onStart() {
-          // update sprite health bar
-          if (!event.outcome.heal) return;
-
           const healPercentage = (event.outcome.heal / receiver.entity.maxHealth);
           const totalWidth = receiver._nameTag.displayWidth;
           const currentWidth = receiver._healthBar.width;
@@ -575,17 +584,45 @@ const animations: Animations = {
           });
       });
     },
-    damageText: (damagedCharacter, damage) => {
+    damageText: (event) => {
       const { gameController } = animationsManager;
       if (!gameController || !gameController.game) {
         return;
       }
       const scene = gameController.game.scene.scenes[0];
 
+      /*
+        2.5x - 3x = critical
+        1.8x - 2.5x = strong
+        0.8x - 1.8x = ok
+        0.1x - 0.8x = weak
+        0 = miss
+      */
+      const characters = { ...gameController.gameState.players, ...gameController.gameState.enemies };
+      const character = characters[event.characterId];
+      const receiver = characters[event.receiverId];
+      const outcomeDamage = event.outcome.damage;
+
+      const baseDamage = ((character.level / 12) + 1) * (character.power / receiver.defense) * event.outcome.attackBase;
+      console.log(`${outcomeDamage} <= ${character.level / 12 + 1} * ${character.power / receiver.defense} * ${event.outcome.attackBase}`);
+      let text = '';
+      if (outcomeDamage === 0) {
+        text = 'MISS!';
+      } else if (outcomeDamage <= baseDamage * 0.8) {
+        text = `${outcomeDamage}...`;
+      } else if (outcomeDamage <= 1.8) {
+        text = `${outcomeDamage}`;
+      } else if (outcomeDamage <= baseDamage * 2.8) {
+        text = `-${outcomeDamage}!`;
+      } else {
+        text = `CRITICAL!! -${outcomeDamage}`;
+        scene.cameras.main.shake();
+      }
+
       const damageText = scene.add.text(
-        damagedCharacter.sprite.x,
-        damagedCharacter.sprite.y + damagedCharacter.sprite.displayHeight,
-        `-${damage}`,
+        receiver.sprite.x,
+        receiver.sprite.y + receiver.sprite.displayHeight,
+        text,
         {
           fontSize: '20px',
           color: '#d30938',
@@ -597,7 +634,7 @@ const animations: Animations = {
       .setDepth(15);
       scene.tweens.add({
         targets: damageText,
-        y: damagedCharacter.sprite.y - damagedCharacter.sprite.displayHeight,
+        y: receiver.sprite.y - receiver.sprite.displayHeight,
         alpha: 1,
         duration: 250,
         onComplete() {

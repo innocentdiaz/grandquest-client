@@ -84,6 +84,7 @@ interface Scene {
   cameras: {
     main: {
       flash: () => void;
+      shake: () => void;
     }
   };
   time: {
@@ -631,7 +632,7 @@ const newGame = (global: GameController): PhaserGame => {
           setTimeout(() => {
             global.isAnimating = false;
             global.showGUI = true;
-          }, 500);
+          }, 1500);
         },
       });
 
