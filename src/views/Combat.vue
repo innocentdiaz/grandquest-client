@@ -8,12 +8,17 @@
         <div id="loading-error">
           <h1>Error</h1>
           <p id="loading-error-text">{{roomConnection}}</p>
-          <button v-on:click="$router.replace('/world/games')">{{
-            (['Whatevs', '>:(', 'RAGE QUIT', 'GO BACK', 'Back'])[Math.floor(Math.random() * 5)]  
-          }}</button>
+          <button v-on:click="$router.replace('/world/games')">EXIT</button>
         </div>
       </div>
-      <div v-else class="loading-text">Joining room {{player.authenticated ? ' as ' + player.username : ''}} <ActivityIndicator/></div>
+      <div v-else class="loading-text">
+        {{
+          !socket.connected
+          ? 'Connecting to server...'
+          : !player.authenticated
+          ? 'Authenticating player...'
+          : 'Joining room...'
+        }} <ActivityIndicator/></div>
     </div>
     <!-- COMBAT GAME -->
     <div class="combat-game">
