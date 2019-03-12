@@ -116,7 +116,7 @@ export interface GameController {
   gameIntervals: {
     [intervalName: string]: number,
   };
-  currentTargetSide: number;
+  currentTargetSide: 0 | 1;
   currentTargetIndex: number;
   _gameClouds: any;
   _fadeScreen: any;
@@ -141,7 +141,7 @@ export interface GameController {
  */
 interface PlacingLine {
   [placingIndex: string]: {
-    character: Character | null;
+    character: () => Character | null;
     nextIndex: number;
     prevIndex: number;
   };
@@ -358,7 +358,7 @@ const newGame = (global: GameController): PhaserGame => {
           global.playerPlacingLine = _.reduce(_.range(1, networkGameState.maxPlayers + 1), (memo: object, index: number) => ({
             ...memo,
             [String(index)]: {
-              character: null,
+              character: () => null,
               nextIndex: index >= networkGameState.maxPlayers ? 1 : index + 1,
               prevIndex: index === 1 ? networkGameState.maxPlayers : index - 1,
             },
@@ -373,7 +373,7 @@ const newGame = (global: GameController): PhaserGame => {
           global.enemyPlacingLine = _.reduce(_.range(1, Object.keys(networkGameState.enemies).length + 1), (memo: object, index: number) => ({
             ...memo,
             [String(index)]: {
-              character: null,
+              character: () => null,
               nextIndex: index >= Object.keys(networkGameState.enemies).length ? 1 : index + 1,
               prevIndex: index === 1 ? Object.keys(networkGameState.enemies).length : index - 1,
             },
@@ -540,10 +540,10 @@ const newGame = (global: GameController): PhaserGame => {
           } else {
             // update selection hand coordinates
             const placingLine = global.currentTargetSide === 0
-            ? global.playerPlacingLine
-            : global.enemyPlacingLine;
+              ? global.playerPlacingLine
+              : global.enemyPlacingLine;
 
-            const { character } = placingLine[global.currentTargetIndex];
+            const character = placingLine[global.currentTargetIndex].character();
 
             if (character && character.sprite.depth === 15) {
               global.targetHand.x = character.sprite.getCenter().x;
@@ -732,12 +732,12 @@ const newGame = (global: GameController): PhaserGame => {
 
       // find empty spot in line
       let emptySpotInLine = _.findKey({...placingLine}, (spot) => {
-        return spot.character === null;
+        return spot.character() === null;
       });
 
-      const cat = character.enemy
-          ? 'enemies'
-          : 'players';
+      const characterType = character.enemy
+        ? 'enemies'
+        : 'players';
       const p = character.enemy
         ? 'enemyPlacingLine'
         : 'playerPlacingLine';
@@ -749,10 +749,10 @@ const newGame = (global: GameController): PhaserGame => {
         .setDepth(10)
         .setOrigin(0.5)
         .play(`${entity.name}-idle`, false, Math.floor(Math.random() * 3));
-      let characterId: string = String(character.id);
+      let characterId = String(character.id);
       // add character with sprite to the global game state!
-      global.gameState[cat] = {
-        ...global.gameState[cat],
+      global.gameState[characterType] = {
+        ...global.gameState[characterType],
         [characterId]: {
           ...character,
           sprite,
@@ -764,7 +764,7 @@ const newGame = (global: GameController): PhaserGame => {
         ...global[p],
         [emptySpotInLine]: {
           ...global[p][emptySpotInLine],
-          character: global.gameState[cat][character.id],
+          character: () => global.gameState[characterType][characterId],
         },
       };
 
@@ -787,7 +787,7 @@ const newGame = (global: GameController): PhaserGame => {
         });
       }
 
-      return global.gameState[cat][character.id];
+      return global.gameState[characterType][character.id];
     },
     coordinatesForEntity(character): { x: number, y: number } {
       let scene: any = this;
@@ -795,7 +795,10 @@ const newGame = (global: GameController): PhaserGame => {
       let placingLine = character.enemy
         ? global.enemyPlacingLine
         : global.playerPlacingLine;
-      let spotInLine: string = _.findKey({...placingLine}, (spot) => !!spot.character && spot.character.id === character.id);
+      let spotInLine: string = _.findKey({...placingLine}, (spot) => {
+        const characterInSpot = spot.character();
+        return !!characterInSpot && characterInSpot.id == character.id
+      });
 
       const canvasWidth = scene.game.canvas.offsetWidth;
       const canvasHeight = scene.game.canvas.offsetHeight;
@@ -839,17 +842,26 @@ const newGame = (global: GameController): PhaserGame => {
       
       // remove character from game state;
       delete cat[id];
+
       // remove character from placing line
       if (character.enemy) {
-        global.enemyPlacingLine = _.mapObject(global.enemyPlacingLine, (spot) => ({
-          ...spot,
-          character: spot.character && spot.character.id === character.id ? null : spot.character,
-        }));
+        global.enemyPlacingLine = _.mapObject(global.enemyPlacingLine, (spot) => {
+          let newSpot = {...spot};
+          const enemyInSpot = spot.character();
+          if (enemyInSpot && enemyInSpot.id === character.id) {
+            newSpot.character = () => null;
+          }
+          return newSpot;
+        });
       } else {
-        global.playerPlacingLine = _.mapObject(global.playerPlacingLine, (spot) => ({
-          ...spot,
-          character: spot.character && spot.character.id === character.id ? null : spot.character,
-        }));
+        global.playerPlacingLine = _.mapObject(global.playerPlacingLine, (spot) => {
+          let newSpot = {...spot};
+          const playerInSpot = spot.character();
+          if (playerInSpot && playerInSpot.id === character.id) {
+            newSpot.character = () => null;
+          }
+          return newSpot;
+        });
       }
 
       /*
@@ -878,16 +890,16 @@ const newGame = (global: GameController): PhaserGame => {
         return console.warn('target hand already added')
       };
 
-      let config!: { index: number; side: number };
+      let config!: { index: number; side: 0|1 };
       // find a valid spot withing both placing lines to place the target hand in
       _.each(
         [..._.pairs(global.playerPlacingLine), ..._.pairs(global.enemyPlacingLine)],
         (pair) => {
         if (config) {
-          return console.log('there is a config!');
+          return;
         }
         const key = pair[0];
-        const character: Character | null = pair[1].character;
+        const character: Character | null = pair[1].character();
         if (!character) {
           return;
         }
@@ -924,7 +936,7 @@ const newGame = (global: GameController): PhaserGame => {
         ? global.playerPlacingLine
         : global.enemyPlacingLine;
 
-      const character = placingLine[index].character;
+      const character = placingLine[index].character();
 
       if(!character) {
         throw new Error('No characters at index ' + index);
@@ -1059,7 +1071,7 @@ export default function (): GameController {
       scene.cursorMoveDate = Date.now();
 
       let indexDirection: string | null = null;
-      let side: number | null = null;
+      let side: 0 | 1 | null = null;
 
       switch (event.key.toUpperCase()) {
         case 'W':
@@ -1085,6 +1097,9 @@ export default function (): GameController {
         const placingLine = gameController.currentTargetSide == 0
           ? this.playerPlacingLine
           : this.enemyPlacingLine;
+        const characters = this.currentTargetSide === 0
+          ? gameController.gameState.players
+          : gameController.gameState.enemies;
         
         // algorith to find next occupied spot in the specified direction (up or down)
         let j = this.currentTargetIndex;
@@ -1095,7 +1110,8 @@ export default function (): GameController {
           } else {
             j = p.prevIndex;
           }
-          const characterInSpot = placingLine[j].character;
+
+          const characterInSpot = placingLine[j].character();
           // if found (new) next occupied spot
           if (
             characterInSpot &&
@@ -1117,12 +1133,16 @@ export default function (): GameController {
         const newPlacingLine = side == 0
           ? this.playerPlacingLine
           : this.enemyPlacingLine;
+        const characters = this.currentTargetSide === 0
+          ? gameController.gameState.players
+          : gameController.gameState.enemies;
 
-        const newIndex = _.findKey({...newPlacingLine}, ({ character}) => {
+        const newIndex = _.findKey({...newPlacingLine}, (spot) => {
+          const character = spot.character();
           return !!character && character.sprite.depth === 15;
         });
         if (newIndex) {
-          this.currentTargetSide = Number(side);
+          this.currentTargetSide = side;
           this.currentTargetIndex = Number(newIndex);
         }
         // sound effect
@@ -1136,7 +1156,7 @@ export default function (): GameController {
           ? gameController.playerPlacingLine
           : gameController.enemyPlacingLine;
 
-        const target = placingLine[gameController.currentTargetIndex].character;
+        const target = placingLine[gameController.currentTargetIndex].character();
 
         if (!target) {
           return console.warn('Null character selected as target');
