@@ -141,7 +141,7 @@ export interface GameController {
  */
 interface PlacingLine {
   [placingIndex: string]: {
-    character: () => Character | null;
+    readonly character: Character | null;
     nextIndex: number;
     prevIndex: number;
   };
@@ -358,7 +358,9 @@ const newGame = (global: GameController): PhaserGame => {
           global.playerPlacingLine = _.reduce(_.range(1, networkGameState.maxPlayers + 1), (memo: object, index: number) => ({
             ...memo,
             [String(index)]: {
-              character: () => null,
+              get character() {
+                return null;
+              },
               nextIndex: index >= networkGameState.maxPlayers ? 1 : index + 1,
               prevIndex: index === 1 ? networkGameState.maxPlayers : index - 1,
             },
@@ -373,7 +375,9 @@ const newGame = (global: GameController): PhaserGame => {
           global.enemyPlacingLine = _.reduce(_.range(1, Object.keys(networkGameState.enemies).length + 1), (memo: object, index: number) => ({
             ...memo,
             [String(index)]: {
-              character: () => null,
+              get character() {
+                return null;
+              },
               nextIndex: index >= Object.keys(networkGameState.enemies).length ? 1 : index + 1,
               prevIndex: index === 1 ? Object.keys(networkGameState.enemies).length : index - 1,
             },
@@ -543,7 +547,7 @@ const newGame = (global: GameController): PhaserGame => {
               ? global.playerPlacingLine
               : global.enemyPlacingLine;
 
-            const character = placingLine[global.currentTargetIndex].character();
+            const character = placingLine[global.currentTargetIndex].character;
 
             if (character && character.sprite.depth === 15) {
               global.targetHand.x = character.sprite.getCenter().x;
@@ -732,7 +736,8 @@ const newGame = (global: GameController): PhaserGame => {
 
       // find empty spot in line
       let emptySpotInLine = _.findKey({...placingLine}, (spot) => {
-        return spot.character() === null;
+        console.log('spot.character', spot.character);
+        return spot.character === null;
       });
 
       const characterType = character.enemy
@@ -758,14 +763,16 @@ const newGame = (global: GameController): PhaserGame => {
           sprite,
         },
       };
-
-      // reference the spawned player in their placing line
+      console.log('add character getter', character.username);
+      // add placingSpot.character getter to empty spot in placing line
       global[p] = {
         ...global[p],
-        [emptySpotInLine]: {
-          ...global[p][emptySpotInLine],
-          character: () => global.gameState[characterType][characterId],
-        },
+        [emptySpotInLine]: Object.defineProperty(
+          global[p][emptySpotInLine],
+          'character',
+          {
+            get: function() { return global.gameState[characterType][characterId] },
+          })
       };
 
       // animate spawning
@@ -796,7 +803,7 @@ const newGame = (global: GameController): PhaserGame => {
         ? global.enemyPlacingLine
         : global.playerPlacingLine;
       let spotInLine: string = _.findKey({...placingLine}, (spot) => {
-        const characterInSpot = spot.character();
+        const characterInSpot = spot.character;
         return !!characterInSpot && characterInSpot.id == character.id
       });
 
@@ -847,18 +854,24 @@ const newGame = (global: GameController): PhaserGame => {
       if (character.enemy) {
         global.enemyPlacingLine = _.mapObject(global.enemyPlacingLine, (spot) => {
           let newSpot = {...spot};
-          const enemyInSpot = spot.character();
+          const enemyInSpot = spot.character;
           if (enemyInSpot && enemyInSpot.id === character.id) {
-            newSpot.character = () => null;
+            // set placingSpot.character to a getter that returns null
+            Object.defineProperty(newSpot, 'character', {
+              get: function() { return null },
+            });
           }
           return newSpot;
         });
       } else {
         global.playerPlacingLine = _.mapObject(global.playerPlacingLine, (spot) => {
           let newSpot = {...spot};
-          const playerInSpot = spot.character();
+          const playerInSpot = spot.character;
           if (playerInSpot && playerInSpot.id === character.id) {
-            newSpot.character = () => null;
+            // set placingSpot.character to a getter that returns null
+            Object.defineProperty(newSpot, 'character', {
+              get: function() { return null },
+            });
           }
           return newSpot;
         });
@@ -899,7 +912,7 @@ const newGame = (global: GameController): PhaserGame => {
           return;
         }
         const key = pair[0];
-        const character: Character | null = pair[1].character();
+        const character: Character | null = pair[1].character;
         if (!character) {
           return;
         }
@@ -936,7 +949,7 @@ const newGame = (global: GameController): PhaserGame => {
         ? global.playerPlacingLine
         : global.enemyPlacingLine;
 
-      const character = placingLine[index].character();
+      const character = placingLine[index].character;
 
       if(!character) {
         throw new Error('No characters at index ' + index);
@@ -1111,7 +1124,7 @@ export default function (): GameController {
             j = p.prevIndex;
           }
 
-          const characterInSpot = placingLine[j].character();
+          const characterInSpot = placingLine[j].character;
           // if found (new) next occupied spot
           if (
             characterInSpot &&
@@ -1138,7 +1151,7 @@ export default function (): GameController {
           : gameController.gameState.enemies;
 
         const newIndex = _.findKey({...newPlacingLine}, (spot) => {
-          const character = spot.character();
+          const character = spot.character;
           return !!character && character.sprite.depth === 15;
         });
         if (newIndex) {
@@ -1156,7 +1169,7 @@ export default function (): GameController {
           ? gameController.playerPlacingLine
           : gameController.enemyPlacingLine;
 
-        const target = placingLine[gameController.currentTargetIndex].character();
+        const target = placingLine[gameController.currentTargetIndex].character;
 
         if (!target) {
           return console.warn('Null character selected as target');
