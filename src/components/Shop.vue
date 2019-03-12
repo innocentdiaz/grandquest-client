@@ -131,7 +131,7 @@ export default class Shop extends Vue {
                       target,
                       0.5,
                       {
-                        hp: results.max,
+                        hp: results.after,
                         roundProps: 'hp',
                         onStart() {
                           audioManager.playOnce('heal');
