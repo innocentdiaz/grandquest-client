@@ -3,6 +3,9 @@ export interface Character {
   username: string;
   enemy: boolean;
   selectionStatus: number;
+  level: number;
+  power: number;
+  defense: number;
   entity: {
     name: string;
     energy: number;
@@ -39,6 +42,7 @@ export interface InventoryItem {
   amount: number;
 }
 export interface CombatEvent {
+  baseDamage: number;
   characterId: string;
   receiverId: string;
   action: {
@@ -46,8 +50,9 @@ export interface CombatEvent {
       id: string;
   }
   outcome: {
-    damage?: number;
-    heal?: number;
-    xp?: number;
+    damage: number;
+    attackBase: number;
+    heal: number;
+    xp: number;
   }
 }
