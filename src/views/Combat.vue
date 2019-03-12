@@ -2,7 +2,7 @@
   <div v-on:keydown="keyMonitor" class="combat-root">
     <!-- LOADING SCREEN -->
     <div v-if="roomConnection !== 1" id="loading-screen" :class="`${typeof roomConnection === 'string' ? 'blur' : ''}`">
-      <img src="@/assets/img/icon/heros-trial.png" alt="Hero's Trial" class="icon">
+      <img src="@/assets/img/icon/heros-trial.png" alt="Hero's Trial" class="icon" v-on:click="$router.push(`/world`)">
       <div class="tip">Fun fact: <br/> Lorem Ipsum this is some sample text for tips</div>
       <div id="loading-error-container" v-if="typeof roomConnection === 'string'">
         <div id="loading-error">
@@ -485,6 +485,7 @@ $mainGreen: #9dff5c;
     }
   }
   .icon {
+    cursor: pointer;
     position: absolute;
     top: 1em;
     left: 1em;
