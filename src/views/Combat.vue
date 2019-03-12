@@ -179,8 +179,6 @@ export default class CombatRoom extends Vue {
 
   public roomConnection: -1 | 0 | 1 | string = -1; // -1 = not pending, 0 = pending, 1 = ok, 'string' = error
 
-  public description: string = '';
-
   public gameInterface = GameController();
   public currentScreen = 'root';
   public currentCursorIndex = 0;
@@ -297,7 +295,6 @@ export default class CombatRoom extends Vue {
 
     AudioManager.playOnce('cursorMove');
 
-    this.description = options[j].description;
     this.currentCursorIndex = j;
   }
   public selectOption() {
@@ -466,6 +463,46 @@ export default class CombatRoom extends Vue {
   get currentLevelRecord() {
     let level = this.gameInterface.gameState.level;
     return this.gameInterface.gameState.levelRecord[level]
+  }
+  get description() {
+    const selectionStatus = this.combatGame.selectionMode;
+
+    if (selectionStatus === 'HIDDEN') {
+      return '';
+    }
+    if (selectionStatus === 'ACTION') {
+      const selectionOption = this.guiMasterObject[this.currentScreen][this.currentCursorIndex];
+      return selectionOption.description;
+    }
+    if (selectionStatus === 'TARGET') {
+      const targetSide = this.gameInterface.currentTargetSide;
+      const targetIndex = this.gameInterface.currentTargetIndex;
+      const placingLine = targetSide === 0
+        ? this.gameInterface.playerPlacingLine
+        : this.gameInterface.enemyPlacingLine;
+      const target = placingLine[targetIndex].character();
+      const currentPlayer = this.currentPlayer;
+
+      if (!target) {
+        return '';
+      }
+      if (currentPlayer && target.id === currentPlayer.id) {
+        return `
+          <h2>${target.username}</h2>
+        `;
+      } else {
+        return `
+          <h2>${target.username}</h2>
+          <h3 class="subtitle">level ${target.level}</h3>
+          <ul>
+            <li>HP: ${Math.round(target.entity.health * 10) / 10}/${target.entity.maxHealth}</li>
+            <li>Power: ${target.power}</li>
+            <li>Defense: ${target.defense}</li>
+          </ul>
+        `;
+      }
+    }
+    return '';
   }
 }
 </script>

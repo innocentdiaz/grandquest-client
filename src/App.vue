@@ -232,8 +232,19 @@ span, p {
   background: rgb(0, 218, 218);
   height: 10px;
 }
+.GUI #gui-description-container {
+  ul {
+    padding-left: 1em;
+    border-left: 5px solid gray;
+  }
+}
 .GUI.faded {
-  opacity: 0.5;
+  & > div:nth-child(1) {
+    opacity: 0.5;
+  }
+  & > div:nth-child(2) {
+    opacity: 0.5;
+  }
 }
 .GUI.hidden {
   opacity: 0;
