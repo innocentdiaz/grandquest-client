@@ -231,14 +231,15 @@ export default class CombatRoom extends Vue {
     const { roomID } = this.$route.params;
     this.roomConnection = 0;
     console.log('Joining combat room');
-    this.SOCKET_EMIT(['COMBAT_ROOM_CONNECT', roomID, (err?: string) => {
-      if (!err) {
+    this.SOCKET_EMIT(['COMBAT_ROOM_CONNECT', roomID, (err?: string, combatRoom?: CombatRoom) => {
+      if (err) {
+        this.roomConnection = err;
+      } else {
         this.roomConnection = 1;
         if (!this.gameInterface.game) {
+          this.SET_COMBAT_GAME_STATE(combatRoom);
           this.gameInterface.launch();
         }
-      } else {
-        this.roomConnection = err;
       }
     }]);
   }
@@ -480,7 +481,7 @@ export default class CombatRoom extends Vue {
       const placingLine = targetSide === 0
         ? this.gameInterface.playerPlacingLine
         : this.gameInterface.enemyPlacingLine;
-      const target = placingLine[targetIndex].character();
+      const target = placingLine[targetIndex].character;
       const currentPlayer = this.currentPlayer;
 
       if (!target) {
