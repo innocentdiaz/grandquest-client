@@ -70,7 +70,6 @@ const animations: Animations = {
         onStart() {
           character.sprite.play('adventurer-swing');
           setTimeout(() => {
-            receiver.sprite.play(`${receiver.entity.name}-hurt`);
 
             const damagePercentage = (event.outcome.damage / receiver.entity.maxHealth);
             const totalWidth = receiver._nameTag.displayWidth;
@@ -89,12 +88,12 @@ const animations: Animations = {
               scene.cameras.main.flash();
               AudioManager.stopAll();
             } else {
-              receiver.sprite.play(`${receiver.entity.name}-hurt`);
               if (event.outcome.damage === 0) {
                 AudioManager.playOnce('attackMiss');
               } else {
-                AudioManager.playOnce(`enemyHurt`);
                 AudioManager.playOnce('combatHit');
+                receiver.sprite.play(`${receiver.entity.name}-hurt`);
+                AudioManager.playOnce(`enemyHurt`);
               }
             }
 
@@ -178,12 +177,12 @@ const animations: Animations = {
               scene.cameras.main.flash();
               AudioManager.stopAll();
             } else {
-              receiver.sprite.play(`${receiver.entity.name}-hurt`);
               if (event.outcome.damage === 0) {
                 AudioManager.playOnce('attackMiss');
               } else {
-                AudioManager.playOnce(`enemyHurt`);
                 AudioManager.playOnce('combatHit');
+                receiver.sprite.play(`${receiver.entity.name}-hurt`);
+                AudioManager.playOnce(`enemyHurt`);
               }
             }
 
@@ -251,9 +250,6 @@ const animations: Animations = {
         onStart() {
           character.sprite.play('adventurer-back-swing');
           setTimeout(() => {
-            receiver.sprite.play(`${receiver.entity.name}-hurt`);
-            AudioManager.playOnce(`enemyHurt`);
-
             const damagePercentage = (event.outcome.damage / receiver.entity.maxHealth);
             const totalWidth = receiver._nameTag.displayWidth;
             const currentWidth = receiver._healthBar.width;
@@ -271,12 +267,12 @@ const animations: Animations = {
               scene.cameras.main.flash();
               AudioManager.stopAll();
             } else {
-              receiver.sprite.play(`${receiver.entity.name}-hurt`);
               if (event.outcome.damage === 0) {
                 AudioManager.playOnce('attackMiss');
               } else {
-                AudioManager.playOnce(`enemyHurt`);
                 AudioManager.playOnce('combatHit');
+                receiver.sprite.play(`${receiver.entity.name}-hurt`);
+                AudioManager.playOnce(`enemyHurt`);
               }
             }
 
@@ -367,7 +363,6 @@ const animations: Animations = {
               if (event.outcome.damage === 0) {
                 AudioManager.playOnce('attackMiss');
               } else {
-                AudioManager.playOnce(`enemyHurt`);
                 AudioManager.playOnce('combatHit');
               }
             }
