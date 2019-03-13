@@ -23,22 +23,24 @@
     <!-- COMBAT GAME -->
     <div class="combat-game">
       <!-- header -->
-      <header v-if="gameInterface.showGUI">
-        <ul>
-          <router-link to="/world">Exit</router-link>
-          <div class="level" v-if="gameInterface.gameState.playState && currentPlayer">
-            <div class="icon">
-              <span id="level-label">{{currentPlayer.level}}</span>
+      <header>
+        <div class="game-header" v-if="gameInterface.showGUI">
+          <ul>
+            <router-link to="/world">Exit</router-link>
+            <div class="level" v-if="gameInterface.gameState.playState && currentPlayer">
+              <div class="icon">
+                <span id="level-label">{{currentPlayer.level}}</span>
+              </div>
+              <div class="bar">
+                <p id="xp-label"></p>
+                <div id="xp-juice"></div>
+              </div>
             </div>
-            <div class="bar">
-              <p id="xp-label"></p>
-              <div id="xp-juice"></div>
-            </div>
-          </div>
-        </ul>
-        <h1 id="title" v-if="gameInterface.gameInitialized && !gameInterface.isAnimating && gameInterface.gameState.playState">
-          {{ combatGame.gameState.title }}, level {{ gameInterface.gameState.level }}
-        </h1>
+          </ul>
+          <h1 id="title" v-if="gameInterface.gameInitialized && !gameInterface.isAnimating && gameInterface.gameState.playState">
+            {{ combatGame.gameState.title }}, level {{ gameInterface.gameState.level }}
+          </h1>
+        </div>
       </header>
       <!-- Main screen -->
       <div id="main">
@@ -122,7 +124,11 @@
             <p>Damage dealt: {{currentLevelRecord.players[this.player.id].damageDealt}}</p>
             <p>Gold Earned: {{currentLevelRecord.players[this.player.id].gold}}</p>
             <p>XP Gained: {{currentLevelRecord.players[this.player.id].xp}}</p>
-            <button>
+            <button
+              v-if="currentLevelRecord.won"
+              :disabled="combatGame.gameState.readyToContinue[this.player.id]"
+              v-on:click="SOCKET_EMIT(['COMBAT_ROOM_READY'])"
+            >
               Ready!
             </button>
           </div>
@@ -591,7 +597,7 @@ $mainGreen: #9dff5c;
   #canvas-parent {
     text-align: center;
   }
-  header {
+  .game-header {
     position: absolute;
     top: 0;
     left: 0;

@@ -14,6 +14,7 @@ import { Character, CombatEvent } from '@/game/types';
 /*
   Import images
 */
+import skyMainImage from '@/assets/img/landscapes/main-sky.png'
 // country landsacpe
 import countryPlatformImage from '@/assets/img/landscapes/country/platform.png';
 import countryTreesImage from '@/assets/img/landscapes/country/trees.png';
@@ -67,6 +68,7 @@ interface Scene {
     rectangle: (x1: number, x2: number, y1: number, y2: number, color: number) => any;
     text: (x: number, y: number, text: string, styles: any) => any;
     particles: (name: string) => any;
+    tileSprite: (x: number, y: number, width: number, height: number, id: string) => any;
   };
   game: PhaserGame;
   tweens: {
@@ -94,8 +96,8 @@ interface Scene {
 
 interface ControllerActions {
   [index: string]: any,
-  loadScene: () => void;
-  addBackground: () => void;
+  startLevel: (level: number) => void;
+  renderBackground: () => void;
   spawnCharacter: (character: Character) => Character;
   coordinatesForEntity: (character: Character) => { x: number, y: number };
   despawnCharacter: (id: string | number) => void;
@@ -120,7 +122,10 @@ export interface GameController {
   currentTargetIndex: number;
   _gameClouds: any;
   _fadeScreen: any;
-  _sceneImg: any[];
+  currentStage: {
+    name: 'country' | 'mountains' | null;
+    imgs: any[];
+  },
   game: PhaserGame | null;
   targetHand: any;
   isAnimating: boolean;
@@ -169,7 +174,6 @@ const newGame = (global: GameController): PhaserGame => {
     // width set to 98% of window width withing range of 300 and 920 pixels
     width: window.innerWidth * .98 > 920 ? 920 : window.innerWidth * .98 < 300 ? 300 : window.innerWidth * .98,
     height: window.innerHeight * .68,
-    backgroundColor: '#7fb8f9',
     parent: 'canvas-parent',
     physics: {
       default: 'arcade',
@@ -205,6 +209,8 @@ const newGame = (global: GameController): PhaserGame => {
         // Load images asyncronously
         let assetsLoaded = 0;
         _.each([
+          // main sky
+          { name: 'main-sky', src: skyMainImage, type: 'image' },
           // country landscape
           { name: 'country-platform', src: countryPlatformImage, type: 'image' },
           { name: 'country-trees-bg', src: countryTreesImage, type: 'image' },
@@ -347,7 +353,7 @@ const newGame = (global: GameController): PhaserGame => {
             actions.despawnCharacter(c.id);
           });
           // load the scene
-          actions.loadScene();
+          actions.startLevel(global.gameState.level);
         }
 
         // generate player placing line
@@ -518,8 +524,8 @@ const newGame = (global: GameController): PhaserGame => {
             )
             .setOrigin(0.5, 0.5)
           } else if (characterOnLocal._healthText.visible) {
-            let currentDisplayedHealth = Math.round(characterOnLocal.entity.maxHealth * (characterOnLocal._healthBar.width/characterOnLocal._nameTag.displayWidth));
-            characterOnLocal._healthText.text = `${currentDisplayedHealth}/${characterOnLocal.entity.maxHealth}`;
+            let currentDisplayedHealth = characterOnLocal.entity.maxHealth * (characterOnLocal._healthBar.width/characterOnLocal._nameTag.displayWidth);
+            characterOnLocal._healthText.text = `${Math.round(currentDisplayedHealth / 10) * 10}/${characterOnLocal.entity.maxHealth}`;
             characterOnLocal._healthText.x = characterOnLocal._healthBarBackground.getCenter().x;
             characterOnLocal._healthText.y = characterOnLocal._healthBarBackground.getCenter().y + 2;
             characterOnLocal._healthText.setDepth(characterOnLocal.sprite.depth + 2);
@@ -590,9 +596,9 @@ const newGame = (global: GameController): PhaserGame => {
     GameController actions
   */
   const actions: ControllerActions = {
-    loadScene() {
+    startLevel(level) {
       /*
-        SCENE CONFIGURATION FOR IMAGE & SPRITE Z-DEPTHS
+        SCENE Z-DEPTHS FOR IMAGE & SPRITE
         -
         Background images: 1-4
         Character (idle): 10
@@ -604,7 +610,21 @@ const newGame = (global: GameController): PhaserGame => {
         HealthText: Character.depth + 2
       */
       let scene: Scene = game.scene.scenes[0];
-      console.log('load scene ', global.gameState.level);
+
+      // stop all audio
+      AudioManager.stopAll();
+      // remove target hand
+      actions.removeTargetHand();
+      // despawn characters
+      _.each({...global.gameState.players, ...global.gameState.enemies}, (character) => {
+        actions.despawnCharacter(character.id);
+      });
+      
+      if (level <= 4) {
+        global.currentStage.name = 'country';
+      } else {
+        global.currentStage.name = 'mountains';
+      }
 
       global.showGUI = false;
       global.isAnimating = true;
@@ -640,88 +660,96 @@ const newGame = (global: GameController): PhaserGame => {
         },
       });
 
-      actions.addBackground();
+      actions.renderBackground();
       store.commit('SET_COMBAT_GAME_SELECTION_MODE', 'ACTION');
       setTimeout(() => {
         AudioManager.playOnce('cursorSelect');
         timeline.play();
       }, 2000);
     },
-    addBackground() {
-      let scene: any = this;
+    renderBackground() {
+      let scene: Scene = game.scene.scenes[0];
+      /*
+      Handy dimensions
+      */
+     const canvasWidth = scene.game.canvas.offsetWidth;
+     const canvasHeight = scene.game.canvas.offsetHeight;
+      let imagePixelHeight = 0;
+      let scaleRatio = 0;
+      scene.add.image(canvasWidth / 2, 0, 'main-sky')
+        .setDepth(0)
+        .setScale(canvasWidth/800)
+        .setOrigin(0.5, 0)
+
       /*
         Wipe the old scene if it exists
       */
-      if (global._sceneImg.length) {
-        for (let img of global._sceneImg) {
+      if (global.currentStage.imgs.length) {
+        for (let img of global.currentStage.imgs) {
           img.destroy();
         }
-        global._sceneImg = [];
       }
-      /*
-        Handy dimensions
-      */
-      const canvasWidth = scene.game.canvas.offsetWidth;
-      const canvasHeight = scene.game.canvas.offsetHeight;
-      let imagePixelHeight = 0;
-      let scaleRatio = 0;
+      // add main-sky
+      global.currentStage.imgs = [
+        scene.add.image(canvasWidth / 2, 0, 'main-sky')
+          .setDepth(0)
+          .setScale(canvasWidth/800)
+          .setOrigin(0.5, 0)
+      ];
 
-      switch(global.gameState.level) {
-        case 0:
-          imagePixelHeight = 210;
-          scaleRatio = canvasHeight / imagePixelHeight;
+      if (global.currentStage.name === 'country') {
+        imagePixelHeight = 210;
+        scaleRatio = canvasHeight / imagePixelHeight;
 
-          // add each image in order
-          _.each([
-            'country-mountains-bg',
-            'country-clouds-bg',
-            'country-trees-bg',
-            'country-platform',
-          ], (name, i) => {
-            // clouds are parallax
-            const img =
-              scene.add.tileSprite(0, 0, canvasWidth, canvasHeight, name)
-              // z-axis
-              .setDepth(i)
-              // pixelHeight of each image in tileset
-              .setScale(scaleRatio)
-              .setOrigin(0);
-            if (name === 'country-clouds-bg') {
-              // set them to the game instance
-              global._gameClouds = img;
-            } else if (name === 'country-mountains-bg') {
-              img.setScale(scaleRatio * .7);
-            }
-            global._sceneImg.push(img);
-          });
-          break;
-        case 1:
-          imagePixelHeight = 216;
-          scaleRatio = canvasHeight / imagePixelHeight;
+        // add each image in order
+        _.each([
+          'country-mountains-bg',
+          'country-clouds-bg',
+          'country-trees-bg',
+          'country-platform',
+        ], (name, i) => {
+          // clouds are parallax
+          const img =
+            scene.add.tileSprite(0, 0, canvasWidth, canvasHeight, name)
+            // z-axis
+            .setDepth(i)
+            // pixelHeight of each image in tileset
+            .setScale(scaleRatio)
+            .setOrigin(0);
+          if (name === 'country-clouds-bg') {
+            // set them to the game instance
+            global._gameClouds = img;
+          } else if (name === 'country-mountains-bg') {
+            img.setScale(scaleRatio * .7);
+          }
+          global.currentStage.imgs.push(img);
+        });
+      } else if (global.currentStage.name === 'mountains') {
+        imagePixelHeight = 216;
+        scaleRatio = canvasHeight / imagePixelHeight;
 
-          _.each([
-            'grassy-mountains-far-bg',
-            'grassy-mountains-bg',
-            'grassy-mountains-clouds-bg',
-            'grassy-mountains-hill',
-          ], (name, i) => {
-            // clouds are parallax
-            const img =
-              scene.add.tileSprite(0, 0, canvasWidth, canvasHeight, name)
-              // z-axis
-              .setDepth(i)
-              // pixelHeight of each image in tileset
-              .setScale(scaleRatio)
-              .setOrigin(0);
-            if (name === 'grassy-mountains-clouds-bg') {
-              // set them to the game instance
-              global._gameClouds = img;
-            }
-            global._sceneImg.push(img);
-          });
-          break;
-        default:
-          throw new Error('Scene not configured for level ' + global.gameState.level);
+        _.each([
+          'grassy-mountains-far-bg',
+          'grassy-mountains-bg',
+          'grassy-mountains-clouds-bg',
+          'grassy-mountains-hill',
+        ], (name, i) => {
+          // clouds are parallax
+          const img =
+            scene.add.tileSprite(0, 0, canvasWidth, canvasHeight, name)
+            // z-axis
+            .setDepth(i)
+            // pixelHeight of each image in tileset
+            .setScale(scaleRatio)
+            .setOrigin(0);
+          if (name === 'grassy-mountains-clouds-bg') {
+            // set them to the game instance
+            global._gameClouds = img;
+          }
+          global.currentStage.imgs.push(img);
+        });
+      } else {
+        throw new Error('Scene not configured for level ' + global.gameState.level);
       }
     },
     spawnCharacter(character): Character {
@@ -736,9 +764,12 @@ const newGame = (global: GameController): PhaserGame => {
 
       // find empty spot in line
       let emptySpotInLine = _.findKey({...placingLine}, (spot) => {
-        console.log('spot.character', spot.character);
         return spot.character === null;
       });
+
+      if (!emptySpotInLine) {
+        throw new Error('f');
+      }
 
       const characterType = character.enemy
         ? 'enemies'
@@ -763,7 +794,6 @@ const newGame = (global: GameController): PhaserGame => {
           sprite,
         },
       };
-      console.log('add character getter', character.username);
       // add placingSpot.character getter to empty spot in placing line
       global[p] = {
         ...global[p],
@@ -771,7 +801,14 @@ const newGame = (global: GameController): PhaserGame => {
           global[p][emptySpotInLine],
           'character',
           {
-            get: function() { return global.gameState[characterType][characterId] },
+            get: function() {
+              const character = global.gameState[characterType][characterId];
+              if (!character) {
+                return null;
+              } else {
+                return global.gameState[characterType][characterId];
+              }
+            },
           })
       };
 
@@ -810,31 +847,40 @@ const newGame = (global: GameController): PhaserGame => {
       const canvasWidth = scene.game.canvas.offsetWidth;
       const canvasHeight = scene.game.canvas.offsetHeight;
 
-      let b = character.enemy ? 0.6 : 0.35;
-      let c = global.gameState.level === 0
-        ? 0.8
-        : global.gameState.level === 1
-        ? 0.6
-        : 0;
+      // begin placing the enemies at 60% of the screen width AND enemies at 35% of the screen width
+      let bx = character.enemy ? 0.6 : 0.35;
+      // begin placing the characters at 80% of the screen height
+      let by = 0.8;
+      
+      // space the characters horizontally by 8% of the screen width
+      let run = 0.08;
+      // space the characters vertically by 2% of the screen height
+      let rise = 0.02;
 
-      let xDelta = global.gameState.level === 0
-        ? 0.08
-        : global.gameState.level === 1
-        ? 0.055
-        : 0;
-      let yDelta = global.gameState.level === 0
-        ? 0.02
-        : global.gameState.level === 1
-        ? 0.03
-        : 0;
-      if (!character.enemy) {
-        xDelta *= -1;
+      // in the grassy mountains scene ...
+      if (global.currentStage.name === 'mountains') {
+        // begin placing characters at 75% of the screen height
+        by = 0.7;
+        rise = 0.04;
       }
+
+      // place players backwards horizontally (start from right-most player)
+      if (!character.enemy) {
+        run *= -1;
+      }
+
+      const input = Number(spotInLine);
+
+      // slope intercept form
+      const coordinates = {
+        X: input * run + bx,
+        Y: input * rise + by,
+      };
 
       return {
-        x: canvasWidth * ((Number(spotInLine) * xDelta) + b),
-        y: canvasHeight * ((Number(spotInLine) * yDelta) + c),
-      }
+        x: canvasWidth * coordinates.X,
+        y: canvasHeight * coordinates.Y,
+      };
     },
     despawnCharacter(id) {
       let character: Character = global.gameState.players[id] || global.gameState.enemies[id];
@@ -855,7 +901,7 @@ const newGame = (global: GameController): PhaserGame => {
         global.enemyPlacingLine = _.mapObject(global.enemyPlacingLine, (spot) => {
           let newSpot = {...spot};
           const enemyInSpot = spot.character;
-          if (enemyInSpot && enemyInSpot.id === character.id) {
+          if (!enemyInSpot || enemyInSpot.id === character.id) {
             // set placingSpot.character to a getter that returns null
             Object.defineProperty(newSpot, 'character', {
               get: function() { return null },
@@ -864,10 +910,10 @@ const newGame = (global: GameController): PhaserGame => {
           return newSpot;
         });
       } else {
-        global.playerPlacingLine = _.mapObject(global.playerPlacingLine, (spot) => {
+        global.playerPlacingLine = _.mapObject(global.playerPlacingLine, (spot, i) => {
           let newSpot = {...spot};
           const playerInSpot = spot.character;
-          if (playerInSpot && playerInSpot.id === character.id) {
+          if (!playerInSpot || playerInSpot.id === character.id) {
             // set placingSpot.character to a getter that returns null
             Object.defineProperty(newSpot, 'character', {
               get: function() { return null },
@@ -1043,7 +1089,10 @@ export default function (): GameController {
     currentTargetIndex: 1,
     _gameClouds: null,
     _fadeScreen: null,
-    _sceneImg: [],
+    currentStage: {
+      name: null,
+      imgs: [],
+    },
     targetHand: null,
     selectedAction: null,
     showGUI: false,
