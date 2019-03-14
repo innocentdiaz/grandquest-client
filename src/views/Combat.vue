@@ -1,14 +1,14 @@
 <template>
   <div v-on:keydown="keyMonitor" class="combat-root">
     <!-- LOADING SCREEN -->
-    <div v-if="roomConnection !== 1" id="loading-screen" :class="`${typeof roomConnection === 'string' ? 'blur' : ''}`">
+    <div v-if="!gameInterface.gameInitialized || roomConnection !== 1" id="loading-screen" :class="`${typeof roomConnection === 'string' ? 'blur' : ''}`">
       <img src="@/assets/img/icon/heros-trial.png" alt="Hero's Trial" class="icon" v-on:click="$router.push(`/world`)">
-      <div class="tip">Fun fact: <br/> Lorem Ipsum this is some sample text for tips</div>
+      <div class="tip">Fun fact: <br/> Coordinates with others players to make the most effective use of your attacks and items!</div>
       <div id="loading-error-container" v-if="typeof roomConnection === 'string'">
         <div id="loading-error">
           <h1>Error</h1>
           <p id="loading-error-text">{{roomConnection}}</p>
-          <button v-on:click="$router.replace('/world/games')">EXIT</button>
+          <button v-on:click="$router.replace('/world/games')" class="exit-btn">EXIT</button>
         </div>
       </div>
       <div v-else class="loading-text">
@@ -17,7 +17,9 @@
           ? 'Connecting to server...'
           : !player.authenticated
           ? 'Authenticating player...'
-          : 'Joining room...'
+          : !gameInterface.gameInitialized
+          ? 'Loading assets...'
+          : 'Beginning game...'
         }} <ActivityIndicator/></div>
     </div>
     <!-- COMBAT GAME -->
@@ -51,9 +53,6 @@
         </div>
         <div class="display" v-else-if="!socket.connected">
           <p>You are not connected to the server</p>
-        </div>
-        <div class="display" v-else-if="!gameInterface.gameInitialized">
-          <ActivityIndicator/>
         </div>
         <div v-else-if="gameInterface.showGUI && currentPlayerSelectionStatus === 1" class="GUI">
           <p>OK! Waiting for other players...</p>
@@ -121,15 +120,23 @@
           <div class="main">
             <h1>Level {{gameInterface.gameState.level}} {{currentLevelRecord.won ? 'completed' : 'lost'}}!</h1>
             <h2 class="subtitle">Level completed in {{gameInterface.gameState.turn}} turns</h2>
-            <p>Damage dealt: {{currentLevelRecord.players[this.player.id].damageDealt}}</p>
-            <p>Gold Earned: {{currentLevelRecord.players[this.player.id].gold}}</p>
-            <p>XP Gained: {{currentLevelRecord.players[this.player.id].xp}}</p>
+            <p><img class="icon" src="@/assets/img/icon/1bit-swords.png"/> dealt: {{currentLevelRecord.players[this.player.id].damageDealt}} dmg</p>
+            <p><img class="icon" src="@/assets/img/items/coins.png"/> earned: {{currentLevelRecord.players[this.player.id].gold}} gold</p>
+            <p><img class="icon" src="@/assets/img/misc/xp-orb.png"/> gained: {{currentLevelRecord.players[this.player.id].xp}} xp</p>
             <button
+              class="ready"
               v-if="currentLevelRecord.won"
               :disabled="combatGame.gameState.readyToContinue[this.player.id]"
               v-on:click="SOCKET_EMIT(['COMBAT_ROOM_READY'])"
             >
               Ready!
+            </button>
+            <button
+              v-else
+              v-on:click="$router.replace('/world/games')"
+              class="exit-btn"
+            >
+              EXIT
             </button>
           </div>
         </div>
@@ -571,18 +578,6 @@ $mainGreen: #9dff5c;
       text-align: center;
       border-radius: 1em;
       width: 50%;
-      button {
-        font-family: 'Press Start 2P', monospace;
-        background: #d30938;
-        color: white;
-        border: none;
-        box-shadow: 0px 0px 5px white;
-        padding: 1em 2em;
-        border-radius: 5px;
-        &:hover {
-          transform: scale(1.1);
-        }
-      }
     }
   }
 }
@@ -720,7 +715,17 @@ $mainGreen: #9dff5c;
       .main {
         flex: 4;
         padding: 0 1em;
-        button {
+        p {
+          display: flex;
+          flex-direction: row;
+          align-items: center;
+          .icon {
+            margin-right: 0.5em;
+            height: 1.5em;
+            border-radius: 5px;
+          }
+        }
+        .ready {
           position: absolute;
           background: $mainGreen;
           color: white;
@@ -779,6 +784,18 @@ $mainGreen: #9dff5c;
     justify-content: center;
     color: white;
     font-family: 'Press Start 2P', monospace;
+  }
+}
+.exit-btn {
+  font-family: 'Press Start 2P', monospace;
+  background: #d30938;
+  color: white;
+  border: none;
+  box-shadow: 0px 0px 5px white;
+  padding: 1em 2em;
+  border-radius: 5px;
+  &:hover {
+    transform: scale(1.1);
   }
 }
 @keyframes slide-up {
