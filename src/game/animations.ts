@@ -505,22 +505,22 @@ const animations: Animations = {
 
       if (!amount) {
         levelLabelElement.innerHTML = String(level);
-        barJuiceElement.style.width = `${(XP/currentPlayer.nextLevelXp) * 100}%`;
+        barJuiceElement.style.width = `${(XP * 100)/(currentPlayer.nextLevelXp * 100) * 100}%`;
         return;
       }
-      let barWidth = Number((barJuiceElement.clientWidth / (barElement.clientWidth - 2)).toFixed(2));
+      let barWidth = (barJuiceElement.clientWidth * 100) / (barElement.clientWidth * 100);
       const lvlShown = Number(levelLabelElement.innerHTML);
-      const shownXP = barWidth*currentPlayer.nextLevelXp;
+      const shownXP = barWidth * currentPlayer.nextLevelXp;
 
       // maths
-      const totalXP = shownXP+amount;
-      const leveled = Math.floor(totalXP/currentPlayer.nextLevelXp); // 0
-      const newXp = totalXP%currentPlayer.nextLevelXp;
-      let j = leveled-lvlShown > 0 ? leveled-lvlShown : 0;
+      const totalXP = shownXP + amount;
+      const leveled = Math.floor(totalXP / currentPlayer.nextLevelXp); // 0
+      const newXp = totalXP % currentPlayer.nextLevelXp;
+      let j = Math.max(leveled - lvlShown, 0);
 
       let i = 0;
       const interval = setInterval(() => {
-        barWidth = Number((barJuiceElement.clientWidth / (barElement.clientWidth - 2)).toFixed(2));
+        barWidth = (barJuiceElement.clientWidth * 100) / (barElement.clientWidth * 100);
         let newWidth = 0;
         barJuiceElement.setAttribute('class', '');
         // if we animated the parents to 100% last animation
@@ -535,17 +535,17 @@ const animations: Animations = {
         }
         // animate last increase
         else if (i === j) {
-          newWidth = (newXp/currentPlayer.nextLevelXp) + barWidth;
+          newWidth = (totalXP * 100) / (currentPlayer.nextLevelXp * 100);
         }
         // all animations are complete
         else {
           if (i === 1) {
-            barJuiceElement.style.width = `${newXp/currentPlayer.nextLevelXp*100}%`;
+            barJuiceElement.style.width = `${newXp / currentPlayer.nextLevelXp * 100}%`;
           }
           return clearInterval(interval);
         }
         barJuiceElement.setAttribute('class', 'animated');
-        barJuiceElement.style.width = `${newWidth*100}%`;
+        barJuiceElement.style.width = `${newWidth * 100}%`;
         i++;
       }, 300);
     },
