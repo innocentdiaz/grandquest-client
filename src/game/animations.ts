@@ -391,6 +391,89 @@ const animations: Animations = {
       });
       timeline.play();
     }),
+    'mountain-warrior-slash': (event, gameController) => new Promise((resolve) => {
+      if (!gameController.game) {
+        return;
+      }
+
+      const scene = gameController.game.scene.scenes[0];
+  
+      let timeline = scene.tweens.createTimeline();
+      const character = {...gameController.gameState.players, ...gameController.gameState.enemies}[event.characterId];
+      const receiver = {...gameController.gameState.players, ...gameController.gameState.enemies}[event.receiverId];
+
+      const originalPosition = character.sprite.x;
+      const atkPosition = receiver.sprite.x + (receiver.sprite.displayWidth * 1.1);
+
+      // jump to receiver
+      timeline.add({
+        targets: [character.sprite],
+        duration: 480,
+        x: atkPosition,
+        onStart() {
+          character.sprite.setDepth(15);
+          AudioManager.playOnce('jump');
+          character.sprite.play('mountain-warrior-jump');
+        },
+      });
+      // warrior slash
+      timeline.add({
+        targets: [character.sprite],
+        duration: 1200,
+        x: atkPosition,
+        onStart() {
+          character.sprite.play('mountain-warrior-slash');
+          setTimeout(() => {
+            const damagePercentage = event.outcome.damage / receiver.entity.maxHealth;
+            const totalWidth = receiver._nameTag.displayWidth;
+            const currentWidth = receiver._healthBar.width;
+            const newWidth = currentWidth - (totalWidth * damagePercentage);
+            scene.tweens.add({
+              targets: receiver._healthBar,
+              width: Math.max(newWidth, 0),
+              duration: 250,
+            });
+            
+            receiver.sprite.play(`${receiver.entity.name}-hurt`);
+            /*
+              If the last enemy has been killed
+            */
+            const alivePlayers = _.filter(gameController.gameState.players, e => e.entity.health > 0);
+            if (newWidth <= 0 && !alivePlayers.length) {
+              AudioManager.stopAll();
+            } else {
+              receiver.sprite.play(`${receiver.entity.name}-hurt`);
+              if (event.outcome.damage === 0) {
+                AudioManager.playOnce('attackMiss');
+              } else {
+                AudioManager.playOnce('combatHit');
+              }
+            }
+
+            // damage text
+            animationsManager.animations.misc.damageText(event);
+          }, 200);
+        },
+      });
+      // walk back to original position
+      timeline.add({
+        targets: [character.sprite],
+        duration: 1250,
+        x: originalPosition,
+        onStart() {
+          character.sprite.scaleX *= -1;
+          character.sprite.play(`mountain-warrior-walk`);
+          setTimeout(() => receiver.sprite.play(`${receiver.entity.name}-idle`), 100);
+        },
+        onComplete() {
+          character.sprite.scaleX *= -1;
+          character.sprite.play(`mountain-warrior-idle`);
+          character.sprite.setDepth(10);
+          resolve();
+        },
+      });
+      timeline.play();
+    }),
   },
   item: {
     'heal-potion': (event, gameController) => new Promise((resolve) => {

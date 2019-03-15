@@ -14,6 +14,7 @@ import EnemyHurtAudio from '@/assets/audio/enemy-hurt.mp3';
 import HealAudio from '@/assets/audio/heal.mp3';
 import npcBubbleAudio from '@/assets/audio/npc-bubble.mp3';
 import AttackMissAudio from '@/assets/audio/attack-miss.mp3';
+import JumpAudio from '@/assets/audio/jump.mp3';
 
 interface AudioManager {
   sounds: {
@@ -32,12 +33,13 @@ let audioManager: AudioManager = {
     fieldsCombat: new Howler.Howl({ src: [ FieldsCombatAudio ], volume: 0.5, loop: true }),
     combatHit: new Howler.Howl({ src: [ CombatHitAudio ], volume: 0.6 }),
     combatSuccess: new Howler.Howl({ src: [ CombatSuccessAudio ], volume: 0.6 }),
-    combatFail: new Howler.Howl({ src: [ CombatFailAudio ], volume: 0.6 }),
+    combatFail: new Howler.Howl({ src: [ CombatFailAudio ], volume: 0.75 }),
     xpGain: new Howler.Howl({ src: [ XPGainFX ] }),
     enemyHurt: new Howler.Howl({ src: [ EnemyHurtAudio ], volume: 0.4 }),
     heal: new Howler.Howl({ src: [ HealAudio ] }),
     npcBubble: new Howler.Howl({ src: [ npcBubbleAudio ], volume: 0.2 }),
     attackMiss: new Howler.Howl({ src: [ AttackMissAudio ], volume: 0.8 }),
+    jump: new Howler.Howl({ src: [ JumpAudio ], volume: 0.8 }),
   },
   playOnce(name, stop) {
     if (!audioManager.sounds.hasOwnProperty(name)) {

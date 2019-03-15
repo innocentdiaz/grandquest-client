@@ -28,6 +28,7 @@ import grassyMountainsHill from '@/assets/img/landscapes/mountains/hill.png';
 // spritesheets
 import AdventurerSheet from '@/assets/img/spritesheets/adventurer-sheet.png';
 import SlimeSheet from '@/assets/img/spritesheets/slime-sheet.png';
+import MountainWarriorSheet from '@/assets/img/spritesheets/mountain-warrior-sheet.png';
 // items
 import healPotionImage from '@/assets/img/items/heal-potion.png';
 // misc
@@ -224,6 +225,7 @@ const newGame = (global: GameController): PhaserGame => {
           // entities
           { name: 'adventurer', src: AdventurerSheet, type: 'spritesheet', spriteDimensions: [ 50, 37 ] },
           { name: 'slime', src: SlimeSheet, type: 'spritesheet', spriteDimensions: [32, 25] },
+          { name: 'mountain-warrior', src: MountainWarriorSheet, type: 'spritesheet', spriteDimensions: [64, 36] },
           // items
           { name: 'item-heal-potion', src: healPotionImage, type: 'image' },
           // misc
@@ -319,6 +321,36 @@ const newGame = (global: GameController): PhaserGame => {
                 key: 'slime-hurt',
                 frames: scene.anims.generateFrameNumbers('slime', { start: 12, end: 16 }),
                 frameRate: 6,
+                repeat: 0,
+              });
+              scene.anims.create({
+                key: 'mountain-warrior-idle',
+                frames: scene.anims.generateFrameNumbers('mountain-warrior', { start: 0, end: 3 }),
+                frameRate: 6,
+                repeat: -1,
+              });
+              scene.anims.create({
+                key: 'mountain-warrior-walk',
+                frames: scene.anims.generateFrameNumbers('mountain-warrior', { start: 4, end: 9 }),
+                frameRate: 9,
+                repeat: -1,
+              });
+              scene.anims.create({
+                key: 'mountain-warrior-jump',
+                frames: scene.anims.generateFrameNumbers('mountain-warrior', { start: 25, end: 32 }),
+                frameRate: 6,
+                repeat: 0,
+              });
+              scene.anims.create({
+                key: 'mountain-warrior-slash',
+                frames: scene.anims.generateFrameNumbers('mountain-warrior', { start: 10, end: 14 }),
+                frameRate: 9,
+                repeat: 0,
+              });
+              scene.anims.create({
+                key: 'mountain-warrior-hurt',
+                frames: scene.anims.generateFrameNumbers('mountain-warrior', { start: 15, end: 19 }),
+                frameRate: 4,
                 repeat: 0,
               });
               scene.anims.create({
@@ -778,6 +810,8 @@ const newGame = (global: GameController): PhaserGame => {
         ? 'enemyPlacingLine'
         : 'playerPlacingLine';
 
+        console.clear();
+        console.log(`${entity.name}-idle`)
       // create game sprite
       let sprite =
         scene.add.sprite(-20, 0, entity.name)
