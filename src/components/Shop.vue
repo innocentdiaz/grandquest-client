@@ -43,14 +43,19 @@
         </ul>
       </div>
     </div>
-    <!-- HP bar -->
-    <div class="hp-container" id="hp">
-      <header>
-        <span>HP</span>
-        <span id="hp-label"></span>
-      </header>
-      <div class="bar" id="hp-bar">
-        <div class="juice" id="hp-juice"></div>
+    <div class="abs-stats">
+      <!-- HP bar -->
+      <div class="hp-container" id="hp">
+        <header>
+          <span>HP</span>
+          <span id="hp-label"></span>
+        </header>
+        <div class="bar" id="hp-bar">
+          <div class="juice" id="hp-juice"></div>
+        </div>
+      </div>
+      <div id="gold-container">
+        <img src="@/assets/img/items/coins.png" alt="Gold">{{player.gold.toLocaleString()}}
       </div>
     </div>
   </div> 
@@ -61,7 +66,7 @@ import { State, Mutation, Action } from 'vuex-class';
 import { Player, SocketState } from '@/types';
 import AudioManager from '@/game/audio-manager';
 import _ from 'underscore';
-import { TimelineLite, TweenMax } from 'gsap';
+import { TimelineLite, TweenMax, Elastic } from 'gsap';
 import audioManager from '@/game/audio-manager';
 
 @Component
@@ -104,7 +109,7 @@ export default class Shop extends Vue {
             to: null,
             disabled: false,
             select: () => {
-              this.SOCKET_EMIT(['SHOP_TRANSACTION', { shop: 'potions-shop', action: 'heal' }, (err: any, results: { before: number, after: number, max: number }) => {
+              this.SOCKET_EMIT(['SHOP_TRANSACTION', { shop: 'potions-shop', action: 'heal' }, (err: any, results: { before: number, after: number, max: number, cost: number }) => {
                 if (err) {
                   audioManager.playOnce('cursorBack');
                   this.animateSpeech(err);
@@ -114,36 +119,77 @@ export default class Shop extends Vue {
                   const hpContainer = document.getElementById('hp');
                   const hpJuice = document.getElementById('hp-juice');
                   const hpLabel = document.getElementById('hp-label');
-                  if (!hpContainer || !hpJuice || !hpLabel) {
+                  const goldContainer = document.getElementById('gold-container');
+                  if (!hpContainer || !hpJuice || !hpLabel || !goldContainer) {
                     throw new Error('Missing HP elements to animate');
                   }
                   let target = { hp: results.before };
+
                   const tl = new TimelineLite();
-                  tl.to(hpContainer, 0.5, {
-                    top: 0,
-                    onStart() {
-                      hpJuice.style.width = `${target.hp / results.max * 100}%`;
-                      hpLabel.innerHTML = `${target.hp}/${results.max}`;
-                    }
-                  });
+                  // animate gold
+                  const costText = document.createElement('span');
+                  costText.innerHTML = `-${results.cost}`
+
+                  goldContainer.appendChild(costText);
                   tl.add(
-                    TweenMax.to(
-                      target,
+                    TweenMax.fromTo(
+                      costText,
                       0.5,
+                      { opacity: 0, y: -10 },
                       {
-                        hp: results.after,
-                        roundProps: 'hp',
+                        opacity: 1,
+                        y: 10,
                         onStart() {
-                          audioManager.playOnce('heal');
-                        },
-                        onUpdate() {
-                          hpJuice.style.width = `${target.hp / results.max * 100}%`;
-                          hpLabel.innerHTML = `${target.hp}/${results.max}`;
-                        },
+                          AudioManager.playOnce('goldDrop');
+                        }
                       }
                     )
                   )
-                  tl.to(hpContainer, 0.25, { top: '-100px' }, '+=1');
+                  tl.to(
+                    costText,
+                    0.5,
+                    {
+                      opacity: 0,
+                      y: 25,
+                      delay: 1,
+                      onComplete: () => {
+                        costText.remove();
+
+                        // animate hp bar into screen
+                        TweenMax.fromTo(
+                          hpContainer,
+                          0.8,
+                          { height: '0px', padding: 0, y: -100 },
+                          {
+                            height: 'auto',
+                            padding: '1em',
+                            y: 0,
+                            ease: Elastic.easeOut.config(0.75, 0.5),
+                          },
+                        );
+                      }
+                    },
+                  )
+                  tl.to(
+                    target,
+                    0.5,
+                    {
+                      hp: results.after,
+                      roundProps: 'hp',
+                      onStart() {
+                        audioManager.playOnce('heal');
+                      },
+                      onUpdate() {
+                        hpJuice.style.width = `${target.hp / results.max * 100}%`;
+                        hpLabel.innerHTML = `${target.hp}/${results.max}`;
+                      },
+                    }
+                  )
+                  tl.to(
+                    hpContainer,
+                    0.8,
+                    { height: '0px', padding: 0, y: -100, delay: 2 },
+                  );
                 }
               }]);
             }
@@ -206,7 +252,7 @@ export default class Shop extends Vue {
             to: null,
             disabled: false,
             select: () => {
-              this.animateSpeech('See you around, bozo.', () => setTimeout(() => {
+              this.animateSpeech('Stay safe!', () => setTimeout(() => {
                 const shopMainEl = document.querySelector('.shop-main');
                 if (!shopMainEl) {
                   return;
@@ -218,6 +264,38 @@ export default class Shop extends Vue {
           },
         ],
         'caravan': [
+          { title: 'Back', description: '', to: 'root', disabled: false, select: null },
+        ],
+      }
+    },
+    'monokai-village/combat-shop': {
+      npcName: 'Marco',
+      npcSpeak: [
+        'Welcome to `El Combatánte!`',
+      ],
+      guiMasterObject: {
+        // screens
+        'root': [
+          // options
+          { title: 'Upgrades', description: 'Upgrade your combat stats!', to: 'upgrade', disabled: false },
+          { title: 'Heal', description: 'Heal your character', to: null, disabled: true },
+          { title: 'Exit',
+            description: 'Back to the map',
+            to: null,
+            disabled: false,
+            select: () => {
+              this.animateSpeech('Until next time, traveller', () => setTimeout(() => {
+                const shopMainEl = document.querySelector('.shop-main');
+                if (!shopMainEl) {
+                  return;
+                }
+                shopMainEl.classList.add('hide');
+                this.exitShop();
+              }, 1500));
+            },
+          },
+        ],
+        'upgrade': [
           { title: 'Back', description: '', to: 'root', disabled: false, select: null },
         ],
       }
@@ -511,16 +589,33 @@ export default class Shop extends Vue {
       }
     }
   }
-  .hp-container {
+  .abs-stats {
     position: absolute;
-    top: -100px;
-    right: 0;
-    color: white;
-    background: rgba(0,0,0,0.75);
-    border-radius: 2px;
-    min-width: 200px;
-    padding: 1em;
+    top: 1em;
+    right: 1em;
+    .hp-container {
+      transform: translateY(-100px);
+      height: 0;
+      color: white;
+      background: rgba(0,0,0,0.75);
+      border-radius: 2px;
+      min-width: 200px;
+    }
+    #gold-container {
+      padding: 5px;
+      border-radius: 5px;
+      background: rgba(0, 0, 0, 0.8);
+      color: #d6ce59;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      img {
+        height: 1em;
+        margin-right: 0.5em;
+      }
+    }
   }
+
   span.fade-in {
     animation: fade-in;
     animation-duration: 0.25s;
