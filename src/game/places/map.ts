@@ -8,7 +8,8 @@ import _ from 'underscore';
 import MonokaiBgImage from '@/assets/img/backgrounds/monokai-village/monokai-village.png';
 import PotionsShopLabelImage from '@/assets/img/icon/monokai-village/potions-shop.png';
 import VillageGateLabelImage from '@/assets/img/icon/monokai-village/village-gate.png';
-import CombatLabelImage from '@/assets/img/icon/heros-trial.png';
+import CombatLabelImage from '@/assets/img/icon/monokai-village/heros-trial.png';
+import CombatShopLabelImage from'@/assets/img/icon/monokai-village/combat-shop.png';
 
 import store from '@/store';
 
@@ -62,6 +63,7 @@ const newGame = (global: GameInterface): any => {
           { name: 'potions-shop-label', type: 'image', src: PotionsShopLabelImage, spriteDimensions: [] },
           { name: 'village-gate-label', type: 'image', src: VillageGateLabelImage, spriteDimensions: [] },
           { name: 'combat-label', type: 'image', src: CombatLabelImage, spriteDimensions: [] },
+          { name: 'combat-shop-label', type: 'image', src: CombatShopLabelImage, spriteDimensions: [] },
         ], (a, i, l) => {
           const { name, src, type, spriteDimensions } = a;
 
@@ -250,6 +252,34 @@ const newGame = (global: GameInterface): any => {
             self.cameras.main.fadeOut(750);
             self.cameras.main.once('camerafadeoutcomplete', () => {
               $vm.$router.push('/world/games');
+            });
+          }
+        });
+
+      let combatShopLabel = self.add.image(self.vw('82%'), self.vh('61%'), 'combat-shop-label')
+        .setAlpha(0.6)
+        .setDisplaySize(self.vw('20%'), self.vw('20%')*(106/484))
+        .setDepth(8)
+        .setInteractive()
+        .on('pointerover', () => {
+          combatShopLabel.setAlpha(1);
+          global.tooltip = {
+            title: 'El Combatánte',
+            description: 'Prepare yourself for battle!',
+          }
+        })
+        .on('pointerout', () => {
+          combatShopLabel.setAlpha(0.6);
+          global.tooltip = {};
+        })
+        .on('pointerup', (pointer: any) => {
+          if (!pointer.wasCancelled) {
+            self.cameras.main.fadeOut(750);
+            self.cameras.main.once('camerafadeoutcomplete', () => {
+              global.chosenShop = 'monokai-village/combat-shop';
+              global.tooltip = {};
+              self.scene.pause();
+              self.cameras.main.fadeIn(750);
             });
           }
         });
