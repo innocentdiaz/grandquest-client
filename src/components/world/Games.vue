@@ -1,7 +1,7 @@
 <template>
   <div id="display">
     <header class="display-header">
-      <img src="@/assets/img/icon/heros-trial.png" alt="" class="display-title">
+      <img src="@/assets/img/icon/monokai-village/heros-trial.png" alt="" class="display-title">
     </header>
     <!-- Combat rooms list abs -->
     <div id="combat-rooms-container">

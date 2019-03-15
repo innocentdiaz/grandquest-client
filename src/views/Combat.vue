@@ -2,7 +2,7 @@
   <div v-on:keydown="keyMonitor" class="combat-root">
     <!-- LOADING SCREEN -->
     <div v-if="!gameInterface.gameInitialized || roomConnection !== 1" id="loading-screen" :class="`${typeof roomConnection === 'string' ? 'blur' : ''}`">
-      <img src="@/assets/img/icon/heros-trial.png" alt="Hero's Trial" class="icon" v-on:click="$router.push(`/world`)">
+      <img src="@/assets/img/icon/monokai-village/heros-trial.png" alt="Hero's Trial" class="icon" v-on:click="$router.push(`/world`)">
       <div class="tip">Fun fact: <br/> Coordinates with others players to make the most effective use of your attacks and items!</div>
       <div id="loading-error-container" v-if="typeof roomConnection === 'string'">
         <div id="loading-error">
