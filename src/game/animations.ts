@@ -48,8 +48,8 @@ const animations: Animations = {
       const scene = gameController.game.scene.scenes[0];
   
       let timeline = scene.tweens.createTimeline();
-      const character = {...gameController.gameState.players, ...gameController.gameState.enemies}[event.characterId];
-      const receiver = {...gameController.gameState.players, ...gameController.gameState.enemies}[event.receiverId];
+      const character = {...gameController.gameState.players, ...gameController.gameState.enemies}[event.character.id];
+      const receiver = {...gameController.gameState.players, ...gameController.gameState.enemies}[event.receiver.id];
 
       const originalPosition = character.sprite.x;
       const atkPosition = receiver.sprite.x - (receiver.sprite.displayWidth * 1.1);
@@ -138,8 +138,8 @@ const animations: Animations = {
       const scene = gameController.game.scene.scenes[0];
   
       let timeline = scene.tweens.createTimeline();
-      const character = {...gameController.gameState.players, ...gameController.gameState.enemies}[event.characterId];
-      const receiver = {...gameController.gameState.players, ...gameController.gameState.enemies}[event.receiverId];
+      const character = {...gameController.gameState.players, ...gameController.gameState.enemies}[event.character.id];
+      const receiver = {...gameController.gameState.players, ...gameController.gameState.enemies}[event.receiver.id];
 
       const originalPosition = character.sprite.x;
       const atkPosition = receiver.sprite.x - (receiver.sprite.displayWidth * 1.1);
@@ -228,8 +228,8 @@ const animations: Animations = {
       const scene = gameController.game.scene.scenes[0];
   
       let timeline = scene.tweens.createTimeline();
-      const character = {...gameController.gameState.players, ...gameController.gameState.enemies}[event.characterId];
-      const receiver = {...gameController.gameState.players, ...gameController.gameState.enemies}[event.receiverId];
+      const character = {...gameController.gameState.players, ...gameController.gameState.enemies}[event.character.id];
+      const receiver = {...gameController.gameState.players, ...gameController.gameState.enemies}[event.receiver.id];
 
       const originalPosition = character.sprite.x;
       const atkPosition = receiver.sprite.x - (receiver.sprite.displayWidth * 1.1);
@@ -317,8 +317,8 @@ const animations: Animations = {
       const scene = gameController.game.scene.scenes[0];
   
       let timeline = scene.tweens.createTimeline();
-      const character = {...gameController.gameState.players, ...gameController.gameState.enemies}[event.characterId];
-      const receiver = {...gameController.gameState.players, ...gameController.gameState.enemies}[event.receiverId];
+      const character = {...gameController.gameState.players, ...gameController.gameState.enemies}[event.character.id];
+      const receiver = {...gameController.gameState.players, ...gameController.gameState.enemies}[event.receiver.id];
 
       const originalPosition = character.sprite.x;
       const atkPosition = receiver.sprite.x + (receiver.sprite.displayWidth * 1.1);
@@ -399,8 +399,9 @@ const animations: Animations = {
       const scene = gameController.game.scene.scenes[0];
   
       let timeline = scene.tweens.createTimeline();
-      const character = {...gameController.gameState.players, ...gameController.gameState.enemies}[event.characterId];
-      const receiver = {...gameController.gameState.players, ...gameController.gameState.enemies}[event.receiverId];
+
+      const character = {...gameController.gameState.players, ...gameController.gameState.enemies}[event.character.id];
+      const receiver = {...gameController.gameState.players, ...gameController.gameState.enemies}[event.receiver.id];
 
       const originalPosition = character.sprite.x;
       const atkPosition = receiver.sprite.x + (receiver.sprite.displayWidth * 1.1);
@@ -484,8 +485,8 @@ const animations: Animations = {
       const scene = gameController.game.scene.scenes[0];
   
       let timeline = scene.tweens.createTimeline();
-      const character = {...gameController.gameState.players, ...gameController.gameState.enemies}[event.characterId];
-      const receiver = {...gameController.gameState.players, ...gameController.gameState.enemies}[event.receiverId];
+      const character = {...gameController.gameState.players, ...gameController.gameState.enemies}[event.character.id];
+      const receiver = {...gameController.gameState.players, ...gameController.gameState.enemies}[event.receiver.id];
   
       let potionImg = scene.add.image(character.sprite.x, character.sprite.y, `item-${event.action.id}`);
 
@@ -641,8 +642,8 @@ const animations: Animations = {
       const { gameController } = animationsManager;
       const scene = animationsManager.gameController.game.scene.scenes[0];
 
-      const character = gameController.gameState.players[event.characterId];
-      const receiver = gameController.gameState.enemies[event.receiverId];
+      const character = {...gameController.gameState.players, ...gameController.gameState.enemies}[event.character.id];
+      const receiver = {...gameController.gameState.players, ...gameController.gameState.enemies}[event.receiver.id];
 
       const particles = scene.add.particles('xp-orb').setDepth(15);
       const emitter = particles.createEmitter({
@@ -677,8 +678,10 @@ const animations: Animations = {
         0 = miss
       */
       const characters = { ...gameController.gameState.players, ...gameController.gameState.enemies };
-      const character = characters[event.characterId];
-      const receiver = characters[event.receiverId];
+
+      const character = characters[event.character.id];
+      const receiver = characters[event.receiver.id];
+
       const outcomeDamage = event.outcome.damage;
 
       const baseDamage = ((character.level / 12) + 1) * (character.power / receiver.defense) * event.outcome.attackBase;

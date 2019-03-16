@@ -6,6 +6,11 @@ export interface Character {
   level: number;
   power: number;
   defense: number;
+  gold: number;
+  xp: number;
+  inventory: {
+    [itemId: string]: InventoryItem;
+  };
   entity: {
     name: string;
     energy: number;
@@ -16,9 +21,6 @@ export interface Character {
     defense: number;
     attacks: {
       [attackId: string]: Attack;
-    };
-    inventory: {
-      [itemId: string]: InventoryItem;
     };
   };
   sprite: any;
@@ -39,12 +41,18 @@ export interface InventoryItem {
   name: string;
   id: string;
   type: string;
-  amount: number;
+  uids: string[];
 }
 export interface CombatEvent {
   baseDamage: number;
-  characterId: string;
-  receiverId: string;
+  character: {
+    id: string;
+    enemy: boolean;
+  };
+  receiver: {
+    id: string;
+    enemy: boolean;
+  };
   action: {
       type: string;
       id: string;
