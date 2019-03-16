@@ -273,6 +273,66 @@ span, p {
     }
   }
 }
+
+#loading-screen {
+  background: rgb(19, 19, 19);
+  color: white;
+  position: absolute;
+  width: 100%;
+  height: 100vh;
+  z-index: 50;
+  &.blur {
+    .icon {
+      filter: blur(20px);
+    }
+    .tip {
+      filter: blur(20px);
+    }
+    .loading-text {
+      filter: blur(20px);
+    }
+  }
+  .icon {
+    cursor: pointer;
+    position: absolute;
+    top: 1em;
+    left: 1em;
+    height: 3rem;
+  }
+  .tip {
+    position: absolute;
+    top: 1em;
+    right: 1em;
+    max-width: 30%;
+    font-size: larger;
+    font-weight: bold;
+  }
+  .loading-text {
+    position: absolute;
+    bottom: 1em;
+    left: 1em;
+    display: inline-flex;
+    align-items: center;
+  }
+  #loading-error-container {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: black;
+    #loading-error {
+      padding: 1em;
+      background: white;
+      text-align: center;
+      border-radius: 1em;
+      width: 50%;
+    }
+  }
+}
 // canvas {
 //   cursor: url('./assets/img/icon/select-target-hand.png'), auto;
 // }

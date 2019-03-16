@@ -1,16 +1,24 @@
 <template>
-  <div class="map">
-    <button class="exit-button" v-on:click="() => $router.replace({ name: 'world' })">
-      EXIT
-    </button>
-    <!-- Parent for the Phaser.Game canvas -->
-    <div id="canvas-parent">
+  <div>
+    <!-- LOADING SCREEN -->
+    <div v-if="!gameInterface.gameInitialized" id="loading-screen">
+      <img src="@/assets/img/icon/monokai-village/monokai-village.png" alt="Monokai Village" class="icon" v-on:click="$router.push(`/world`)">
+      <div class="tip">Fun fact: <br/> More shops, games and worlds are soon coming to GrandQuest!</div>
+      <div class="loading-text">Loading assets <ActivityIndicator/></div>
     </div>
-    <div class="tool-tip" v-if="gameInterface.tooltip.title">
-      <h2>{{gameInterface.tooltip.title}}</h2>
-      <p>{{gameInterface.tooltip.description}}</p>
+    <div class="map">
+      <button class="exit-button" v-on:click="() => $router.replace({ name: 'world' })">
+        EXIT
+      </button>
+      <!-- Parent for the Phaser.Game canvas -->
+      <div id="canvas-parent">
+      </div>
+      <div class="tool-tip" v-if="gameInterface.tooltip.title">
+        <h2>{{gameInterface.tooltip.title}}</h2>
+        <p>{{gameInterface.tooltip.description}}</p>
+      </div>
+      <Shop v-if="gameInterface.chosenShop" v-bind:shopName="gameInterface.chosenShop" v-bind:exitShop="gameInterface.exitShop"/>
     </div>
-    <Shop v-if="gameInterface.chosenShop" v-bind:shopName="gameInterface.chosenShop" v-bind:exitShop="gameInterface.exitShop"/>
   </div>
 </template>
 <script lang="ts">
@@ -19,9 +27,10 @@ import { State, Mutation } from 'vuex-class'
 import gameInterface from '@/game/places/map.ts';
 import { Player, SocketState } from '@/types';
 import Shop from '@/components/Shop.vue';
+import ActivityIndicator from '@/components/ActivityIndicator.vue';
 
 @Component({
-  components: { Shop }
+  components: { ActivityIndicator, Shop }
 })
 export default class Map extends Vue {
   @State public player!: Player;

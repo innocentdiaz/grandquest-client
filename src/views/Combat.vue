@@ -403,18 +403,18 @@ export default class CombatRoom extends Vue {
       disabled: false,
       select: null,
     });
-    const potions = _.filter(currentPlayer.entity.inventory, (i: InventoryItem) => i.type === 'potion');
+    const potions = _.filter(currentPlayer.inventory, (i: InventoryItem) => i.type === 'potion');
 
     potions.forEach((item) => {
       guiMasterObject.potions.push({
         id: item.id,
-        title: item.amount > 1 ? `${item.name} (${item.amount})` : item.name,
+        title: item.uids.length > 1 ? `${item.name} (${item.uids.length})` : item.name,
         description: `
           Name: ${item.name} <br/>
-          Quantity: ${item.amount}
+          Quantity: ${item.uids.length}
         `,
         to: null,
-        disabled: item.amount === 0,
+        disabled: item.uids.length === 0,
         select: {
           type: 'item',
           id: item.id,
@@ -510,6 +510,14 @@ export default class CombatRoom extends Vue {
           <h3 class="subtitle">level ${target.level}</h3>
           <ul>
             <li>HP: ${Math.round(target.entity.health * 10) / 10}/${target.entity.maxHealth}</li>
+            ${
+              target.enemy && target.entity.health != 0
+              ? `
+                <li>Gold: ${target.gold}</li>
+                <li>XP: ${target.xp}</li>
+              `
+              : ''
+            }
             <li>Power: ${target.power}</li>
             <li>Defense: ${target.defense}</li>
           </ul>
@@ -522,65 +530,7 @@ export default class CombatRoom extends Vue {
 </script>
 <style lang="scss" scoped>
 $mainGreen: #9dff5c;
-#loading-screen {
-  background: rgb(19, 19, 19);
-  color: white;
-  position: absolute;
-  width: 100%;
-  height: 100vh;
-  z-index: 50;
-  &.blur {
-    .icon {
-      filter: blur(20px);
-    }
-    .tip {
-      filter: blur(20px);
-    }
-    .loading-text {
-      filter: blur(20px);
-    }
-  }
-  .icon {
-    cursor: pointer;
-    position: absolute;
-    top: 1em;
-    left: 1em;
-    height: 3rem;
-  }
-  .tip {
-    position: absolute;
-    top: 1em;
-    right: 1em;
-    max-width: 30%;
-    font-size: larger;
-    font-weight: bold;
-  }
-  .loading-text {
-    position: absolute;
-    bottom: 1em;
-    left: 1em;
-    display: inline-flex;
-    align-items: center;
-  }
-  #loading-error-container {
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: black;
-    #loading-error {
-      padding: 1em;
-      background: white;
-      text-align: center;
-      border-radius: 1em;
-      width: 50%;
-    }
-  }
-}
+
 .combat-root {
   height: 100vh;
   width: 100%;
