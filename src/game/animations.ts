@@ -70,14 +70,13 @@ const animations: Animations = {
         onStart() {
           character.sprite.play('adventurer-swing');
           setTimeout(() => {
-
             const damagePercentage = (event.outcome.damage / receiver.entity.maxHealth);
             const totalWidth = receiver._nameTag.displayWidth;
             const currentWidth = receiver._healthBar.width;
             const newWidth = currentWidth - (totalWidth * damagePercentage);
             scene.tweens.add({
               targets: receiver._healthBar,
-              width: newWidth <= 0 ? 0 : newWidth,
+              width: Math.max(newWidth, 0),
               duration: 220,
             });
             /*
@@ -166,7 +165,7 @@ const animations: Animations = {
             const newWidth = currentWidth - (totalWidth * damagePercentage);
             scene.tweens.add({
               targets: receiver._healthBar,
-              width: newWidth <= 0 ? 0 : newWidth,
+              width: Math.max(newWidth, 0),
               duration: 180,
             });
             /*
@@ -256,7 +255,7 @@ const animations: Animations = {
             const newWidth = currentWidth - (totalWidth * damagePercentage);
             scene.tweens.add({
               targets: receiver._healthBar,
-              width: newWidth <= 0 ? 0 : newWidth, // avoid negative health bar
+              width: Math.max(newWidth, 0),
               duration: 150,
             });
             /*
@@ -347,7 +346,7 @@ const animations: Animations = {
             const newWidth = currentWidth - (totalWidth * damagePercentage);
             scene.tweens.add({
               targets: receiver._healthBar,
-              width: newWidth <= 0 ? 0 : newWidth >= totalWidth ? totalWidth : newWidth,
+              width: Math.max(newWidth, 0),
               duration: 250,
             });
             
@@ -503,7 +502,7 @@ const animations: Animations = {
           const newWidth = currentWidth + (totalWidth * healPercentage);
           scene.tweens.add({
             targets: receiver._healthBar,
-            width: newWidth >= totalWidth ? totalWidth : newWidth,
+            width: Math.min(newWidth, totalWidth),
             duration: 250,
             onStart() {
               AudioManager.playOnce('heal');
