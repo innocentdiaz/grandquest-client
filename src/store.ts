@@ -3,7 +3,7 @@ import Vuex from 'vuex';
 import {
   State,
   ActionContext,
-  Player,
+  User,
   World,
   CombatHub,
   CombatRoom,
@@ -17,7 +17,7 @@ Vue.use(Vuex);
 
 const initialState = {
   headerVisibility: true,
-  player: {
+  user: {
     id: null,
     username: '',
     gold: 0,
@@ -79,8 +79,8 @@ const mutations = {
   SET_SOCKET_LOADING (s: State) {
     s.socket.loading = true;
   },
-  UPDATE_SOCKET_PLAYER (s: State, player: Player) {
-    s.player = { ...s.player, ...player };
+  UPDATE_SOCKET_USER (s: State, user: User) {
+    s.user = { ...s.user, ...user };
   },
   SET_SOCKET_ROOM (s: State, room: any) {
     s.socket.room = room;
@@ -122,7 +122,7 @@ const actions = {
     });
     socket.on('disconnect', () => {
       commit('SET_SOCKET_CONNECTION', false);
-      commit('UPDATE_SOCKET_PLAYER', { authenticated: false })
+      commit('UPDATE_SOCKET_USER', { authenticated: false })
     });
     socket.on('connect_error', () => {
       commit('SET_SOCKET_CONNECTION', false);
@@ -145,8 +145,8 @@ const actions = {
     socket.on('COMBAT_HUB_STATE', (combatHubState: CombatHub) => {
       commit('SET_COMBAT_HUB_STATE', combatHubState);
     });
-    socket.on('PLAYER_STATE', (player: Player) => {
-      commit('UPDATE_SOCKET_PLAYER', player);
+    socket.on('USER_STATE', (user: User) => {
+      commit('UPDATE_SOCKET_USER', user);
     });
     socket.on('COMBAT_ROOM_STATE', (combatRoomState: CombatRoom) => {
       commit('SET_COMBAT_GAME_STATE', combatRoomState);
@@ -158,11 +158,11 @@ const actions = {
     */
     const JWT = localStorage.getItem('grandquest:jwt');
     if (JWT) {
-      socket.emit('AUTHENTICATE_SOCKET', JWT, (err: string | null, player?: Player) => {
-        if (!err && player) {
-          commit('UPDATE_SOCKET_PLAYER', { ...player, authenticated: true, token: JWT });
+      socket.emit('AUTHENTICATE_SOCKET', JWT, (err: string | null, user?: User) => {
+        if (!err && user) {
+          commit('UPDATE_SOCKET_USER', { ...user, authenticated: true, token: JWT });
         } else {
-          commit('UPDATE_SOCKET_PLAYER', { ...player, authenticated: false, token: null });
+          commit('UPDATE_SOCKET_USER', { ...user, authenticated: false, token: null });
           console.log(`vuex > initializeSocket > "socket auth error = '${err}'"`);
           localStorage.removeItem('grandquest:jwt');
         }

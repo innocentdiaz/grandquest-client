@@ -1,8 +1,8 @@
 <template>
     <div class="forum">
         <div class="control">
-            <div class="user-control" v-if="player.authenticated">
-                <h2>{{player.username}}</h2>
+            <div class="user-control" v-if="user.authenticated">
+                <h2>{{user.username}}</h2>
                 <p>Joined {{playerJoinDate}}</p>
             </div>
             <div class="user-control" v-else>
@@ -65,7 +65,7 @@
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator';
 import { State, Getter } from 'vuex-class';
-import { Player } from '@/types';
+import { User } from '@/types';
 import api from '@/api';
 import {ApiResponse} from 'apisauce';
 import ActivityIndicator from '@/components/ActivityIndicator.vue';
@@ -74,7 +74,7 @@ import moment from 'moment';
 interface PostObj {
     title: string;
     body: string;
-    user: Player;
+    user: User;
     created_at: string;
     status: any;
     board: any;
@@ -84,13 +84,13 @@ interface PostObj {
   components: { ActivityIndicator },
 })
 export default class Post extends Vue {
-  @State public player!: Player;
+  @State public user!: User;
   @Getter public playerJoinDate!: string;
 
   public post: PostObj = {
     title: '',
     body: '',
-    user: this.player,
+    user: this.user,
     created_at: '',
     status: null,
     board: { id: null },

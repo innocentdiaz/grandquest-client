@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { GameController } from './places/combat';
-import { CombatEvent, Character } from './types';
+import { CombatEvent, CombatCharacter } from './types';
 import AudioManager from '@/game/audio-manager';
 import store from '@/store';
 import _ from 'underscore';
@@ -99,8 +99,8 @@ const animations: Animations = {
             // damage text
             animationsManager.animations.misc.damageText(event);
 
-            // animate XP bar for the current player
-            if (store.state.player.id === character.id && event.outcome.xp) {
+            // animate XP bar for the current user
+            if (store.state.user.id === character.id && event.outcome.xp) {
               animationsManager.animations.GUI.XP(event.outcome.xp);
               animationsManager.animations.misc.XP(event);
             }
@@ -188,8 +188,8 @@ const animations: Animations = {
             // damage text
             animationsManager.animations.misc.damageText(event);
 
-            // animate XP bar for the current player
-            if (store.state.player.id === character.id && event.outcome.xp) {
+            // animate XP bar for the current user
+            if (store.state.user.id === character.id && event.outcome.xp) {
               animationsManager.animations.GUI.XP(event.outcome.xp);
               animationsManager.animations.misc.XP(event);
             }
@@ -278,8 +278,8 @@ const animations: Animations = {
             // damage text
             animationsManager.animations.misc.damageText(event);
 
-            // animate XP bar for the current player
-            if (store.state.player.id === character.id && event.outcome.xp) {
+            // animate XP bar for the current user
+            if (store.state.user.id === character.id && event.outcome.xp) {
               animationsManager.animations.GUI.XP(event.outcome.xp);
               animationsManager.animations.misc.XP(event);
             }
@@ -564,10 +564,10 @@ const animations: Animations = {
       if (!gameController || !gameController.game) {
         return console.warn('Attempted to animate GUI.XP but gameController OR game have not been initialized yet');
       }
-      if (!store.state.player.id) {
+      if (!store.state.user.id) {
         return;
       }
-      const currentPlayer = store.state.player;
+      const currentPlayer = store.state.user;
 
       if (!currentPlayer) {
         return;

@@ -15,8 +15,8 @@
         {{
           !socket.connected
           ? 'Connecting to server...'
-          : !player.authenticated
-          ? 'Authenticating player...'
+          : !user.authenticated
+          ? 'Authenticating user...'
           : !gameInterface.gameInitialized
           ? 'Loading assets...'
           : 'Beginning game...'
@@ -104,15 +104,15 @@
       <div id="outcomes" v-if="gameInterface.gameInitialized && !gameInterface.gameState.playState && currentLevelRecord && !gameInterface.isAnimating">
         <div class="content">
           <aside>
-            <div class="player-container" v-for="(player, id) in currentLevelRecord.players" v-bind:key="id">
-              <img v-bind:src="require(`../assets/img/icon/people/${gameInterface.gameState.players[id].entity.name}.png`)" class="avatar" alt="Player entity">
+            <div class="user-container" v-for="(user, id) in currentLevelRecord.players" v-bind:key="id">
+              <img v-bind:src="require(`../assets/img/icon/people/${gameInterface.gameState.players[id].entity.name}.png`)" class="avatar" alt="User entity">
               <div class="grid">
                 <h3 class="title">{{gameInterface.gameState.players[id].username}}</h3>
                 <h2 v-if="combatGame.gameState.readyToContinue[id]">Ready!</h2>
                 <div v-else>
-                  <p>Dmg: {{player.damageDealt}}</p>
-                  <p>Gold: {{player.gold}}</p>
-                  <p>XP: {{player.xp}}</p>
+                  <p>Dmg: {{user.damageDealt}}</p>
+                  <p>Gold: {{user.gold}}</p>
+                  <p>XP: {{user.xp}}</p>
                 </div>
               </div>
             </div>
@@ -120,13 +120,13 @@
           <div class="main">
             <h1>Level {{gameInterface.gameState.level}} {{currentLevelRecord.won ? 'completed' : 'lost'}}!</h1>
             <h2 class="subtitle">Level completed in {{gameInterface.gameState.turn}} turns</h2>
-            <p><img class="icon" src="@/assets/img/icon/1bit-swords.png"/> dealt: {{currentLevelRecord.players[this.player.id].damageDealt}} dmg</p>
-            <p><img class="icon" src="@/assets/img/items/coins.png"/> earned: {{currentLevelRecord.players[this.player.id].gold}} gold</p>
-            <p><img class="icon" src="@/assets/img/misc/xp-orb.png"/> gained: {{currentLevelRecord.players[this.player.id].xp}} xp</p>
+            <p><img class="icon" src="@/assets/img/icon/1bit-swords.png"/> dealt: {{currentLevelRecord.players[this.user.id].damageDealt}} dmg</p>
+            <p><img class="icon" src="@/assets/img/items/coins.png"/> earned: {{currentLevelRecord.players[this.user.id].gold}} gold</p>
+            <p><img class="icon" src="@/assets/img/misc/xp-orb.png"/> gained: {{currentLevelRecord.players[this.user.id].xp}} xp</p>
             <button
               class="ready"
               v-if="currentLevelRecord.won"
-              :disabled="combatGame.gameState.readyToContinue[this.player.id]"
+              :disabled="combatGame.gameState.readyToContinue[this.user.id]"
               v-on:click="SOCKET_EMIT(['COMBAT_ROOM_READY'])"
             >
               Ready!
@@ -148,8 +148,8 @@
 import { Component, Vue } from 'vue-property-decorator';
 import { Action, State, Mutation } from 'vuex-class';
 import ActivityIndicator from '@/components/ActivityIndicator.vue';
-import { SocketState, Player, CombatGame } from '@/types';
-import { Character, Attack, InventoryItem } from '@/game/types';
+import { SocketState, User, CombatGame } from '@/types';
+import { CombatCharacter, Attack, InventoryItem } from '@/game/types';
 import _ from 'underscore';
 import io from 'socket.io-client';
 import api from '@/api';
@@ -178,7 +178,7 @@ interface GuiMasterObject {
   components: { ActivityIndicator },
 })
 export default class CombatRoom extends Vue {
-  @State public player!: Player;
+  @State public user!: User;
   @State public socket!: SocketState;
   @State public combatGame!: CombatGame;
   @Action public socketJoinRoom: any;
@@ -205,20 +205,20 @@ export default class CombatRoom extends Vue {
     window.addEventListener('resize', this.gameInterface.resizeMonitor, true);
 
     // combat hub connection attempt
-    if (this.socket.connected && this.player.authenticated) {
+    if (this.socket.connected && this.user.authenticated) {
       console.log('attempt connections attempt from mount');
       this.attemptConnection();
     }
   }
   public updated() {
-    const { player, socket, roomConnection } = this;
+    const { user, socket, roomConnection } = this;
     // on disconnect socket
     if (!socket.connected && roomConnection !== -1) {
       console.log('disconnect');
       this.roomConnection = -1;
     }
     // combat hub connection attempt
-    if (socket.connected && player.authenticated && roomConnection === -1) {
+    if (socket.connected && user.authenticated && roomConnection === -1) {
       console.log('attempt connections attempt from update');
       this.attemptConnection();
     }
@@ -342,10 +342,10 @@ export default class CombatRoom extends Vue {
       return guiMasterObject
     }
 
-    const currentPlayer: Character | null = this.currentPlayer;
+    const currentPlayer: CombatCharacter | null = this.currentPlayer;
 
     if (!currentPlayer) {
-      console.warn('No current player');
+      console.warn('No current user');
       return guiMasterObject;
     }
 
@@ -445,9 +445,9 @@ export default class CombatRoom extends Vue {
     }
     return guiMasterObject;
   }
-  get currentPlayer(): Character | null {
+  get currentPlayer(): CombatCharacter | null {
     // if not authenticated
-    const { id } = this.player;
+    const { id } = this.user;
     if (!id) {
       return null;
     }
@@ -455,7 +455,7 @@ export default class CombatRoom extends Vue {
     if (!this.gameInterface.gameInitialized) {
       return null;
     }
-    // if no player matching this player id
+    // if no user matching this user id
     if (!this.gameInterface.gameState.players.hasOwnProperty(id)) {
       return null;
     }
@@ -700,7 +700,7 @@ $mainGreen: #9dff5c;
         align-items: stretch;
         box-shadow: 0 0 5px inset grey;
 
-        .player-container {
+        .user-container {
           display: flex;
           flex-direction: row;
           align-items: center;

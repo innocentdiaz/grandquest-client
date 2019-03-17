@@ -1,5 +1,5 @@
 <template>
-  <div class="log-in" v-if="!player.authenticated">
+  <div class="log-in" v-if="!user.authenticated">
     <router-link to="/">
       <img src="@/assets/img/icon/grandquest.png" id="icon" alt="GrandQuest">
     </router-link>
@@ -41,13 +41,13 @@ import ActivityIndicator from '@/components/ActivityIndicator.vue';
 
 import api from '@/api';
 import { ApiResponse } from 'apisauce';
-import { Player } from '@/types';
+import { User } from '@/types';
 
 @Component({
   components: { ActivityIndicator },
 })
 export default class LogIn extends Vue {
-  @State public player!: Player;
+  @State public user!: User;
   @Mutation public SET_HEADER_VISIBILITY: any;
   @Mutation public UPDATE_SOCKET_PLAYER: any;
   @Action public INIT_SOCKET: any;

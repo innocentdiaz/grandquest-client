@@ -5,23 +5,23 @@
         <img src="../assets/img/icon/grandquest.png" alt="GrandQuest">
       </div>
       <div class="auth-container">
-        <div v-if="player.loading">
+        <div v-if="user.loading">
           <ActivityIndicator size=40 />
         </div>
-        <div v-else-if="player.authenticated">
+        <div v-else-if="user.authenticated">
           <div class="sign">
-            <h2>{{player.username}}</h2>
+            <h2>{{user.username}}</h2>
             <hr>
             <div>
               <p>{{socket.connected ? '' : socket.loading ? 'Connecting to server...' : 'Disconnected from server'}}</p>
-              <p class="gold"><img src="../assets/img/items/coins.png" alt="">{{player.gold.toLocaleString()}}</p>
+              <p class="gold"><img src="../assets/img/items/coins.png" alt="">{{user.gold.toLocaleString()}}</p>
               <div class="level-container">
                 <span class="icon">
-                  {{player.level}}
+                  {{user.level}}
                 </span>
                 <div class="progress">
-                  <span class="label">{{player.xp}}/{{player.nextLevelXp}}</span>
-                  <div class="juice" :style="`width: ${(player.xp / player.nextLevelXp) * 100}%;`"></div>
+                  <span class="label">{{user.xp}}/{{user.nextLevelXp}}</span>
+                  <div class="juice" :style="`width: ${(user.xp / user.nextLevelXp) * 100}%;`"></div>
                 </div>
               </div>
             </div>
@@ -62,14 +62,14 @@
 import { Component, Vue } from 'vue-property-decorator';
 import ActivityIndicator from '@/components/ActivityIndicator.vue';
 import { State } from 'vuex-class';
-import { Player, SocketState } from '../types';
+import { User, SocketState } from '../types';
 
 @Component({
   components: { ActivityIndicator },
 })
 
 export default class Header extends Vue {
-  @State public player!: Player;
+  @State public user!: User;
   @State public socket!: SocketState;
 }
 </script>

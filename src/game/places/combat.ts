@@ -9,7 +9,7 @@ import store from '@/store';
   Import types
 */
 import { CombatRoom } from '@/types';
-import { Character, CombatEvent } from '@/game/types';
+import { CombatCharacter, CombatEvent } from '@/game/types';
 
 /*
   Import images
@@ -99,8 +99,8 @@ interface ControllerActions {
   [index: string]: any,
   startLevel: (level: number) => void;
   renderBackground: () => void;
-  spawnCharacter: (character: Character) => Character;
-  coordinatesForEntity: (character: Character) => { x: number, y: number };
+  spawnCharacter: (character: CombatCharacter) => CombatCharacter;
+  coordinatesForEntity: (character: CombatCharacter) => { x: number, y: number };
   despawnCharacter: (id: string | number) => void;
   addTargetHand: () => void;
   removeTargetHand: () => void;
@@ -147,7 +147,7 @@ export interface GameController {
  */
 interface PlacingLine {
   [placingIndex: string]: {
-    readonly character: Character | null;
+    readonly character: CombatCharacter | null;
     nextIndex: number;
     prevIndex: number;
   };
@@ -388,7 +388,7 @@ const newGame = (global: GameController): PhaserGame => {
           actions.startLevel(global.gameState.level);
         }
 
-        // generate player placing line
+        // generate user placing line
         if (networkGameState.maxPlayers !== Object.keys(global.playerPlacingLine).length) {
           // reset players on local state
           global.gameState.players = {};
@@ -575,7 +575,7 @@ const newGame = (global: GameController): PhaserGame => {
         });
         // target selection hand
         if (global.targetHand) {
-          const currentPlayer = store.state.player.id ? global.gameState.players[store.state.player.id] : null;
+          const currentPlayer = store.state.user.id ? global.gameState.players[store.state.user.id] : null;
           // remove the target hand if game is animating or the user already selected the target & action
           if (currentPlayer && currentPlayer.selectionStatus === 1 || global.isAnimating || store.state.combatGame.selectionMode !== 'TARGET') {
             actions.removeTargetHand();
@@ -633,13 +633,13 @@ const newGame = (global: GameController): PhaserGame => {
         SCENE Z-DEPTHS FOR IMAGE & SPRITE
         -
         Background images: 1-4
-        Character (idle): 10
+        CombatCharacter (idle): 10
         FadeScreen: 14
-        Character (selected or animating): 15
-        TargetHand: Character.depth
-        NameTag: Character.depth
-        HealthBar: Character.depth + 1
-        HealthText: Character.depth + 2
+        CombatCharacter (selected or animating): 15
+        TargetHand: CombatCharacter.depth
+        NameTag: CombatCharacter.depth
+        HealthBar: CombatCharacter.depth + 1
+        HealthText: CombatCharacter.depth + 2
       */
       let scene: Scene = game.scene.scenes[0];
 
@@ -784,7 +784,7 @@ const newGame = (global: GameController): PhaserGame => {
         throw new Error('Scene not configured for level ' + global.gameState.level);
       }
     },
-    spawnCharacter(character): Character {
+    spawnCharacter(character): CombatCharacter {
       let scene: Scene = game.scene.scenes[0];
 
       let { entity } = character;
@@ -898,7 +898,7 @@ const newGame = (global: GameController): PhaserGame => {
         rise = 0.04;
       }
 
-      // place players backwards horizontally (start from right-most player)
+      // place players backwards horizontally (start from right-most user)
       if (!character.enemy) {
         run *= -1;
       }
@@ -917,7 +917,7 @@ const newGame = (global: GameController): PhaserGame => {
       };
     },
     despawnCharacter(id) {
-      let character: Character = global.gameState.players[id] || global.gameState.enemies[id];
+      let character: CombatCharacter = global.gameState.players[id] || global.gameState.enemies[id];
 
       if (!character) {
         return;
@@ -992,7 +992,7 @@ const newGame = (global: GameController): PhaserGame => {
           return;
         }
         const key = pair[0];
-        const character: Character | null = pair[1].character;
+        const character: CombatCharacter | null = pair[1].character;
         if (!character) {
           return;
         }

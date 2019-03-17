@@ -1,4 +1,4 @@
-export interface Character {
+export interface CombatCharacter {
   id: number;
   username: string;
   enemy: boolean;

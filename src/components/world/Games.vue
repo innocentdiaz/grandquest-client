@@ -22,25 +22,25 @@
       </div>
     </div>
     <div class="body">
-      <div class="panel" v-if="player.authenticated">
+      <div class="panel" v-if="user.authenticated">
         <section>
-          <h3>{{player.username}}'s battle information:</h3>
+          <h3>{{user.username}}'s battle information:</h3>
         </section>
         <section>
-          <div class="character" v-if="player.authenticated">
+          <div class="character" v-if="user.authenticated">
             <div class="selection">
               <div class="img-container">
                 <img :src="require(`@/assets/img/icon/people/${currentCharacter.name.toLowerCase()}.png`)" alt="character avatar">
-                <div class="cover" v-if="player.level < currentCharacter.level">
+                <div class="cover" v-if="user.level < currentCharacter.level">
                   <p>Unlocked at level {{currentCharacter.level}}</p>
                 </div>
               </div>
               <div class="control">
                 <button :class="`chevron left ${currentCharacterIndex === 0 ? 'disabled' : ''}`" v-on:click="moveSelection(-1)"></button>
-                <span class="character-name">{{player.level >= currentCharacter.level ? currentCharacter.name : '???'}}</span>
+                <span class="character-name">{{user.level >= currentCharacter.level ? currentCharacter.name : '???'}}</span>
                 <button :class="`chevron right ${currentCharacterIndex === availableCharacters.length - 1 ? 'disabled' : ''}`" v-on:click="moveSelection(1)"></button>
               </div>
-              <p>{{player.level >= currentCharacter.level ? currentCharacter.description : ''}}</p>
+              <p>{{user.level >= currentCharacter.level ? currentCharacter.description : ''}}</p>
             </div>
             <div class="info" v-if="combatData.loaded === 0">
               <ActivityIndicator />
@@ -73,7 +73,7 @@
         <button v-if="combatData.loaded && combatData.health === 0" class="need-health main-start" disabled="true">
           PLAY MULTIPLAYER
         </button>
-        <button v-else :class="`${player.authenticated ? '' : 'need-auth'} main-start`" :disabled="combatHubConnection !== 1 || !player.authenticated" v-on:click="setRoomsVisiblity(true)">
+        <button v-else :class="`${user.authenticated ? '' : 'need-auth'} main-start`" :disabled="combatHubConnection !== 1 || !user.authenticated" v-on:click="setRoomsVisiblity(true)">
           PLAY MULTIPLAYER
         </button>
         <div class="hr-text">
@@ -92,7 +92,7 @@
 import { Component, Vue } from 'vue-property-decorator';
 import { State, Action } from 'vuex-class';
 import ActivityIndicator from '@/components/ActivityIndicator.vue';
-import { CombatRoom, CombatHub, SocketState, World, Player } from '@/types';
+import { CombatRoom, CombatHub, SocketState, World, User } from '@/types';
 import api from '@/api';
 import { ApiResponse } from 'apisauce';
 import { TweenLite, Elastic } from 'gsap';
@@ -106,7 +106,7 @@ interface CombatRooms {
 })
 export default class Hub extends Vue {
   @State public world!: World;
-  @State public player!: Player;
+  @State public user!: User;
   @State  public socket!: SocketState;
   @Action public SOCKET_EMIT: any;
   @State  public combatHub!: CombatHub;
@@ -131,7 +131,7 @@ export default class Hub extends Vue {
   };
 
   public updated() {
-    const { player, combatData, socket } = this;
+    const { user, combatData, socket } = this;
 
     // on disconnect socket
     if (!socket.connected) {
@@ -139,7 +139,7 @@ export default class Hub extends Vue {
     }
 
     // combat hub connection attempt
-    if (socket.connected && player.authenticated && this.combatHubConnection === -1) {
+    if (socket.connected && user.authenticated && this.combatHubConnection === -1) {
       // console.log('joining combat hub');
       this.combatHubConnection = 0;
       this.SOCKET_EMIT(['COMBAT_HUB_CONNECT', (err?: string) => {
@@ -151,10 +151,10 @@ export default class Hub extends Vue {
         }
       }])
     }
-    // load combatData for player
-    if (player.authenticated && combatData.loaded === -1) {
+    // load combatData for user
+    if (user.authenticated && combatData.loaded === -1) {
       this.combatData = { loaded: 0 };
-      api.get(`player/${this.player.id}/combat`)
+      api.get(`user/${this.user.id}/combat`)
       .then((res: ApiResponse<any>) => {
         const body = res.data;
         if (res.ok) {

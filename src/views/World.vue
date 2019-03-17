@@ -15,7 +15,7 @@
           <h3>You are currently offline</h3>
         </div>
       </header> -->
-      <div v-if="!player.authenticated" class="auth-banner">
+      <div v-if="!user.authenticated" class="auth-banner">
         <h2 class="main-title">In order to browse GrandQuest you should sign in!</h2>
         <div class="auth">
           <h2>Are you new to GrandQuest?</h2>
@@ -55,7 +55,7 @@
 import { Vue, Component } from 'vue-property-decorator';
 import { State } from 'vuex-class';
 import moment from 'moment';
-import { World, SocketState, Player } from '@/types';
+import { World, SocketState, User } from '@/types';
 import api from '@/api';
 import ActivityIndicator from '@/components/ActivityIndicator.vue';
 import Travel from '@/components/world/Travel.vue';
@@ -72,7 +72,7 @@ import { TweenLite, Elastic } from 'gsap';
 export default class Main extends Vue {
   @State public socket!: SocketState;
   @State public world!: World;
-  @State public player!: Player;
+  @State public user!: User;
 
   public view = 'travel';
 

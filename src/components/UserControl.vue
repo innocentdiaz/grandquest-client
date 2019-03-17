@@ -1,11 +1,11 @@
 <template>
-  <div class="user-control" v-if="player.authenticated">
-    <h2>{{ player.username }}</h2>
+  <div class="user-control" v-if="user.authenticated">
+    <h2>{{ user.username }}</h2>
     <small>Joined {{ userJoinDate() }}</small>
     <div id="stats">
       <h2>Stats</h2>
-      <p>Gold: {{player.gold}}</p>
-      <p>XP: {{player.xp}}</p>
+      <p>Gold: {{user.gold}}</p>
+      <p>XP: {{user.xp}}</p>
     </div>
   </div>
   <div class="user-control" v-else>
@@ -16,16 +16,16 @@
 <script lang="ts">
 import { Vue, Component } from 'vue-property-decorator';
 import { State } from 'vuex-class';
-import { Player } from '@/types';
+import { User } from '@/types';
 import items from '@/game/definitions/items';
 import moment from 'moment';
 
 @Component
 export default class UserControl extends Vue {
-  @State public player!: Player;
+  @State public user!: User;
 
   public userJoinDate() {
-    return moment(this.player.createdAt).fromNow();
+    return moment(this.user.createdAt).fromNow();
   }
 }
 </script>

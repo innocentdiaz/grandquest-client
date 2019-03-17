@@ -1,9 +1,9 @@
-import { Character, CombatEvent } from '@/game/types';
+import { CombatCharacter, CombatEvent } from '@/game/types';
 
 // Store
 export interface State {
     headerVisibility: boolean;
-    player: Player;
+    user: User;
     world: World;
     combatHub: CombatHub;
     combatGame: CombatGame;
@@ -17,7 +17,7 @@ export interface ActionContext {
 }
 
 // Models
-export interface Player {
+export interface User {
     id: number|null;
     username: string;
     role: string;
@@ -49,10 +49,10 @@ export interface CombatRoom {
     level: number;
     playState: number;
     players: {
-        [id: string]: Character,
+        [id: string]: CombatCharacter,
     },
     enemies: {
-        [id: string]: Character,
+        [id: string]: CombatCharacter,
     },
     turnEvents: { // TODO: probably should make an interface for ``
         [turnIndex: string]: [CombatEvent]

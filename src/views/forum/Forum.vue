@@ -53,7 +53,7 @@
 <script lang="ts">
     import { Component, Vue } from 'vue-property-decorator';
     import { State, Getter } from 'vuex-class';
-    import { Player } from '../../types';
+    import { User } from '../../types';
     import moment from 'moment';
     import UserControl from '@/components/UserControl.vue';
     import ActivityIndicator from '../../components/ActivityIndicator.vue';
@@ -63,7 +63,7 @@
     })
 
     export default class Forum extends Vue {
-        @State public player!: Player;
+        @State public user!: User;
 
         public currentForumIndex = 0;
         public mainForums = [

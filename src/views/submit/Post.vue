@@ -1,5 +1,5 @@
 <template>
-    <div class="submit-container" v-if="!player.authenticated">
+    <div class="submit-container" v-if="!user.authenticated">
         <h1>Just one second..</h1>
         <p>You need to be
             <router-link to="/login">logged in</router-link>
@@ -45,7 +45,7 @@
 <script lang="ts">
   import { Component, Vue } from 'vue-property-decorator';
   import { State } from 'vuex-class';
-  import { Player } from '@/types';
+  import { User } from '@/types';
   import { ApiResponse } from 'apisauce';
   import api from '@/api';
   import ActivityIndicator from '@/components/ActivityIndicator.vue';
@@ -59,7 +59,7 @@
     components: {ActivityIndicator},
   })
   export default class Post extends Vue {
-    @State public player!: Player;
+    @State public user!: User;
 
     public board: Board = {
       id: null,
@@ -86,12 +86,12 @@
     // TODO: add requirements for posting fields like length
     public onSubmit() {
         
-        if (!this.player.token) {
+        if (!this.user.token) {
             return this.post.apiError = 'You are not logged in';
         }
         this.post.apiError = '';
         this.post.loading = true;
-      api.setHeader('Authorization', this.player.token);
+      api.setHeader('Authorization', this.user.token);
       api.post(`/posts/${this.board.id}`, this.post)
         .then((res: ApiResponse<any>) => {
           const body = res.data;

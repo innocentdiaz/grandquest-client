@@ -9,16 +9,16 @@ import { Vue, Component } from 'vue-property-decorator';
 import ActivityIndicator from '@/components/ActivityIndicator.vue';
 import api from '@/api';
 import { State } from 'vuex-class';
-import { Player } from '@/types';
+import { User } from '@/types';
 
 @Component({
   components: { ActivityIndicator },
 })
 export default class LogOut extends Vue {
-  @State public player!: Player;
+  @State public user!: User;
 
   public mounted() {
-    const jwt = this.player.token || localStorage.getItem('grandquest:jwt');
+    const jwt = this.user.token || localStorage.getItem('grandquest:jwt');
 
     if (jwt) {
       console.log('delete auth using jwt ', api.headers)
@@ -29,7 +29,7 @@ export default class LogOut extends Vue {
         location.reload();
       });
     } else {
-      console.log('no player token!');
+      console.log('no user token!');
       this.$router.replace('/');
     }
   }

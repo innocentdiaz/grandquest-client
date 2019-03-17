@@ -5,13 +5,13 @@
       <img src="@/assets/img/icon/monokai-village/monokai-village.png" alt="" class="display-title">
     </header>
     <div class="body">
-      <div class="panel" v-if="player.authenticated">
+      <div class="panel" v-if="user.authenticated">
         <section>
-          <p>{{player.username}}'s travel log: </p>
+          <p>{{user.username}}'s travel log: </p>
         </section>
       </div>
       <div class="buttons">
-        <button :class="`${player.authenticated ? '' : 'need-auth'} main-start`" :disabled="!socket.connected || !player.authenticated" v-on:click="() => $router.replace({ name: 'map' })">
+        <button :class="`${user.authenticated ? '' : 'need-auth'} main-start`" :disabled="!socket.connected || !user.authenticated" v-on:click="() => $router.replace({ name: 'map' })">
           EXPLORE MONOKAI
         </button>
       </div>
@@ -21,11 +21,11 @@
 <script lang="ts">
 import { Vue, Component } from 'vue-property-decorator';
 import { State } from 'vuex-class';
-import { Player, SocketState, World } from '@/types';
+import { User, SocketState, World } from '@/types';
 
 @Component
 export default class Travel extends Vue {
-  @State public player!: Player;
+  @State public user!: User;
   @State public socket!: SocketState;
   @State public world!: World;
 

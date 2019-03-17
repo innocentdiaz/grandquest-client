@@ -25,7 +25,7 @@
 import { Component, Vue } from 'vue-property-decorator';
 import { State, Mutation } from 'vuex-class'
 import gameInterface from '@/game/places/map.ts';
-import { Player, SocketState } from '@/types';
+import { User, SocketState } from '@/types';
 import Shop from '@/components/Shop.vue';
 import ActivityIndicator from '@/components/ActivityIndicator.vue';
 
@@ -33,13 +33,13 @@ import ActivityIndicator from '@/components/ActivityIndicator.vue';
   components: { ActivityIndicator, Shop }
 })
 export default class Map extends Vue {
-  @State public player!: Player;
+  @State public user!: User;
   @State public socket!: SocketState;
   @Mutation public SET_HEADER_VISIBILITY: any;
 
   public gameInterface = gameInterface();
   public mounted() {
-    if (!this.socket.connected || !this.player.authenticated) {
+    if (!this.socket.connected || !this.user.authenticated) {
       return this.$router.replace({ name: 'world' });
     }
     this.SET_HEADER_VISIBILITY(false);

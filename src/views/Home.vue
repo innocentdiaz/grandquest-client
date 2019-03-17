@@ -11,7 +11,7 @@
           with the skills, tools and alliences you build?
         </p>
       </aside>
-      <div class="content" v-if="!player.authenticated">
+      <div class="content" v-if="!user.authenticated">
         <h1>Want to try our world? <br/> Join us!</h1>
         <h2 class="subtitle">Make new friends, participate in forums, and explore our world</h2>
         <SignUpForm />
@@ -31,14 +31,14 @@
 import { Component, Vue } from 'vue-property-decorator';
 import { State } from 'vuex-class';
 import SignUpForm from '@/components/forms/SignUp.vue';
-import { Player } from '@/types';
+import { User } from '@/types';
 
 @Component({
   components: { SignUpForm },
 })
 
 export default class Home extends Vue {
-  @State public player!: Player;
+  @State public user!: User;
 }
 </script>
 
