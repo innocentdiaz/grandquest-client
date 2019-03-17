@@ -16,9 +16,6 @@ interface Animations {
   item: {
     [itemId: string]: (event: CombatEvent, gameController: GameController) => Promise<{}>;
   };
-  GUI: {
-    XP: (amount?: number) => void;
-  };
   misc: {
     XP :(event: CombatEvent) => void;
     damageText: (event: CombatEvent) => void;
@@ -101,7 +98,6 @@ const animations: Animations = {
 
             // animate XP bar for the current user
             if (store.state.user.id === character.id && event.outcome.xp) {
-              animationsManager.animations.GUI.XP(event.outcome.xp);
               animationsManager.animations.misc.XP(event);
             }
           }, 585);
@@ -190,7 +186,6 @@ const animations: Animations = {
 
             // animate XP bar for the current user
             if (store.state.user.id === character.id && event.outcome.xp) {
-              animationsManager.animations.GUI.XP(event.outcome.xp);
               animationsManager.animations.misc.XP(event);
             }
           }, 580);
@@ -280,7 +275,6 @@ const animations: Animations = {
 
             // animate XP bar for the current user
             if (store.state.user.id === character.id && event.outcome.xp) {
-              animationsManager.animations.GUI.XP(event.outcome.xp);
               animationsManager.animations.misc.XP(event);
             }
           }, 470);
@@ -558,81 +552,6 @@ const animations: Animations = {
       timeline.play();
     }),
   },
-  GUI: {
-    XP: (amount) => {
-      const gameController = animationsManager.gameController;
-      if (!gameController || !gameController.game) {
-        return console.warn('Attempted to animate GUI.XP but gameController OR game have not been initialized yet');
-      }
-      if (!store.state.user.id) {
-        return;
-      }
-      const currentPlayer = store.state.user;
-
-      if (!currentPlayer) {
-        return;
-      }
-      let XP = currentPlayer.xp;
-      let level = currentPlayer.level;
-      // elements
-      const barElement = document.querySelector('.level .bar');
-      const barJuiceElement = document.getElementById('xp-juice');
-      const barLabelElement = document.getElementById('xp-label');
-      const levelLabelElement = document.getElementById('level-label');
-      
-      if (!barElement || !barJuiceElement || !barLabelElement || !levelLabelElement) {
-        return;
-      }
-
-      barLabelElement.innerHTML = `${XP}/${currentPlayer.nextLevelXp} xp`;
-
-      if (!amount) {
-        levelLabelElement.innerHTML = String(level);
-        barJuiceElement.style.width = `${(XP * 100)/(currentPlayer.nextLevelXp * 100) * 100}%`;
-        return;
-      }
-      let barWidth = (barJuiceElement.clientWidth * 100) / (barElement.clientWidth * 100);
-      const lvlShown = Number(levelLabelElement.innerHTML);
-      const shownXP = barWidth * currentPlayer.nextLevelXp;
-
-      // maths
-      const totalXP = shownXP + amount;
-      const leveled = Math.floor(totalXP / currentPlayer.nextLevelXp); // 0
-      const newXp = totalXP % currentPlayer.nextLevelXp;
-      let j = Math.max(leveled - lvlShown, 0);
-
-      let i = 0;
-      const interval = setInterval(() => {
-        barWidth = (barJuiceElement.clientWidth * 100) / (barElement.clientWidth * 100);
-        let newWidth = 0;
-        barJuiceElement.setAttribute('class', '');
-        // if we animated the parents to 100% last animation
-        if (barWidth >= 1) {
-          barWidth = 0;
-          barJuiceElement.style.width = '0%';
-          level++;
-          levelLabelElement.innerHTML = String(level);
-        }
-        if (i < j) {
-          newWidth = 1;
-        }
-        // animate last increase
-        else if (i === j) {
-          newWidth = (totalXP * 100) / (currentPlayer.nextLevelXp * 100);
-        }
-        // all animations are complete
-        else {
-          if (i === 1) {
-            barJuiceElement.style.width = `${newXp / currentPlayer.nextLevelXp * 100}%`;
-          }
-          return clearInterval(interval);
-        }
-        barJuiceElement.setAttribute('class', 'animated');
-        barJuiceElement.style.width = `${newWidth * 100}%`;
-        i++;
-      }, 300);
-    },
-  },
   misc: {
     XP: (event) => {
       if (!animationsManager.gameController || !animationsManager.gameController.game) {
@@ -683,8 +602,8 @@ const animations: Animations = {
 
       const outcomeDamage = event.outcome.damage;
 
-      const baseDamage = ((character.level / 12) + 1) * (character.power / receiver.defense) * event.outcome.attackBase;
-      console.log(`${outcomeDamage} <= ${character.level / 12 + 1} * ${character.power / receiver.defense} * ${event.outcome.attackBase}`);
+      const baseDamage = (character.power / receiver.defense) * event.outcome.attackBase;
+      console.log(`${outcomeDamage} <= ${character.power / receiver.defense} * ${event.outcome.attackBase}`);
       let text = '';
       if (outcomeDamage === 0) {
         text = 'MISS!';

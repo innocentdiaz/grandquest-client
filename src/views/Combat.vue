@@ -31,11 +31,11 @@
             <router-link to="/world">Exit</router-link>
             <div class="level" v-if="gameInterface.gameState.playState && currentPlayer">
               <div class="icon">
-                <span id="level-label">{{currentPlayer.level}}</span>
+                <span id="level-label">{{user.level}}</span>
               </div>
               <div class="bar">
-                <p id="xp-label"></p>
-                <div id="xp-juice"></div>
+                <p id="xp-label">{{user.xp}}/{{user.nextLevelXp}} xp</p>
+                <div id="xp-juice" :style="`width:${user.xp / user.nextLevelXp * 100}%;`"></div>
               </div>
             </div>
           </ul>
@@ -507,14 +507,14 @@ export default class CombatRoom extends Vue {
       } else {
         return `
           <h2>${target.username}</h2>
-          <h3 class="subtitle">level ${target.level}</h3>
+          <h3 class="subtitle">${target.entity.name}</h3>
           <ul>
             <li>HP: ${Math.round(target.entity.health * 10) / 10}/${target.entity.maxHealth}</li>
             ${
               target.enemy && target.entity.health != 0
               ? `
-                <li>Gold: ${target.gold}</li>
-                <li>XP: ${target.xp}</li>
+                <li>Gold: ${target.goldReward}</li>
+                <li>XP: ${target.xpReward}</li>
               `
               : ''
             }
