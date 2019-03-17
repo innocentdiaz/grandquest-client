@@ -26,7 +26,7 @@
         <h2>Offline</h2>
         <span>You don't appear to be connected to the server. You can not make any transactions unless you are online.</span>
       </div>
-      <div class="user-control abs" v-else-if="!player.authenticated">
+      <div class="user-control abs" v-else-if="!user.authenticated">
         <h2>Hmmm...</h2>
         <span>It doesn't look like you are logged in... Please log in order to make transactions!</span>
       </div>
@@ -55,7 +55,7 @@
         </div>
       </div>
       <div id="gold-container">
-        <img src="@/assets/img/items/coins.png" alt="Gold">{{player.gold.toLocaleString()}}
+        <img src="@/assets/img/items/coins.png" alt="Gold">{{user.gold.toLocaleString()}}
       </div>
     </div>
   </div> 
@@ -63,7 +63,7 @@
 <script lang="ts">
 import { Vue, Component, Watch, Prop } from 'vue-property-decorator';
 import { State, Mutation, Action } from 'vuex-class';
-import { Player, SocketState } from '@/types';
+import { User, SocketState } from '@/types';
 import AudioManager from '@/game/audio-manager';
 import _ from 'underscore';
 import { TimelineLite, TweenMax, Elastic } from 'gsap';
@@ -71,7 +71,7 @@ import audioManager from '@/game/audio-manager';
 
 @Component
 export default class Shop extends Vue {
-  @State public player!: Player;
+  @State public user!: User;
   @State public socket!: SocketState;
   @Action public SOCKET_EMIT!: any;
   @Mutation public SET_HEADER_VISIBILITY!: any;
@@ -213,18 +213,120 @@ export default class Shop extends Vue {
         'buy': [
           { title: 'Back', description: '', to: 'root', disabled: false, select: null },
           ..._.map({
-              'heal-potion': { title: 'Health I', price: 11, description: 'Regenerates 25 health points when consumed' },
+              'heal-potion': { title: 'Health I', price: 8, description: 'Regenerates 25 health points when consumed' },
               'energy-potion': { title: 'Energy I', price: 16, description: 'Recharges 15 energy points when consumed' },
             }, ({ title, description, price }, id) => ({
               title: `${title} - ${price} gold`,
               description,
               to: null,
-              disabled: this.player && this.player.gold < price,
+              disabled: this.user && this.user.gold < price,
               select: () => {
                 this.SOCKET_EMIT(['SHOP_TRANSACTION', { shop: 'potions-shop', item: id }, (err: any) => {
                   if (err) {
                     audioManager.playOnce('cursorBack');
                     this.animateSpeech(err);
+                  } else {
+                    AudioManager.playOnce('goldDrop');
+
+                    const replies = [
+                      'Nice doing business',
+                      'Enjoy,,',
+                      'Good choice!',
+                      'I\'m glad you like it',
+                    ];
+
+                    this.animateSpeech(replies[_.random(0, replies.length - 1)]);
+
+                    const absEl = document.querySelector('.abs-stats');
+                    const goldContainer = document.getElementById('gold-container');
+
+                    if (!absEl || !goldContainer) {
+                      throw new Error('Could not find abs-stats element');
+                    }
+
+                    const costText = document.createElement('span');
+                    costText.innerHTML = `-${price}`
+
+                    goldContainer.appendChild(costText);
+
+                    TweenMax.fromTo(
+                      costText,
+                      0.5,
+                      { opacity: 0, y: -20 },
+                      {
+                        opacity: 1,
+                        y: 20,
+                        onStart() {
+                          AudioManager.playOnce('goldDrop');
+                        },
+                        onComplete() {
+                          TweenMax.to(
+                            costText,
+                            0.5,
+                            {
+                              opacity: 0,
+                              y: 25,
+                              delay: 1,
+                              onComplete() { costText.remove() }
+                            },
+                          );
+                        },
+                      },
+                    );
+                    /*
+                    <div class="inventory-item">
+                      <img class="logo" src="@/assets/img/items/heal-potion.png" alt="Heal Potion">
+                      <div class="description">
+                        <h1 class="title">Heal Potion I</h1>
+                        <p>Heal Potion I was added to the inventory!</p>
+                      </div>
+                    </div>
+                    */
+
+                    // inventory frame
+                    const invEl = document.createElement('div');
+                    invEl.classList.add('inventory-item');
+
+                    const invImgEl = document.createElement('img');
+                    invImgEl.classList.add('icon');
+                    invImgEl.setAttribute('src', require(`@/assets/img/items/${id}.png`));
+
+                    const descEl = document.createElement('div');
+                    descEl.classList.add('description');
+
+                    const titleEl = document.createElement('h1');
+                    titleEl.classList.add('title');
+                    titleEl.innerHTML = `${title}`;
+                    const pEl = document.createElement('p');
+                    pEl.innerHTML = `${title} was added to the inventory!`;
+
+                    descEl.appendChild(titleEl);
+                    descEl.appendChild(pEl);
+
+                    invEl.appendChild(invImgEl);
+                    invEl.appendChild(descEl);
+
+                    absEl.appendChild(invEl);
+
+                    TweenMax.fromTo(
+                      invEl,
+                      0.5,
+                      { x: 150 },
+                      { x: 0,
+                        ease: Elastic.easeOut.config(0.75, 0.5),
+                        onComplete() {
+                          TweenMax.to(
+                            invEl,
+                            0.5,
+                            {
+                              x: '100%',
+                              delay: 2,
+                              onComplete() { invEl.remove() }
+                            },
+                          );
+                        }
+                      },
+                    );
                   }
                 }]);
               },
@@ -315,7 +417,7 @@ export default class Shop extends Vue {
     if (Date.now() - this.moveCursorDelta <= 100) {
       return
     }
-    if (!this.player.authenticated || !this.socket.connected) {
+    if (!this.user.authenticated || !this.socket.connected) {
       return
     }
     this.moveCursorDelta = Date.now();
@@ -417,8 +519,8 @@ export default class Shop extends Vue {
     AudioManager.playOnce('cursorMove');
     this.currentCursorIndex = j;
   }
-  @Watch('player')
-  onChildChanged(cur: Player, prev: Player) {
+  @Watch('user')
+  onChildChanged(cur: User, prev: User) {
     if (cur.gold !== prev.gold && (prev.gold === 0 && cur.gold !== 0)) {
       AudioManager.playOnce('goldDrop');
     }
@@ -538,13 +640,18 @@ export default class Shop extends Vue {
     font-size: large;
 
     .sign {
-      background: url('../assets/img/textures/wood.png');
-      background-repeat: repeat;
-      border-radius: 5px;
+      background: #000 url('../assets/img/textures/dark-noise.png');
+      border: 5px solid transparent;
+      border-image: url('../assets/img/textures/frame-border.png');
+      border-image-outset: 0;
+      border-image-repeat: round;
+      border-image-slice: 3;
+      border-radius: 2px;
       margin-top:2em;
-      margin-left: 4em;
-      margin-right: 4em;
+      margin-left: auto;
+      margin-right: auto;
       max-height: 50%;
+      max-width: 60%;
       &::before {
         content: '|';
         font-size: large;
@@ -593,7 +700,35 @@ export default class Shop extends Vue {
     position: absolute;
     top: 1em;
     right: 1em;
+    .inventory-item {
+      overflow: hidden;
+      color: white;
+      padding: 6px 8px;
+      background: #000 url('../assets/img/textures/dark-noise.png');
+      border: 3px solid transparent;
+      border-image: url('../assets/img/textures/frame-border.png');
+      border-image-outset: 0;
+      border-image-repeat: round;
+      border-image-slice: 3;
+      border-radius: 2px;
+      box-shadow: 0px 0px 1px 2px rgba(0,0,0,0.5),0px 2px 4px rgba(0,0,0,0.25),0px 0px 6px 1px rgba(0,0,0,0.5) inset;
+      display: flex;
+      flex-direction: row;
+      .icon {
+        height: 2em;
+        margin-right: 1em;
+        align-self: center;
+      }
+      .description {
+        align-self: stretch;
+        .title {
+          font-size: large;
+          margin: 0;
+        }
+      }
+    }
     .hp-container {
+      overflow: hidden;
       transform: translateY(-100px);
       height: 0;
       color: white;
