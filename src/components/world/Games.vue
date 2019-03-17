@@ -154,7 +154,7 @@ export default class Hub extends Vue {
     // load combatData for user
     if (user.authenticated && combatData.loaded === -1) {
       this.combatData = { loaded: 0 };
-      api.get(`user/${this.user.id}/combat`)
+      api.get(`combatant/${this.user.id}`)
       .then((res: ApiResponse<any>) => {
         const body = res.data;
         if (res.ok) {
