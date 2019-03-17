@@ -609,13 +609,6 @@ const newGame = (global: GameController): PhaserGame => {
               .setSize(scene.game.canvas.offsetWidth, scene.game.canvas.offsetHeight);
           }
         }
-
-        /*
-          GUI rendering
-        */
-        if (!global.isAnimating) {
-          animationsManager.animations.GUI.XP();
-        }
       },
     },
   };
