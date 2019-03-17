@@ -3,11 +3,10 @@ export interface CombatCharacter {
   username: string;
   enemy: boolean;
   selectionStatus: number;
-  level: number;
   power: number;
   defense: number;
-  gold: number;
-  xp: number;
+  goldReward: number;
+  xpReward: number;
   inventory: {
     [itemId: string]: InventoryItem;
   };
@@ -18,7 +17,6 @@ export interface CombatCharacter {
     energyRate: number;
     health: number;
     maxHealth: number;
-    defense: number;
     attacks: {
       [attackId: string]: Attack;
     };
