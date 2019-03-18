@@ -350,6 +350,23 @@ export default class Main extends Vue {
                   }
                   .info {
                     flex: 1;
+                    .row {
+                      display: flex;
+                      flex-direction: row;
+                      align-items: center;
+                      margin-bottom: 5px;
+                      .col {
+                        display: flex;
+                        flex-direction: row;
+                        align-items: center;
+                        margin-right: 10px;
+
+                        img {
+                          height: 1.5em;
+                          margin-right: 5px;
+                        }
+                      }
+                    }
                   }
                 }
                 p {

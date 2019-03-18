@@ -19,7 +19,7 @@
                 <span class="icon">
                   {{user.level}}
                 </span>
-                <div class="progress">
+                <div class="progress framed">
                   <span class="label">{{user.xp}}/{{user.nextLevelXp}}</span>
                   <div class="juice" :style="`width: ${(user.xp / user.nextLevelXp) * 100}%;`"></div>
                 </div>
@@ -194,9 +194,10 @@ $mainGreen: #9dff5c;
           .progress {
             flex: 1;
             position: relative;
+            border-width: 3px;
+            padding: 0;
             background: #424242;
-            border: 2px solid #3b3b3b;
-            height: 1.5em;
+            height: 1.75em;
             border-radius: 2px;
 
             .label {

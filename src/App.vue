@@ -218,19 +218,28 @@ span, p {
   color: grey;
   padding-left: 2px;
 }
-.GUI .bar-container {
-  height: 10px;
-  width: 100%;
-  max-width: 200px;
-  border: 1px solid grey;
-}
-.GUI #health-bar {
-  background: #56f33e;
-  height: 10px;
-}
-.GUI #energy-bar {
-  background: rgb(0, 218, 218);
-  height: 10px;
+.stats-container {
+  padding: 10px 20px 10px 0;
+
+  .energy-container {
+    header {
+      width: 100%;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .bar {
+      padding: 0;
+      height: 1.5em;
+      display: flex;
+      flex-direction: row;
+      align-items: stretch;
+      .juice {
+        background: linear-gradient(to bottom, rgb(0, 218, 218) 60%, rgb(21, 182, 182));
+      }
+    }
+  }
 }
 .GUI #gui-description-container {
   ul {
@@ -260,16 +269,15 @@ span, p {
     margin-bottom: 2px;
   }
   .bar {
+    padding: 0;
     background: black;
     height: 1.5em;
-    border: 1px solid white;
     display: flex;
     flex-direction: row;
     align-items: stretch;
 
     .juice {
-      width: 80%;
-      background: #56F33E;
+      background-image: linear-gradient(to bottom, #56F33E 60%, rgb(66, 206, 44));
     }
   }
 }
@@ -332,6 +340,16 @@ span, p {
       width: 50%;
     }
   }
+}
+.framed {
+  background: #000 url('./assets/img/textures/dark-noise.png');
+  padding: 4px 5px;
+  border: 2px solid transparent;
+  border-image: url('./assets/img/textures/frame-border.png');
+  border-image-outset: 0;
+  border-image-repeat: round;
+  border-image-slice: 3;
+  border-radius: 2px;
 }
 // canvas {
 //   cursor: url('./assets/img/icon/select-target-hand.png'), auto;
