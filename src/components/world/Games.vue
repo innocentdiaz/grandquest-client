@@ -48,14 +48,22 @@
             <div class="info" v-else-if="combatData.loaded === 1">
               <div class="hp-container">
                 <header>
-                  <span>HP</span><span>{{combatData.health}}/{{combatData.max_health}}</span>
+                  <span>HP</span><span>{{combatData.health}}/{{combatData.maxHealth}}</span>
                 </header>
-                <div class="bar">
-                  <div class="juice" :style="{width:`${(combatData.health/combatData.max_health)*100}%`}"></div>
+                <div class="bar framed">
+                  <div class="juice" :style="{width:`${(combatData.health/combatData.maxHealth)*100}%`}"></div>
                 </div>
               </div>
-              <p>Wins: <span class="green">{{combatData.levels_won}}</span></p>
-              <p>Loses: <span class="red">{{combatData.levels_lost}}</span></p>
+              <div class="row framed">
+                <div class="col">
+                  <img src="@/assets/img/icon/1bit-swords.png" alt="Power">{{combatData.power}}
+                </div>
+                <div class="col">
+                  <img src="@/assets/img/icon/1bit-shield.png" alt="Defense">{{combatData.defense}}
+                </div>
+              </div>
+              <p>Wins: <span class="green">{{combatData.levelsWon}}</span></p>
+              <p>Loses: <span class="red">{{combatData.levelsLost}}</span></p>
             </div>
           </div>
         </section>

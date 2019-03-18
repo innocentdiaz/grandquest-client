@@ -67,22 +67,24 @@
               : 'GUI'
           "
         >
-          <div>
-            <h2 class="health" v-if="currentPlayer">
-              HP {{currentPlayer.entity.health}}/{{currentPlayer.entity.maxHealth}}
-            </h2>
-            <h2 class="health" v-else>HP ...</h2>
-            <div class="bar-container" v-if="currentPlayer">
-              <div id="health-bar" v-bind:style="{ width: `${currentPlayer.entity.health / currentPlayer.entity.maxHealth * 100}%` }"></div>
+          <div class="stats-container">
+            <div class="hp-container" v-if="currentPlayer">
+              <header>
+                <span>HP</span><span>{{currentPlayer.entity.health}}/{{currentPlayer.entity.maxHealth}}</span>
+              </header>
+              <div class="bar framed">
+                <div class="juice" :style="{width:`${(currentPlayer.entity.health/currentPlayer.entity.maxHealth)*100}%`}"></div>
+              </div>
             </div>
-            <h2 class="energy" v-if="currentPlayer">
-              EP {{currentPlayer.entity.energy}}/{{currentPlayer.entity.maxEnergy}}
-            </h2>
-            <h2 v-else>EP ...</h2>
-            <div class="bar-container" v-if="currentPlayer">
-              <div id="energy-bar" v-bind:style="{ width: `${currentPlayer.entity.energy / currentPlayer.entity.maxEnergy * 100}%` }"></div>
+            <div class="energy-container" v-if="currentPlayer">
+              <header>
+                <span>EP</span><span>{{currentPlayer.entity.energy}}/{{currentPlayer.entity.maxEnergy}}</span>
+              </header>
+              <div class="bar framed">
+                <div class="juice" v-bind:style="{ width: `${currentPlayer.entity.energy / currentPlayer.entity.maxEnergy * 100}%` }"></div>
+              </div>
             </div>
-            <h3>Players: {{ combatGame.gameState.playerCount }} / {{ combatGame.gameState.maxPlayers }}</h3>
+            <h3 class="subtitle">Players: {{ combatGame.gameState.playerCount }} / {{ combatGame.gameState.maxPlayers }}</h3>
           </div>
           <div>
             <ul id="gui-selection-list">
