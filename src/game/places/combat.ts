@@ -609,6 +609,10 @@ const newGame = (global: GameController): PhaserGame => {
               .setSize(scene.game.canvas.offsetWidth, scene.game.canvas.offsetHeight);
           }
         }
+
+        if (!global.isAnimating && (store.state.combatGame.selectionMode === 'HIDDEN' && global.gameState.turn % 2 === 0)) {
+          store.commit('SET_COMBAT_GAME_SELECTION_MODE', 'ACTION');
+        }
       },
     },
   };
@@ -1259,6 +1263,7 @@ export default function (): GameController {
             action: gameController.selectedAction,
           }
         ]);
+        store.commit('SET_COMBAT_GAME_SELECTION_MODE', 'HIDDEN');
       }
     },
     resizeMonitor() {
@@ -1296,9 +1301,7 @@ export default function (): GameController {
       // REMOVE highlights all characters
       else if (category === false) {
         _.each({...gameController.gameState.players, ...gameController.gameState.enemies}, (character) => {
-          if (character.sprite.depth != 10){
-            character.sprite.setDepth(10);
-          }
+          character.sprite.setDepth(10);
         });
       }
       // category = 'players' / 'enemies'
@@ -1308,14 +1311,10 @@ export default function (): GameController {
           ? 'players'
           : 'enemies';
         _.each(gameController.gameState[category], (character) => {
-          if (character.sprite.depth != 15) {
-            character.sprite.setDepth(15);
-          }
+          character.sprite.setDepth(15);
         });
         _.each(gameController.gameState[oppositeCategory], (character) => {
-          if (character.sprite.depth != 10) {
-            character.sprite.setDepth(10);
-          }
+          character.sprite.setDepth(10);
         });
       }
     },
