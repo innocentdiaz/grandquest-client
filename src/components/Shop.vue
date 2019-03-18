@@ -707,6 +707,10 @@ export default class Shop extends Vue {
   public selectOption() {
     let option = this.currentScreenObject[this.currentCursorIndex];
 
+    if (option.disabled) {
+      return;
+    }
+
     if (typeof option.select === 'function') {
       option.select();
     } else if (option.to) {
