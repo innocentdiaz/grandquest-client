@@ -44,13 +44,24 @@
       </div>
     </div>
     <div class="abs-stats">
+      <!-- Power / Defense stats -->
+      <div class="powdef-container framed" id="powdef">
+        <div class="pow-container">
+          <img src="@/assets/img/icon/1bit-swords.png" alt="Power: ">
+          <span id="pow-label">0</span>
+        </div>
+        <div class="def-container">
+          <img src="@/assets/img/icon/1bit-shield.png" alt="Defense: ">
+          <span id="def-label">0</span>
+        </div>
+      </div>
       <!-- HP bar -->
       <div class="hp-container" id="hp">
         <header>
           <span>HP</span>
           <span id="hp-label"></span>
         </header>
-        <div class="bar" id="hp-bar">
+        <div class="bar framed" id="hp-bar">
           <div class="juice" id="hp-juice"></div>
         </div>
       </div>
@@ -68,6 +79,9 @@ import AudioManager from '@/game/audio-manager';
 import _ from 'underscore';
 import { TimelineLite, TweenMax, Elastic } from 'gsap';
 import audioManager from '@/game/audio-manager';
+import api from '@/api';
+import { ApiResponse } from 'apisauce';
+import { powerDefenseCosts } from '@/game/definitions/costs';
 
 @Component
 export default class Shop extends Vue {
@@ -87,319 +101,526 @@ export default class Shop extends Vue {
 
   public speechAnimationInterval: any = null;
 
-  public shops: { [shopName: string]: any } = {
-    'monokai-village/potions-shop': {
-      npcName: 'Even',
-      npcSpeak: [
-        'Sorry but our beauty potions probably wouldn\'t work on you.',
-        'If you\'re looking for a love potion, I\'ve got bad news for you.',
-        'Yes, I\'ve got the concoction you\'re looking for, just follow me into the cellar.',
-        'I think some herbal tea would fix your stomach problems!',
-        'We don\'t sell quackery, we sell magic!',
-      ],
-      guiMasterObject: {
-        // screens
-        'root': [
-          // options
-          { title: 'Buy', description: 'Buy from Even\'s potions', to: 'buy', disabled: false },
-          { title: 'Sell', description: 'Sell potions from your own inventory', to: 'sell', disabled: false, select: null },
-          {
-            title: 'Heal',
-            description: 'Heal your combat health to the maximum',
-            to: null,
-            disabled: false,
-            select: () => {
-              this.SOCKET_EMIT(['SHOP_TRANSACTION', { shop: 'potions-shop', action: 'heal' }, (err: any, results: { before: number, after: number, max: number, cost: number }) => {
-                if (err) {
-                  audioManager.playOnce('cursorBack');
-                  this.animateSpeech(err);
-                } else {
-                  this.animateSpeech('That will leave a scar.');
+  public combatData = {
+    power: 1,
+    defense: 1,
+    loaded: -1, // -1 = err, 0 = pending, 1 = ok
+  }
 
-                  const hpContainer = document.getElementById('hp');
-                  const hpJuice = document.getElementById('hp-juice');
-                  const hpLabel = document.getElementById('hp-label');
-                  const goldContainer = document.getElementById('gold-container');
-                  if (!hpContainer || !hpJuice || !hpLabel || !goldContainer) {
-                    throw new Error('Missing HP elements to animate');
-                  }
-                  let target = { hp: results.before };
+  public updated() {
+    const { user, combatData } = this;
 
-                  const tl = new TimelineLite();
-                  // animate gold
-                  const costText = document.createElement('span');
-                  costText.innerHTML = `-${results.cost}`
-
-                  goldContainer.appendChild(costText);
-                  tl.add(
-                    TweenMax.fromTo(
-                      costText,
-                      0.5,
-                      { opacity: 0, y: -10 },
-                      {
-                        opacity: 1,
-                        y: 10,
-                        onStart() {
-                          AudioManager.playOnce('goldDrop');
-                        }
-                      }
-                    )
-                  )
-                  tl.to(
-                    costText,
-                    0.5,
-                    {
-                      opacity: 0,
-                      y: 25,
-                      delay: 1,
-                      onComplete: () => {
-                        costText.remove();
-
-                        // animate hp bar into screen
-                        TweenMax.fromTo(
-                          hpContainer,
-                          0.8,
-                          { height: '0px', padding: 0, y: -100 },
-                          {
-                            height: 'auto',
-                            padding: '1em',
-                            y: 0,
-                            ease: Elastic.easeOut.config(0.75, 0.5),
-                          },
-                        );
-                      }
-                    },
-                  )
-                  tl.to(
-                    target,
-                    0.5,
-                    {
-                      hp: results.after,
-                      roundProps: 'hp',
-                      onStart() {
-                        audioManager.playOnce('heal');
-                      },
-                      onUpdate() {
-                        hpJuice.style.width = `${target.hp / results.max * 100}%`;
-                        hpLabel.innerHTML = `${target.hp}/${results.max}`;
-                      },
-                    }
-                  )
-                  tl.to(
-                    hpContainer,
-                    0.8,
-                    { height: '0px', padding: 0, y: -100, delay: 2 },
-                  );
-                }
-              }]);
-            }
-          },
-          { title: 'Exit',
-            description: 'Back to the map',
-            to: null,
-            disabled: false,
-            select: () => {
-              this.animateSpeech('See you around, bozo.', () => setTimeout(() => {
-                const shopMainEl = document.querySelector('.shop-main');
-                if (!shopMainEl) {
-                  return;
-                }
-                shopMainEl.classList.add('hide');
-                this.exitShop();
-              }, 1500));
-            },
-          },
+    // load combatData for user
+    if (user.authenticated && combatData.loaded === -1) {
+      this.combatData = { ...this.combatData, loaded: 0 };
+      api.get(`combatant/${user.id}`)
+      .then((res: ApiResponse<any>) => {
+        const body = res.data;
+        if (res.ok) {
+          this.combatData = { ...body.data, loaded: 1 };
+        } else {
+          this.combatData = { ...this.combatData, loaded: -1 };
+        }
+      });
+    }
+  }
+  get shops(): { [shopName: string]: any } {
+    return {
+      'monokai-village/potions-shop': {
+        npcName: 'Even',
+        npcSpeak: [
+          'Sorry but our beauty potions probably wouldn\'t work on you.',
+          'If you\'re looking for a love potion, I\'ve got bad news for you.',
+          'Yes, I\'ve got the concoction you\'re looking for, just follow me into the cellar.',
+          'I think some herbal tea would fix your stomach problems!',
+          'We don\'t sell quackery, we sell magic!',
         ],
-        'buy': [
-          { title: 'Back', description: '', to: 'root', disabled: false, select: null },
-          ..._.map({
-              'heal-potion': { title: 'Health I', price: 8, description: 'Regenerates 25 health points when consumed' },
-              'energy-potion': { title: 'Energy I', price: 16, description: 'Recharges 15 energy points when consumed' },
-            }, ({ title, description, price }, id) => ({
-              title: `${title} - ${price} gold`,
-              description,
+        guiMasterObject: {
+          // screens
+          'root': [
+            // options
+            { title: 'Buy', description: 'Buy from Even\'s potions', to: 'buy', disabled: false },
+            { title: 'Sell', description: 'Sell potions from your own inventory', to: 'sell', disabled: false, select: null },
+            {
+              title: 'Heal',
+              description: 'Heal your combat health to the maximum',
               to: null,
-              disabled: this.user && this.user.gold < price,
+              disabled: false,
               select: () => {
-                this.SOCKET_EMIT(['SHOP_TRANSACTION', { shop: 'potions-shop', item: id }, (err: any) => {
+                this.SOCKET_EMIT(['SHOP_TRANSACTION', { shop: 'potions-shop', action: 'heal' }, (err: any, results: { before: number, after: number, max: number, cost: number }) => {
                   if (err) {
                     audioManager.playOnce('cursorBack');
                     this.animateSpeech(err);
                   } else {
-                    AudioManager.playOnce('goldDrop');
+                    this.animateSpeech('That will leave a scar.');
 
-                    const replies = [
-                      'Nice doing business',
-                      'Enjoy,,',
-                      'Good choice!',
-                      'I\'m glad you like it',
-                    ];
-
-                    this.animateSpeech(replies[_.random(0, replies.length - 1)]);
-
-                    const absEl = document.querySelector('.abs-stats');
+                    const hpContainer = document.getElementById('hp');
+                    const hpJuice = document.getElementById('hp-juice');
+                    const hpLabel = document.getElementById('hp-label');
                     const goldContainer = document.getElementById('gold-container');
-
-                    if (!absEl || !goldContainer) {
-                      throw new Error('Could not find abs-stats element');
+                    if (!hpContainer || !hpJuice || !hpLabel || !goldContainer) {
+                      throw new Error('Missing HP elements to animate');
                     }
+                    let target = { hp: results.before };
 
+                    const tl = new TimelineLite();
+                    // animate gold
                     const costText = document.createElement('span');
-                    costText.innerHTML = `-${price}`
+                    costText.innerHTML = `-${results.cost}`
 
                     goldContainer.appendChild(costText);
-
-                    TweenMax.fromTo(
+                    tl.add(
+                      TweenMax.fromTo(
+                        costText,
+                        0.5,
+                        { opacity: 0, y: -10 },
+                        {
+                          opacity: 1,
+                          y: 10,
+                          onStart() {
+                            AudioManager.playOnce('goldDrop');
+                          }
+                        }
+                      )
+                    )
+                    tl.to(
                       costText,
                       0.5,
-                      { opacity: 0, y: -20 },
                       {
-                        opacity: 1,
-                        y: 20,
-                        onStart() {
-                          AudioManager.playOnce('goldDrop');
-                        },
-                        onComplete() {
-                          TweenMax.to(
-                            costText,
-                            0.5,
+                        opacity: 0,
+                        y: 25,
+                        delay: 1,
+                        onComplete: () => {
+                          costText.remove();
+
+                          // animate hp bar into screen
+                          TweenMax.fromTo(
+                            hpContainer,
+                            0.8,
+                            { height: '0px', padding: 0, y: -100 },
                             {
-                              opacity: 0,
-                              y: 25,
-                              delay: 1,
-                              onComplete() { costText.remove() }
-                            },
-                          );
-                        },
-                      },
-                    );
-                    /*
-                    <div class="inventory-item">
-                      <img class="logo" src="@/assets/img/items/heal-potion.png" alt="Heal Potion">
-                      <div class="description">
-                        <h1 class="title">Heal Potion I</h1>
-                        <p>Heal Potion I was added to the inventory!</p>
-                      </div>
-                    </div>
-                    */
-
-                    // inventory frame
-                    const invEl = document.createElement('div');
-                    invEl.classList.add('inventory-item');
-
-                    const invImgEl = document.createElement('img');
-                    invImgEl.classList.add('icon');
-                    invImgEl.setAttribute('src', require(`@/assets/img/items/${id}.png`));
-
-                    const descEl = document.createElement('div');
-                    descEl.classList.add('description');
-
-                    const titleEl = document.createElement('h1');
-                    titleEl.classList.add('title');
-                    titleEl.innerHTML = `${title}`;
-                    const pEl = document.createElement('p');
-                    pEl.innerHTML = `${title} was added to the inventory!`;
-
-                    descEl.appendChild(titleEl);
-                    descEl.appendChild(pEl);
-
-                    invEl.appendChild(invImgEl);
-                    invEl.appendChild(descEl);
-
-                    absEl.appendChild(invEl);
-
-                    TweenMax.fromTo(
-                      invEl,
-                      0.5,
-                      { x: 150 },
-                      { x: 0,
-                        ease: Elastic.easeOut.config(0.75, 0.5),
-                        onComplete() {
-                          TweenMax.to(
-                            invEl,
-                            0.5,
-                            {
-                              x: '100%',
-                              delay: 2,
-                              onComplete() { invEl.remove() }
+                              height: 'auto',
+                              padding: '1em',
+                              y: 0,
+                              ease: Elastic.easeOut.config(0.75, 0.5),
                             },
                           );
                         }
                       },
+                    )
+                    tl.to(
+                      target,
+                      0.5,
+                      {
+                        hp: results.after,
+                        roundProps: 'hp',
+                        onStart() {
+                          audioManager.playOnce('heal');
+                        },
+                        onUpdate() {
+                          hpJuice.style.width = `${target.hp / results.max * 100}%`;
+                          hpLabel.innerHTML = `${target.hp}/${results.max}`;
+                        },
+                      }
+                    )
+                    tl.to(
+                      hpContainer,
+                      0.8,
+                      { height: '0px', padding: 0, y: -100, delay: 2 },
                     );
                   }
                 }]);
+              }
+            },
+            { title: 'Exit',
+              description: 'Back to the map',
+              to: null,
+              disabled: false,
+              select: () => {
+                this.animateSpeech('See you around, bozo.', () => setTimeout(() => {
+                  const shopMainEl = document.querySelector('.shop-main');
+                  if (!shopMainEl) {
+                    return;
+                  }
+                  shopMainEl.classList.add('hide');
+                  this.exitShop();
+                }, 1500));
               },
-            })
-          )
-        ],
-        'sell': [
-          { title: 'Back', description: '', to: 'root', disabled: false, select: null },
-        ]
-      }
-    },
-    'monokai-village/village-gate': {
-      npcName: 'Daelen',
-      npcSpeak: [
-        'I used to be an adventurer like you.',
-        'Are you sure you\'re supposed to be wandering the village all by yourself?',
-      ],
-      guiMasterObject: {
-        // screens
-        'root': [
-          // options
-          { title: 'Order Caravan', description: 'Send a caravan on an expedition for treasure', to: 'caravan', disabled: false },
-          { title: 'Exit',
-            description: 'Back to the map',
-            to: null,
-            disabled: false,
-            select: () => {
-              this.animateSpeech('Stay safe!', () => setTimeout(() => {
-                const shopMainEl = document.querySelector('.shop-main');
-                if (!shopMainEl) {
-                  return;
-                }
-                shopMainEl.classList.add('hide');
-                this.exitShop();
-              }, 1500));
             },
-          },
+          ],
+          'buy': [
+            { title: 'Back', description: '', to: 'root', disabled: false, select: null },
+            ..._.map({
+                'heal-potion': { title: 'Health I', price: 8, description: 'Regenerates 25 health points when consumed' },
+                'energy-potion': { title: 'Energy I', price: 16, description: 'Recharges 15 energy points when consumed' },
+              }, ({ title, description, price }, id) => ({
+                title: `${title} - ${price} gold`,
+                description,
+                to: null,
+                disabled: this.user && this.user.gold < price,
+                select: () => {
+                  this.SOCKET_EMIT(['SHOP_TRANSACTION', { shop: 'potions-shop', item: id }, (err: any) => {
+                    if (err) {
+                      audioManager.playOnce('cursorBack');
+                      this.animateSpeech(err);
+                    } else {
+                      AudioManager.playOnce('goldDrop');
+
+                      const replies = [
+                        'Nice doing business',
+                        'Enjoy,,',
+                        'Good choice!',
+                        'I\'m glad you like it',
+                      ];
+
+                      this.animateSpeech(replies[_.random(0, replies.length - 1)]);
+
+                      const absEl = document.querySelector('.abs-stats');
+                      const goldContainer = document.getElementById('gold-container');
+
+                      if (!absEl || !goldContainer) {
+                        throw new Error('Could not find abs-stats element');
+                      }
+
+                      const costText = document.createElement('span');
+                      costText.innerHTML = `-${price}`
+
+                      goldContainer.appendChild(costText);
+
+                      TweenMax.fromTo(
+                        costText,
+                        0.5,
+                        { opacity: 0, y: -20 },
+                        {
+                          opacity: 1,
+                          y: 20,
+                          onStart() {
+                            AudioManager.playOnce('goldDrop');
+                          },
+                          onComplete() {
+                            TweenMax.to(
+                              costText,
+                              0.5,
+                              {
+                                opacity: 0,
+                                y: 25,
+                                delay: 1,
+                                onComplete() { costText.remove() }
+                              },
+                            );
+                          },
+                        },
+                      );
+                      /*
+                      <div class="inventory-item">
+                        <img class="logo" src="@/assets/img/items/heal-potion.png" alt="Heal Potion">
+                        <div class="description">
+                          <h1 class="title">Heal Potion I</h1>
+                          <p>Heal Potion I was added to the inventory!</p>
+                        </div>
+                      </div>
+                      */
+
+                      // inventory frame
+                      const invEl = document.createElement('div');
+                      invEl.classList.add('inventory-item');
+
+                      const invImgEl = document.createElement('img');
+                      invImgEl.classList.add('icon');
+                      invImgEl.setAttribute('src', require(`@/assets/img/items/${id}.png`));
+
+                      const descEl = document.createElement('div');
+                      descEl.classList.add('description');
+
+                      const titleEl = document.createElement('h1');
+                      titleEl.classList.add('title');
+                      titleEl.innerHTML = `${title}`;
+                      const pEl = document.createElement('p');
+                      pEl.innerHTML = `${title} was added to the inventory!`;
+
+                      descEl.appendChild(titleEl);
+                      descEl.appendChild(pEl);
+
+                      invEl.appendChild(invImgEl);
+                      invEl.appendChild(descEl);
+
+                      absEl.appendChild(invEl);
+
+                      TweenMax.fromTo(
+                        invEl,
+                        0.5,
+                        { x: 150 },
+                        { x: 0,
+                          ease: Elastic.easeOut.config(0.75, 0.5),
+                          onComplete() {
+                            TweenMax.to(
+                              invEl,
+                              0.5,
+                              {
+                                x: '100%',
+                                delay: 2,
+                                onComplete() { invEl.remove() }
+                              },
+                            );
+                          }
+                        },
+                      );
+                    }
+                  }]);
+                },
+              })
+            )
+          ],
+          'sell': [
+            { title: 'Back', description: '', to: 'root', disabled: false, select: null },
+          ]
+        }
+      },
+      'monokai-village/village-gate': {
+        npcName: 'Daelen',
+        npcSpeak: [
+          'I used to be an adventurer like you.',
+          'Are you sure you\'re supposed to be wandering the village all by yourself?',
         ],
-        'caravan': [
-          { title: 'Back', description: '', to: 'root', disabled: false, select: null },
-        ],
-      }
-    },
-    'monokai-village/combat-shop': {
-      npcName: 'Marco',
-      npcSpeak: [
-        'Welcome to `El Combatánte!`',
-      ],
-      guiMasterObject: {
-        // screens
-        'root': [
-          // options
-          { title: 'Upgrades', description: 'Upgrade your combat stats!', to: 'upgrade', disabled: false },
-          { title: 'Heal', description: 'Heal your character', to: null, disabled: true },
-          { title: 'Exit',
-            description: 'Back to the map',
-            to: null,
-            disabled: false,
-            select: () => {
-              this.animateSpeech('Until next time, traveller', () => setTimeout(() => {
-                const shopMainEl = document.querySelector('.shop-main');
-                if (!shopMainEl) {
-                  return;
-                }
-                shopMainEl.classList.add('hide');
-                this.exitShop();
-              }, 1500));
+        guiMasterObject: {
+          // screens
+          'root': [
+            // options
+            { title: 'Order Caravan', description: 'Send a caravan on an expedition for treasure', to: 'caravan', disabled: false },
+            { title: 'Exit',
+              description: 'Back to the map',
+              to: null,
+              disabled: false,
+              select: () => {
+                this.animateSpeech('Stay safe!', () => setTimeout(() => {
+                  const shopMainEl = document.querySelector('.shop-main');
+                  if (!shopMainEl) {
+                    return;
+                  }
+                  shopMainEl.classList.add('hide');
+                  this.exitShop();
+                }, 1500));
+              },
             },
-          },
+          ],
+          'caravan': [
+            { title: 'Back', description: '', to: 'root', disabled: false, select: null },
+          ],
+        }
+      },
+      'monokai-village/combat-shop': {
+        npcName: 'Marco',
+        npcSpeak: [
+          'Welcome to `El Combatánte!`',
         ],
-        'upgrade': [
-          { title: 'Back', description: '', to: 'root', disabled: false, select: null },
-        ],
+        guiMasterObject: {
+          // screens
+          'root': [
+            // options
+            { title: 'Upgrades', description: 'Upgrade your combat stats!', to: 'upgrade', disabled: false },
+            { title: 'Heal', description: 'Heal your character', to: null, disabled: true },
+            { title: 'Exit',
+              description: 'Back to the map',
+              to: null,
+              disabled: false,
+              select: () => {
+                this.animateSpeech('Until next time, traveller', () => setTimeout(() => {
+                  const shopMainEl = document.querySelector('.shop-main');
+                  if (!shopMainEl) {
+                    return;
+                  }
+                  shopMainEl.classList.add('hide');
+                  this.exitShop();
+                }, 1500));
+              },
+            },
+          ],
+          'upgrade': [
+            { title: 'Back', description: '', to: 'root', disabled: false, select: null },
+            {
+              title: `Upgrade Power ${this.combatData.loaded === 1 ? `(${powerDefenseCosts[this.combatData.power + 1] || '???'} gold)` : ''}`,
+              description: `
+                Upgrade your combat power ${
+                  this.combatData.loaded === 1 ?
+                    `to level ${this.combatData.power + 1}`
+                    : ''
+                }
+                `,
+              to: null,
+              disabled: this.combatData.loaded !== 1 || (this.user && this.user.gold < powerDefenseCosts[this.combatData.power + 1]),
+              select: () => {
+                this.SOCKET_EMIT(['SHOP_TRANSACTION', { shop: 'combat-shop', action: 'power-up' }, (err: any, results: { before: number, after: number, cost: number }) => {
+                  if (err) {
+                    audioManager.playOnce('cursorBack');
+                    this.animateSpeech(err);
+                  } else {
+                    this.combatData.power = results.after;
+
+                    this.animateSpeech('You\'re all set');
+
+                    const powdefContainer = document.getElementById('powdef');
+                    const powLabel = document.getElementById('pow-label');
+                    const defLabel = document.getElementById('def-label');
+                    const goldContainer = document.getElementById('gold-container');
+                    if (!goldContainer || !powdefContainer || !powLabel || !defLabel) {
+                      throw new Error('Missing elements to animate');
+                    }
+
+                    const tl = new TimelineLite();
+                    // animate gold
+                    const costText = document.createElement('span');
+                    costText.innerHTML = `-${results.cost}`
+
+                    goldContainer.appendChild(costText);
+                    tl.add(
+                      TweenMax.fromTo(
+                        costText,
+                        0.5,
+                        { opacity: 0, y: -10 },
+                        {
+                          opacity: 1,
+                          y: 10,
+                          onStart() {
+                            AudioManager.playOnce('goldDrop');
+                          }
+                        }
+                      )
+                    )
+                    tl.to(
+                      costText,
+                      0.5,
+                      {
+                        opacity: 0,
+                        y: 25,
+                        delay: 1,
+                        onComplete: () => {
+                          costText.remove();
+                        }
+                      },
+                    );
+                    tl.add(
+                      TweenMax.fromTo(
+                        powdefContainer,
+                        0.8,
+                        { height: '0px', padding: 0, y: -100 },
+                        {
+                          height: 'auto',
+                          padding: '1em',
+                          y: 0,
+                          ease: Elastic.easeOut.config(0.75, 0.5),
+                          onStart: () => {
+                            powLabel.innerHTML = String(results.before);
+                            defLabel.innerHTML = String(this.combatData.defense);
+                            setTimeout(() => {
+                              AudioManager.playOnce('xpGain');
+                              powLabel.innerHTML = String(results.after);
+                            }, 750);
+                          },
+                        }
+                      )
+                    );
+                    tl.to(
+                      powdefContainer,
+                      0.8,
+                      { height: 0, padding: 0, y: -100, delay: 2.25 },
+                    )
+                  }
+                }]);
+              }
+            },
+            {
+              title: `Upgrade Defense ${this.combatData.loaded === 1 ? `(${powerDefenseCosts[this.combatData.defense + 1] || '???'} gold)` : ''}`,
+              description: `
+                Upgrade your combat defense ${
+                  this.combatData.loaded === 1 ?
+                    `to level ${this.combatData.defense + 1}`
+                    : ''
+                }
+                `,
+              to: null,
+              disabled: this.combatData.loaded !== 1 || (this.user && this.user.gold < powerDefenseCosts[this.combatData.defense + 1]),
+              select: () => {
+                this.SOCKET_EMIT(['SHOP_TRANSACTION', { shop: 'combat-shop', action: 'defense-up' }, (err: any, results: { before: number, after: number, cost: number }) => {
+                  if (err) {
+                    audioManager.playOnce('cursorBack');
+                    this.animateSpeech(err);
+                  } else {
+                    this.combatData.defense = results.after;
+
+                    this.animateSpeech('You\'re all set!');
+
+                    const powdefContainer = document.getElementById('powdef');
+                    const powLabel = document.getElementById('pow-label');
+                    const defLabel = document.getElementById('def-label');
+                    const goldContainer = document.getElementById('gold-container');
+                    if (!goldContainer || !powdefContainer || !powLabel || !defLabel) {
+                      throw new Error('Missing elements to animate');
+                    }
+
+                    const tl = new TimelineLite();
+                    // animate gold
+                    const costText = document.createElement('span');
+                    costText.innerHTML = `-${results.cost}`
+
+                    goldContainer.appendChild(costText);
+                    tl.add(
+                      TweenMax.fromTo(
+                        costText,
+                        0.5,
+                        { opacity: 0, y: -10 },
+                        {
+                          opacity: 1,
+                          y: 10,
+                          onStart() {
+                            AudioManager.playOnce('goldDrop');
+                          }
+                        }
+                      )
+                    )
+                    tl.to(
+                      costText,
+                      0.5,
+                      {
+                        opacity: 0,
+                        y: 25,
+                        delay: 1,
+                        onComplete: () => {
+                          costText.remove();
+                        }
+                      },
+                    );
+                    tl.add(
+                      TweenMax.fromTo(
+                        powdefContainer,
+                        0.8,
+                        { height: '0px', padding: 0, y: -100 },
+                        {
+                          height: 'auto',
+                          padding: '1em',
+                          y: 0,
+                          ease: Elastic.easeOut.config(0.75, 0.5),
+                          onStart: () => {
+                            defLabel.innerHTML = String(results.before);
+                            powLabel.innerHTML = String(this.combatData.power);
+                            setTimeout(() => {
+                              AudioManager.playOnce('xpGain');
+                              defLabel.innerHTML = String(results.after);
+                            }, 750);
+                          },
+                        }
+                      )
+                    );
+                    tl.to(
+                      powdefContainer,
+                      0.8,
+                      { height: 0, padding: 0, y: -100, delay: 2.25 },
+                    );
+                  };
+                }]);
+              }
+            },
+          ],
+        }
       }
     }
   }
@@ -700,6 +921,31 @@ export default class Shop extends Vue {
     position: absolute;
     top: 1em;
     right: 1em;
+    .powdef-container {
+      overflow: hidden;
+      padding: 0;
+      transform: translateY(-100px);
+      height: 0;
+
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      color: white;
+      .pow-container, .def-container {
+        flex: 1;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        margin-right: 1em;
+        img {
+          height: 2em;
+          margin-right: 10px;
+        }
+        span {
+          font-size: 1.5em;
+        }
+      }
+    }
     .inventory-item {
       overflow: hidden;
       color: white;
@@ -729,6 +975,7 @@ export default class Shop extends Vue {
     }
     .hp-container {
       overflow: hidden;
+      padding: 0;
       transform: translateY(-100px);
       height: 0;
       color: white;
