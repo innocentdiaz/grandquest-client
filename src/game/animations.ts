@@ -57,6 +57,7 @@ const animations: Animations = {
         x: atkPosition,
         onStart() {
           character.sprite.play(`adventurer-walk`);
+          console.log('set adventurer to 15');
           character.sprite.setDepth(15);
         },
       });
@@ -119,6 +120,7 @@ const animations: Animations = {
         onComplete() {
           character.sprite.scaleX *= -1;
           character.sprite.play(`adventurer-idle`);
+          console.log('set adventurer to 10');
           character.sprite.setDepth(10);
           resolve();
         },
@@ -471,6 +473,87 @@ const animations: Animations = {
   },
   item: {
     'heal-potion': (event, gameController) => new Promise((resolve) => {
+      if (!gameController.game) {
+        return;
+      }
+
+      const scene = gameController.game.scene.scenes[0];
+  
+      let timeline = scene.tweens.createTimeline();
+      const character = {...gameController.gameState.players, ...gameController.gameState.enemies}[event.character.id];
+      const receiver = {...gameController.gameState.players, ...gameController.gameState.enemies}[event.receiver.id];
+  
+      let potionImg = scene.add.image(character.sprite.x, character.sprite.y, `item-${event.action.id}`);
+
+      potionImg.setDepth(character.sprite.depth + 1);
+
+      timeline.add({
+        targets: potionImg,
+        y: character.sprite.y,
+        duration: 250,
+        onStart() {
+          const healPercentage = (event.outcome.heal / receiver.entity.maxHealth);
+          const totalWidth = receiver._nameTag.displayWidth;
+          const currentWidth = receiver._healthBar.width;
+          const newWidth = currentWidth + (totalWidth * healPercentage);
+          scene.tweens.add({
+            targets: receiver._healthBar,
+            width: Math.min(newWidth, totalWidth),
+            duration: 250,
+            onStart() {
+              AudioManager.playOnce('heal');
+            }
+          });
+
+          // animate healing text
+          const healText = scene.add.text(
+            receiver.sprite.x,
+            receiver.sprite.y + receiver.sprite.displayHeight,
+            `+${event.outcome.heal}`,
+            {
+              fontSize: '20px',
+              color: '#56f33e',
+              textAlign: 'center',
+            },
+          )
+          .setOrigin(0.5, 1)
+          .setAlpha(0)
+          .setDepth(15);
+          scene.tweens.add({
+            targets: healText,
+            y: receiver.sprite.y - receiver.sprite.displayHeight,
+            alpha: 1,
+            duration: 250,
+            onComplete() {
+              setTimeout(() => {
+                scene.tweens.add({
+                  targets: healText,
+                  y: healText.y - 30,
+                  alpha: 0,
+                  duration: 700,
+                  onComplete() {
+                    healText.destroy();
+                  },
+                });
+              }, 1500);
+            }
+          });
+        },
+      });
+      timeline.add({
+        targets: potionImg,
+        y: character.sprite.y - 50,
+        alpha: { value: 0, duration: 500 },
+        ease: 'Power1',
+        duration: 700,
+        onComplete() {
+          potionImg.destroy();
+          resolve();
+        },
+      });
+      timeline.play();
+    }),
+    'heal-potion-2': (event, gameController) => new Promise((resolve) => {
       if (!gameController.game) {
         return;
       }

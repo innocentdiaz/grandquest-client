@@ -252,6 +252,7 @@ export default class Shop extends Vue {
             { title: 'Back', description: '', to: 'root', disabled: false, select: null },
             ..._.map({
                 'heal-potion': { title: 'Health I', price: 8, description: 'Regenerates 25 health points when consumed' },
+                'heal-potion-2': { title: 'Health II', price: 24, description: 'Regenerates 50 health points when consumed' },
                 'energy-potion': { title: 'Energy I', price: 16, description: 'Recharges 15 energy points when consumed' },
               }, ({ title, description, price }, id) => ({
                 title: `${title} - ${price} gold`,

@@ -432,17 +432,19 @@ export default class CombatRoom extends Vue {
         selectedOption = guiMasterObject.root[0];
       }
 
-      if (selectedOption.disabled) {
-        this.gameInterface.highlightCharacters(false);
-      } else if (
-        this.currentScreen === 'attacks' ||
-        selectedOption.id === 'attacks'
-      ) {
-        this.gameInterface.highlightCharacters('enemies');
-      } else if (selectedOption.id === 'heal-potion') {
-        this.gameInterface.highlightCharacters('players');
-      } else {
-        this.gameInterface.highlightCharacters(true);
+      if (!this.gameInterface.isAnimating) {
+        if (selectedOption.disabled) {
+          this.gameInterface.highlightCharacters(false);
+        } else if (
+          this.currentScreen === 'attacks' ||
+          selectedOption.id === 'attacks'
+        ) {
+          this.gameInterface.highlightCharacters('enemies');
+        } else if (selectedOption.id === 'heal-potion') {
+          this.gameInterface.highlightCharacters('players');
+        } else {
+          this.gameInterface.highlightCharacters(true);
+        }
       }
     }
     return guiMasterObject;

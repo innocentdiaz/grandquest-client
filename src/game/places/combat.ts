@@ -31,6 +31,7 @@ import SlimeSheet from '@/assets/img/spritesheets/slime-sheet.png';
 import MountainWarriorSheet from '@/assets/img/spritesheets/mountain-warrior-sheet.png';
 // items
 import healPotionImage from '@/assets/img/items/heal-potion.png';
+import healPotion2Image from '@/assets/img/items/heal-potion-2.png';
 // misc
 import graveMarkerImage from'@/assets/img/misc/grave-marker.png';
 import SelectTargetImage from '@/assets/img/icon/select-target.png';
@@ -228,6 +229,7 @@ const newGame = (global: GameController): PhaserGame => {
           { name: 'mountain-warrior', src: MountainWarriorSheet, type: 'spritesheet', spriteDimensions: [64, 36] },
           // items
           { name: 'item-heal-potion', src: healPotionImage, type: 'image' },
+          { name: 'item-heal-potion-2', src: healPotion2Image, type: 'image' },
           // misc
           { name: 'select-target', src: SelectTargetImage, type: 'image' },
           { name: 'grave-marker', src: graveMarkerImage, type: 'spritesheet', spriteDimensions: [29, 20] },
@@ -1278,6 +1280,8 @@ export default function (): GameController {
       if (!gameController.gameInitialized || !gameController.game) {
         return;
       }
+      console.clear();
+      console.log(Date.now());
       const scene = gameController.game.scene.scenes[0];
 
       // ADD fade screen ...
@@ -1291,15 +1295,15 @@ export default function (): GameController {
       // category = true
       // ADD highlight all characters
       if (category === true) {
+        console.log('ALL SET TO 15');
         _.each({...gameController.gameState.players, ...gameController.gameState.enemies}, (character) => {
-          if (character.sprite.depth != 15) {
             character.sprite.setDepth(15);
-          }
         });
       }
       // category = false
       // REMOVE highlights all characters
       else if (category === false) {
+        console.log('ALL SET TO 10');
         _.each({...gameController.gameState.players, ...gameController.gameState.enemies}, (character) => {
           character.sprite.setDepth(10);
         });
@@ -1310,6 +1314,8 @@ export default function (): GameController {
         const oppositeCategory = category === 'enemies'
           ? 'players'
           : 'enemies';
+        console.log(category, ' SET TO 15');
+        console.log(oppositeCategory, ' SET TO 10');
         _.each(gameController.gameState[category], (character) => {
           character.sprite.setDepth(15);
         });
