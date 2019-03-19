@@ -245,7 +245,6 @@ export default class CombatRoom extends Vue {
 
     // combat hub connection attempt
     if (this.socket.connected && this.user.authenticated) {
-      console.log('attempt connections attempt from mount');
       this.attemptConnection();
     }
   }
@@ -253,12 +252,10 @@ export default class CombatRoom extends Vue {
     const { user, socket, roomConnection } = this;
     // on disconnect socket
     if (!socket.connected && roomConnection !== -1) {
-      console.log('disconnect');
       this.roomConnection = -1;
     }
     // combat hub connection attempt
     if (socket.connected && user.authenticated && roomConnection === -1) {
-      console.log('attempt connections attempt from update');
       this.attemptConnection();
     }
   }
@@ -274,15 +271,15 @@ export default class CombatRoom extends Vue {
   }
   public attemptConnection() {
     if (!this.socket.connected) {
-      return console.warn('Attempted connection but socket is not connected');
+      return;
     }
     if (this.roomConnection !== -1) {
-      return console.warn('Attempted connection when roomConnection is not -1');
+      return;
     }
 
     const { roomID } = this.$route.params;
     this.roomConnection = 0;
-    console.log('Joining combat room');
+
     this.SOCKET_EMIT(['COMBAT_ROOM_CONNECT', roomID, (err?: string, combatRoom?: CombatRoom) => {
       if (err) {
         this.roomConnection = err;
@@ -408,7 +405,6 @@ export default class CombatRoom extends Vue {
     const currentPlayer: CombatCharacter | null = this.currentPlayer;
 
     if (!currentPlayer) {
-      console.warn('No current user');
       return guiMasterObject;
     }
 

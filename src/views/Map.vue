@@ -73,7 +73,7 @@ export default class Map extends Vue {
   }
   .tool-tip {
     position: absolute;
-    max-width: 225px;
+    max-width: 425px;
     top: 10px;
     right: 10px;
     background: rgba(24, 24, 24, 0.856);

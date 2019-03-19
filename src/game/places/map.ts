@@ -102,8 +102,13 @@ const newGame = (global: GameInterface): any => {
         if (!global.gameInitialized) {
           return
         }
+
         
         var pointer = self.input.activePointer;
+
+        console.clear();
+        console.log('x', pointer.x);
+        console.log(`g.c.oW',`, self.game.canvas.offsetWidth);
         // move camera
         if (pointer.x < self.game.canvas.offsetWidth * 0.25) {
           self.cameras.main.scrollX -= 5.5;

@@ -977,7 +977,7 @@ const newGame = (global: GameController): PhaserGame => {
       let scene: Scene = game.scene.scenes[0];
 
       if (global.targetHand) {
-        return console.warn('target hand already added')
+        return;
       };
 
       let config!: { index: number; side: 0|1 };
@@ -1002,7 +1002,6 @@ const newGame = (global: GameController): PhaserGame => {
       });
 
       if (!config) {
-        console.warn('No config to add target hand');
         return;
       }
 
@@ -1014,7 +1013,7 @@ const newGame = (global: GameController): PhaserGame => {
     },
     removeTargetHand() {
       if (!global.targetHand) {
-        return console.warn('attempted to remove target hand which does not exist');
+        return;
       }
       global.targetHand.destroy()
       global.targetHand = null;
@@ -1155,7 +1154,7 @@ export default function (): GameController {
     // this will be binded to the game on launch
     keyMonitor(event: KeyboardEvent) {
       if (!gameController.game) {
-        return console.warn('Key monitor attempted to run but no game has been initialized');
+        return;
       }
 
       let scene: any = gameController.game.scene.scenes[0];
@@ -1253,10 +1252,10 @@ export default function (): GameController {
         const target = placingLine[gameController.currentTargetIndex].character;
 
         if (!target) {
-          return console.warn('Null character selected as target');
+          return;
         }
         if (!gameController.selectedAction) {
-          return console.warn('Null selectedAction provided when selecting target');
+          return;
         }
         store.dispatch('SOCKET_EMIT', [
           'COMBAT_ROOM_ACTION', {
