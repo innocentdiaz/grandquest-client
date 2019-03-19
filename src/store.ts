@@ -49,6 +49,7 @@ const initialState = {
       enemies: {},
       turn: -1,
       level: 0,
+      queuedEvents: {},
       turnEvents: {},
       playState: 1,
       readyToContinue: {},
