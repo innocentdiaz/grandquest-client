@@ -809,8 +809,6 @@ const newGame = (global: GameController): PhaserGame => {
         ? 'enemyPlacingLine'
         : 'playerPlacingLine';
 
-        console.clear();
-        console.log(`${entity.name}-idle`)
       // create game sprite
       let sprite =
         scene.add.sprite(-20, 0, entity.name)
@@ -1111,6 +1109,7 @@ export default function (): GameController {
       maxPlayers: 4,
       turn: -1,
       level: -1,
+      queuedEvents: {},
       turnEvents: {},
       playState: 1,
       levelRecord: {},
@@ -1280,8 +1279,7 @@ export default function (): GameController {
       if (!gameController.gameInitialized || !gameController.game) {
         return;
       }
-      console.clear();
-      console.log(Date.now());
+
       const scene = gameController.game.scene.scenes[0];
 
       // ADD fade screen ...
@@ -1295,7 +1293,6 @@ export default function (): GameController {
       // category = true
       // ADD highlight all characters
       if (category === true) {
-        console.log('ALL SET TO 15');
         _.each({...gameController.gameState.players, ...gameController.gameState.enemies}, (character) => {
             character.sprite.setDepth(15);
         });
@@ -1303,7 +1300,6 @@ export default function (): GameController {
       // category = false
       // REMOVE highlights all characters
       else if (category === false) {
-        console.log('ALL SET TO 10');
         _.each({...gameController.gameState.players, ...gameController.gameState.enemies}, (character) => {
           character.sprite.setDepth(10);
         });
@@ -1314,8 +1310,6 @@ export default function (): GameController {
         const oppositeCategory = category === 'enemies'
           ? 'players'
           : 'enemies';
-        console.log(category, ' SET TO 15');
-        console.log(oppositeCategory, ' SET TO 10');
         _.each(gameController.gameState[category], (character) => {
           character.sprite.setDepth(15);
         });

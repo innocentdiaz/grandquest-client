@@ -54,6 +54,22 @@ export interface CombatRoom {
     enemies: {
         [id: string]: CombatCharacter,
     },
+    queuedEvents: {
+        [characterId: string]: {
+            character: {
+                id: string;
+                enemy: boolean;
+            };
+            receiver: {
+                id: string;
+                enemy: boolean;
+            };
+            action: {
+                type: string;
+                id: string;
+            }
+        }
+    }
     turnEvents: { // TODO: probably should make an interface for ``
         [turnIndex: string]: [CombatEvent]
     }

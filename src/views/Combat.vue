@@ -24,122 +24,159 @@
     </div>
     <!-- COMBAT GAME -->
     <div class="combat-game">
-      <!-- header -->
-      <header>
-        <div class="game-header" v-if="gameInterface.showGUI">
-          <ul>
-            <router-link to="/world">Exit</router-link>
-            <div class="level" v-if="gameInterface.gameState.playState && currentPlayer">
-              <div class="icon">
-                <span id="level-label">{{user.level}}</span>
+      <div class="main-screen">
+        <!-- header -->
+        <header>
+          <div class="game-header" v-if="gameInterface.showGUI">
+            <ul>
+              <router-link to="/world">Exit</router-link>
+              <div class="level" v-if="gameInterface.gameState.playState && currentPlayer">
+                <div class="icon">
+                  <span id="level-label">{{user.level}}</span>
+                </div>
+                <div class="bar">
+                  <p id="xp-label">{{user.xp}}/{{user.nextLevelXp}} xp</p>
+                  <div id="xp-juice" :style="`width:${user.xp / user.nextLevelXp * 100}%;`"></div>
+                </div>
               </div>
-              <div class="bar">
-                <p id="xp-label">{{user.xp}}/{{user.nextLevelXp}} xp</p>
-                <div id="xp-juice" :style="`width:${user.xp / user.nextLevelXp * 100}%;`"></div>
-              </div>
-            </div>
-          </ul>
-          <h1 id="title" v-if="gameInterface.gameInitialized && !gameInterface.isAnimating && gameInterface.gameState.playState">
-            {{ combatGame.gameState.title }}, level {{ gameInterface.gameState.level }}
-          </h1>
-        </div>
-      </header>
-      <!-- Main screen -->
-      <div id="main">
-        <div id="canvas-parent"></div>
-        <!-- Display -->
-        <div class="display" v-if="socket.loading">
-          <p>Connecting to server</p>
-        </div>
-        <div class="display" v-else-if="!socket.connected">
-          <p>You are not connected to the server</p>
-        </div>
-        <div v-else-if="gameInterface.showGUI && currentPlayerSelectionStatus === 1" class="GUI">
-          <p>OK! Waiting for other players...</p>
-        </div>
-        <div
-          v-else-if="currentPlayer" 
-          :class="
-            gameInterface.isAnimating || currentPlayerSelectionStatus === -1
-              ? 'GUI hidden'
-              : combatGame.selectionMode === 'TARGET' && currentPlayerSelectionStatus === 0
-              ? 'GUI faded'
-              : 'GUI'
-          "
-        >
-          <div class="stats-container">
-            <div class="hp-container" v-if="currentPlayer">
-              <header>
-                <span>HP</span><span>{{currentPlayer.entity.health}}/{{currentPlayer.entity.maxHealth}}</span>
-              </header>
-              <div class="bar framed">
-                <div class="juice" :style="{width:`${(currentPlayer.entity.health/currentPlayer.entity.maxHealth)*100}%`}"></div>
-              </div>
-            </div>
-            <div class="energy-container" v-if="currentPlayer">
-              <header>
-                <span>EP</span><span>{{currentPlayer.entity.energy}}/{{currentPlayer.entity.maxEnergy}}</span>
-              </header>
-              <div class="bar framed">
-                <div class="juice" v-bind:style="{ width: `${currentPlayer.entity.energy / currentPlayer.entity.maxEnergy * 100}%` }"></div>
-              </div>
-            </div>
-            <h3 class="subtitle">Players: {{ combatGame.gameState.playerCount }} / {{ combatGame.gameState.maxPlayers }}</h3>
-          </div>
-          <div>
-            <ul id="gui-selection-list">
-              <li
-                v-for="(option, index) in currentScreenObject"
-                :key="option.title"
-                :class="`${option.disabled ? 'disabled' : ''} ${combatGame.selectionMode !== 'TARGET' && combatGame.selectionMode !== 'HIDDEN' && currentCursorIndex == index ? 'active' : ''}`"
-              >
-                {{ option.title }}
-              </li>
             </ul>
+            <h1 id="title" v-if="gameInterface.gameInitialized && !gameInterface.isAnimating && gameInterface.gameState.playState">
+              {{ combatGame.gameState.title }}, level {{ gameInterface.gameState.level }}
+            </h1>
           </div>
-          <div id="gui-description-container">
-            <p v-html="description"></p>
+        </header>
+        <!-- Main screen -->
+        <div id="main">
+          <div id="canvas-parent"></div>
+          <!-- Display -->
+          <div class="display" v-if="socket.loading">
+            <p>Connecting to server</p>
+          </div>
+          <div class="display" v-else-if="!socket.connected">
+            <p>You are not connected to the server</p>
+          </div>
+          <div v-else-if="gameInterface.showGUI && currentPlayerSelectionStatus === 1" class="GUI">
+            <p>OK! Waiting for other players...</p>
+          </div>
+          <div
+            v-else-if="currentPlayer" 
+            :class="
+              gameInterface.isAnimating || currentPlayerSelectionStatus === -1
+                ? 'GUI hidden'
+                : combatGame.selectionMode === 'TARGET' && currentPlayerSelectionStatus === 0
+                ? 'GUI faded'
+                : 'GUI'
+            "
+          >
+            <div class="stats-container">
+              <div class="hp-container" v-if="currentPlayer">
+                <header>
+                  <span>HP</span><span>{{currentPlayer.entity.health}}/{{currentPlayer.entity.maxHealth}}</span>
+                </header>
+                <div class="bar framed">
+                  <div class="juice" :style="{width:`${(currentPlayer.entity.health/currentPlayer.entity.maxHealth)*100}%`}"></div>
+                </div>
+              </div>
+              <div class="energy-container" v-if="currentPlayer">
+                <header>
+                  <span>EP</span><span>{{currentPlayer.entity.energy}}/{{currentPlayer.entity.maxEnergy}}</span>
+                </header>
+                <div class="bar framed">
+                  <div class="juice" v-bind:style="{ width: `${currentPlayer.entity.energy / currentPlayer.entity.maxEnergy * 100}%` }"></div>
+                </div>
+              </div>
+              <h3 class="subtitle">Players: {{ combatGame.gameState.playerCount }} / {{ combatGame.gameState.maxPlayers }}</h3>
+            </div>
+            <div>
+              <ul id="gui-selection-list">
+                <li
+                  v-for="(option, index) in currentScreenObject"
+                  :key="option.title"
+                  :class="`${option.disabled ? 'disabled' : ''} ${combatGame.selectionMode !== 'TARGET' && combatGame.selectionMode !== 'HIDDEN' && currentCursorIndex == index ? 'active' : ''}`"
+                >
+                  {{ option.title }}
+                </li>
+              </ul>
+            </div>
+            <div id="gui-description-container">
+              <p v-html="description"></p>
+            </div>
+          </div>
+        </div>
+        <!-- Outcomes screen -->
+        <div id="outcomes" v-if="gameInterface.gameInitialized && !gameInterface.gameState.playState && currentLevelRecord && !gameInterface.isAnimating">
+          <div class="content">
+            <aside>
+              <div class="user-container" v-for="(user, id) in currentLevelRecord.players" v-bind:key="id">
+                <img v-bind:src="require(`../assets/img/icon/people/${gameInterface.gameState.players[id].entity.name}.png`)" class="avatar" alt="User entity">
+                <div class="grid">
+                  <h3 class="title">{{gameInterface.gameState.players[id].username}}</h3>
+                  <h2 v-if="combatGame.gameState.readyToContinue[id]">Ready!</h2>
+                  <div v-else>
+                    <p>Dmg: {{user.damageDealt}}</p>
+                    <p>Gold: {{user.gold}}</p>
+                    <p>XP: {{user.xp}}</p>
+                  </div>
+                </div>
+              </div>
+            </aside>
+            <div class="main">
+              <h1>Level {{gameInterface.gameState.level}} {{currentLevelRecord.won ? 'completed' : 'lost'}}!</h1>
+              <h2 class="subtitle">Level completed in {{gameInterface.gameState.turn}} turns</h2>
+              <p><img class="icon" src="@/assets/img/icon/1bit-swords.png"/> dealt: {{currentLevelRecord.players[this.user.id].damageDealt}} dmg</p>
+              <p><img class="icon" src="@/assets/img/items/coins.png"/> earned: {{currentLevelRecord.players[this.user.id].gold}} gold</p>
+              <p><img class="icon" src="@/assets/img/misc/xp-orb.png"/> gained: {{currentLevelRecord.players[this.user.id].xp}} xp</p>
+              <button
+                class="ready"
+                v-if="currentLevelRecord.won"
+                :disabled="combatGame.gameState.readyToContinue[this.user.id]"
+                v-on:click="SOCKET_EMIT(['COMBAT_ROOM_READY'])"
+              >
+                Ready!
+              </button>
+              <button
+                v-else
+                v-on:click="$router.replace('/world/games')"
+                class="exit-btn"
+              >
+                EXIT
+              </button>
+            </div>
           </div>
         </div>
       </div>
-      <!-- Outcomes screen -->
-      <div id="outcomes" v-if="gameInterface.gameInitialized && !gameInterface.gameState.playState && currentLevelRecord && !gameInterface.isAnimating">
-        <div class="content">
-          <aside>
-            <div class="user-container" v-for="(user, id) in currentLevelRecord.players" v-bind:key="id">
-              <img v-bind:src="require(`../assets/img/icon/people/${gameInterface.gameState.players[id].entity.name}.png`)" class="avatar" alt="User entity">
-              <div class="grid">
-                <h3 class="title">{{gameInterface.gameState.players[id].username}}</h3>
-                <h2 v-if="combatGame.gameState.readyToContinue[id]">Ready!</h2>
-                <div v-else>
-                  <p>Dmg: {{user.damageDealt}}</p>
-                  <p>Gold: {{user.gold}}</p>
-                  <p>XP: {{user.xp}}</p>
-                </div>
-              </div>
+      <div class="combat-side-menu">
+        <div class="logo-container">
+          <img src="@/assets/img/icon/monokai-village/heros-trial.png" alt="">
+        </div>
+        <div class="invitations-container">
+          <h2>INVITE</h2>
+          <div class="link-container" v-if="gameInterface.gameState.playerCount < gameInterface.gameState.maxPlayers">
+            <img class="icon" src="http://cdn.onlinewebfonts.com/svg/img_325088.png" alt="">
+            <input class="link" v-bind:value="$route.path"/>
+          </div>
+          <div class="discord-container">
+            <img class="icon" src="@/assets/img/icon/discord.png" alt="">
+            <div class="label">
+              436 ONLINE
             </div>
-          </aside>
-          <div class="main">
-            <h1>Level {{gameInterface.gameState.level}} {{currentLevelRecord.won ? 'completed' : 'lost'}}!</h1>
-            <h2 class="subtitle">Level completed in {{gameInterface.gameState.turn}} turns</h2>
-            <p><img class="icon" src="@/assets/img/icon/1bit-swords.png"/> dealt: {{currentLevelRecord.players[this.user.id].damageDealt}} dmg</p>
-            <p><img class="icon" src="@/assets/img/items/coins.png"/> earned: {{currentLevelRecord.players[this.user.id].gold}} gold</p>
-            <p><img class="icon" src="@/assets/img/misc/xp-orb.png"/> gained: {{currentLevelRecord.players[this.user.id].xp}} xp</p>
-            <button
-              class="ready"
-              v-if="currentLevelRecord.won"
-              :disabled="combatGame.gameState.readyToContinue[this.user.id]"
-              v-on:click="SOCKET_EMIT(['COMBAT_ROOM_READY'])"
-            >
-              Ready!
-            </button>
-            <button
-              v-else
-              v-on:click="$router.replace('/world/games')"
-              class="exit-btn"
-            >
-              EXIT
-            </button>
+          </div>
+          <div class="reddit-container">
+            <img class="icon" src="@/assets/img/icon/reddit.png" alt="">
+            <div class="label">
+              r/grandquest
+            </div>
+          </div>
+        </div>
+        <div class="queued-events" v-if="!gameInterface.isAnimating">
+          <div class="character-container" v-for="character in gameInterface.turn % 2 ? gameInterface.gameState.enemies : gameInterface.gameState.players" :key="character.id">
+            <div class="portrait-container">
+              <img :src="require(`@/assets/img/spritesheets/${character.entity.name}-portrait.png`)" alt="">
+            </div>
+            <div class="description">
+              <h2 class="title">{{character.username}}</h2>
+              <p class="event-description">{{eventDescription(character.id)}}</p>
+            </div>
           </div>
         </div>
       </div>
@@ -329,6 +366,30 @@ export default class CombatRoom extends Vue {
     } else if (selectedOption.select) {
       this.gameInterface.selectAction(selectedOption.select);
     }
+  }
+  public eventDescription(id: string): string {
+    if (!this.gameInterface.gameInitialized) {
+      return '';
+    }
+
+    const characters = {...this.gameInterface.gameState.players, ...this.gameInterface.gameState.enemies};
+    const character = characters[id];
+
+    if (!character) {
+      return '...';
+    }
+
+    const queuedEvents = this.gameInterface.gameState.queuedEvents;
+    const characterEvent = _.find(queuedEvents, (event) => {
+      return event.character.id === id;
+    });
+
+    if (!characterEvent) {
+      return 'Waiting...';
+    }
+    const receiver = characters[characterEvent.receiver.id];
+
+    return `${character.username} chose ${characterEvent.action.type} ${characterEvent.action.id} on ${String(receiver.id) == String(id) ? 'self' : receiver.username}`;
   }
   get guiMasterObject() {
     let guiMasterObject: GuiMasterObject = {
@@ -537,190 +598,330 @@ $mainGreen: #9dff5c;
 
 .combat-root {
   height: 100vh;
-  width: 100%;
   position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   background: black;
-  #canvas-parent {
-    text-align: center;
-  }
-  .game-header {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    background: linear-gradient(to bottom, rgb(22, 22, 22), rgba(24, 24, 24, 0.6), rgba(24, 24, 24, 0.4), rgba(0, 0, 0, 0));
-    color: white;
-    z-index: 15;
-    animation: fade-in 0.5s forwards;
-    #title {
-      font-family: 'Lora', serif;
-      margin-left: 10px;
-    }
-    ul {
-      display: block;
-      margin: 0;
-      padding: 0;
-      background: black;
-      min-height: 30px;
-      padding: 0 10px;
-      display: flex;
-      flex-direction: row;
-      align-items: center;
-      justify-content: space-between;
-
-      .level {
-        display: flex;
-        flex-direction: row;
-        align-items: center;
-        span {
-          z-index: 10;
-        }
-        .icon {
-          height: 20px;
-          width: 20px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          color: white;
-          font-weight: bold;
-          background-image: url('../assets/img/misc/gold-frame.png');
-          background-position: center center;
-          background-repeat: no-repeat;
-          background-size: contain;
-          height: 45px;
-          font-size: 15px;
-          margin-right: 10px;
-        }
-        .bar {
-          position: relative;
-          height: 20px;
-          width: 250px;
-          color: white;
-          background: black;
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          border: 1px solid white;
-          overflow: hidden;
-          font-size: 15px;
-          #xp-label {
-            z-index: 6;
-          }
-          #xp-juice {
-            position: absolute;
-            left: 0;
-            top: 0;
-            bottom: 0;
-            background-image: linear-gradient(to bottom, #a700a7 80%, #800080);
-            width: 0;
-            z-index: 5;
-            &.animated {
-              background-color: rgb(189, 0, 189);
-              transition: .3s all ease-in-out;
-            }
-          }
-        }
-      }
-    }
-  }
-
-  .GUI {
-    animation-name: slide-up;
-    animation-duration: 0.5s;
-    animation-fill-mode: forwards;
-  }
-  #main {
-    height: 100vh;
-    width: 100vw;
+  overflow: hidden;
+  .combat-game {
     display: flex;
+    flex-direction: row;
     align-items: stretch;
-    flex-direction: column;
-    overflow: hidden;
-  }
-  #outcomes {
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    right: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 10;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    animation: 2s outcomes-fadein forwards;
-    .content {
-      position: relative;
-      border-radius: 5px;
-      background: white;
-      margin: 2em 1.25em;
-      min-width: 70%;
-      min-height: 50%;
-      max-height: 70%;
-      display: flex;
-      flex-direction: row;
-      align-items: stretch;
-      animation: 1s outcomes-scalein forwards;
+    width: 100vw;
 
-      .main {
-        flex: 4;
-        padding: 0 1em;
-        p {
+    .main-screen {
+      position: relative;
+      min-width: 600px;
+      flex: 1;
+      overflow: hidden;
+
+      #canvas-parent {
+        text-align: center;
+      }
+      .game-header {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        background: linear-gradient(to bottom, rgb(22, 22, 22), rgba(24, 24, 24, 0.6), rgba(24, 24, 24, 0.4), rgba(0, 0, 0, 0));
+        color: white;
+        z-index: 15;
+        animation: fade-in 0.5s forwards;
+        #title {
+          font-family: 'Lora', serif;
+          margin-left: 10px;
+        }
+        ul {
+          display: block;
+          margin: 0;
+          padding: 0;
+          background: black;
+          min-height: 30px;
+          padding: 0 10px;
           display: flex;
           flex-direction: row;
           align-items: center;
-          .icon {
-            margin-right: 0.5em;
-            height: 1.5em;
-            border-radius: 5px;
-          }
-        }
-        .ready {
-          position: absolute;
-          background: $mainGreen;
-          color: white;
-          border: none;
-          bottom: 1em;
-          right: 1em;
-          font-size: 1.3em;
-          padding: 5px 8px;
-          border-bottom-right-radius: 5px;
-          transition: .2s all ease-in-out;
-          &:hover {
-            transform: scale(1.1);
-            border-radius: 5px;
-            box-shadow: 3px 3px 3px rgb(161, 161, 161);
+          justify-content: space-between;
+
+          .level {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            span {
+              z-index: 10;
+            }
+            .icon {
+              height: 20px;
+              width: 20px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              color: white;
+              font-weight: bold;
+              background-image: url('../assets/img/misc/gold-frame.png');
+              background-position: center center;
+              background-repeat: no-repeat;
+              background-size: contain;
+              height: 45px;
+              font-size: 15px;
+              margin-right: 10px;
+            }
+            .bar {
+              position: relative;
+              height: 20px;
+              width: 250px;
+              color: white;
+              background: black;
+              display: flex;
+              justify-content: center;
+              align-items: center;
+              border: 1px solid white;
+              overflow: hidden;
+              font-size: 15px;
+              #xp-label {
+                z-index: 6;
+              }
+              #xp-juice {
+                position: absolute;
+                left: 0;
+                top: 0;
+                bottom: 0;
+                background-image: linear-gradient(to bottom, #a700a7 80%, #800080);
+                width: 0;
+                z-index: 5;
+                &.animated {
+                  background-color: rgb(189, 0, 189);
+                  transition: .3s all ease-in-out;
+                }
+              }
+            }
           }
         }
       }
-      aside {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        align-items: stretch;
-        box-shadow: 0 0 5px inset grey;
 
-        .user-container {
+      .GUI {
+        animation-name: slide-up;
+        animation-duration: 0.5s;
+        animation-fill-mode: forwards;
+      }
+      #main {
+        display: flex;
+        align-items: stretch;
+        flex-direction: column;
+        overflow: hidden;
+      }
+      #outcomes {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        right: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 10;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        animation: 2s outcomes-fadein forwards;
+        .content {
+          position: relative;
+          border-radius: 5px;
+          background: white;
+          margin: 2em 1.25em;
+          min-width: 70%;
+          min-height: 50%;
+          max-height: 70%;
+          display: flex;
+          flex-direction: row;
+          align-items: stretch;
+          animation: 1s outcomes-scalein forwards;
+
+          .main {
+            flex: 4;
+            padding: 0 1em;
+            p {
+              display: flex;
+              flex-direction: row;
+              align-items: center;
+              .icon {
+                margin-right: 0.5em;
+                height: 1.5em;
+                border-radius: 5px;
+              }
+            }
+            .ready {
+              position: absolute;
+              background: $mainGreen;
+              color: white;
+              border: none;
+              bottom: 1em;
+              right: 1em;
+              font-size: 1.3em;
+              padding: 5px 8px;
+              border-bottom-right-radius: 5px;
+              transition: .2s all ease-in-out;
+              &:hover {
+                transform: scale(1.1);
+                border-radius: 5px;
+                box-shadow: 3px 3px 3px rgb(161, 161, 161);
+              }
+            }
+          }
+          aside {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            box-shadow: 0 0 5px inset grey;
+
+            .user-container {
+              display: flex;
+              flex-direction: row;
+              align-items: center;
+              margin: 20px 10px 0 0;
+
+              .avatar {
+                align-self: flex-start;
+                height: 3.5em;
+              }
+              .grid {
+                .title {
+                  display: block;
+                  margin: 10px 0 5px 0;
+                }
+                p {
+                  margin: 2px 0;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    .combat-side-menu {
+      background: #c1cdc9;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      padding: 1em;
+      max-width: 300px;
+
+      .logo-container {
+        text-align: center;
+        margin-bottom: 1em;
+        img {
+          width: 100%;
+        }
+      }
+      .invitations-container {
+        background: #dee7e3;
+        text-align: center;
+        border-radius: 5px;
+        padding: 1em;
+
+        .link-container {
+          display: flex;
+          flex-direction: row;
+          align-items: stretch;
+          border: 1px solid #d1d5da;
+          border-radius: 5px;
+          overflow: hidden;
+          margin-bottom: 1em;
+
+          .icon {
+            padding: 8px;
+            height: 2em;
+            background-image: linear-gradient(to bottom,#fafbfc,#eff3f6 90%);
+
+            &:hover {
+              cursor: pointer;
+              background-image: linear-gradient(to bottom,#f0f3f6,#e6ebf1 90%);
+              border-color: rgba(27,31,35,.35);
+            }
+            &:active {
+              background: #e6ebf1;
+            }
+          }
+          .link {
+            background: white;
+            box-shadow: inset 0 1px 2px rgba(27,31,35,.075);
+            color: #24292e;
+            font-family: monospace;
+            border: none;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            padding: 0 1em;
+            overflow: hidden;
+          }
+        }
+        .discord-container, .reddit-container {
+          border-radius: calc(1.5em /2);
           display: flex;
           flex-direction: row;
           align-items: center;
-          margin: 20px 10px 0 0;
-
-          .avatar {
-            align-self: flex-start;
-            height: 3.5em;
+          overflow: hidden;
+          margin-bottom: 1em;
+          .icon {
+            height: 1.5em;
+            padding: 4px;
           }
-          .grid {
+          .label {
+            align-self: stretch;
+            color: white;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: small;
+          }
+        }
+        .discord-container {
+          .icon {
+            background: #687fbf;
+          }
+          .label {
+            background: #7289da;
+          }
+        }
+        .reddit-container {
+          .icon {
+            padding: 0;
+            background: #ff2f1f;
+          }
+          .label {
+            background: #ff620a;
+          }
+        }
+      }
+      .queued-events {
+        margin-top: 2em;
+        background: #dee7e3;
+        border-radius: 5px;
+        padding: 1em;
+        .character-container {
+          display: flex;
+          flex-direction: row;
+          align-items: center;
+          .portrait-container {
+            margin-right: 15px;
             .title {
-              display: block;
-              margin: 10px 0 5px 0;
+              font-size: medium;
+              margin: 0;
             }
-            p {
-              margin: 2px 0;
+            .event-description {
+              margin: 0;
+            }
+            img {
+              height: 3em;
+              image-rendering: optimizeSpeed;             /* STOP SMOOTHING, GIVE ME SPEED  */
+              image-rendering: -moz-crisp-edges;          /* Firefox                        */
+              image-rendering: -o-crisp-edges;            /* Opera                          */
+              image-rendering: -webkit-optimize-contrast; /* Chrome (and eventually Safari) */
+              image-rendering: pixelated; /* Chrome */
+              image-rendering: optimize-contrast;         /* CSS3 Proposed                  */
+              -ms-interpolation-mode: nearest-neighbor;   /* IE8+                           */
             }
           }
         }
