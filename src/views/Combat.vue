@@ -168,7 +168,7 @@
             </div>
           </div>
         </div>
-        <div class="queued-events" v-if="!gameInterface.isAnimating">
+        <div class="queued-events" v-if="!gameInterface.isAnimating && gameInterface.gameState.playState === 1">
           <div class="character-container" v-for="character in gameInterface.turn % 2 ? gameInterface.gameState.enemies : gameInterface.gameState.players" :key="character.id">
             <div class="portrait-container">
               <img :src="require(`@/assets/img/spritesheets/${character.entity.name}-portrait.png`)" alt="">

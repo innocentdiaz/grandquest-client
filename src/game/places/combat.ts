@@ -458,7 +458,11 @@ const newGame = (global: GameController): PhaserGame => {
           // IF we have NOT just joined the match
           let appliedEvents = networkGameState.turnEvents[global.gameState.turn];
           if (appliedEvents && global.gameState.turn !== -1) {
-            actions.animateEvents(appliedEvents);
+            if (!appliedEvents.length) {
+              store.commit('SET_COMBAT_GAME_SELECTION_MODE', 'ACTION');
+            } else {
+              actions.animateEvents(appliedEvents);
+            }
           }
           global.gameState.turn = networkGameState.turn;
         }
@@ -610,10 +614,6 @@ const newGame = (global: GameController): PhaserGame => {
             global._fadeScreen
               .setSize(scene.game.canvas.offsetWidth, scene.game.canvas.offsetHeight);
           }
-        }
-
-        if (!global.isAnimating && (store.state.combatGame.selectionMode === 'HIDDEN' && global.gameState.turn % 2 === 0)) {
-          store.commit('SET_COMBAT_GAME_SELECTION_MODE', 'ACTION');
         }
       },
     },
@@ -1263,7 +1263,6 @@ export default function (): GameController {
             action: gameController.selectedAction,
           }
         ]);
-        store.commit('SET_COMBAT_GAME_SELECTION_MODE', 'HIDDEN');
       }
     },
     resizeMonitor() {
