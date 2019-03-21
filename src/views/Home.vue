@@ -5,10 +5,10 @@
       <aside>
         <img :src="require('@/assets/img/icon/gq.png')" id="logo">
         <p>
-          You've stumbled onto a great quest. Mountains range as far as 
-          the eye can see. Ahead of you stand walls of a great empire,
-          and you can feel the adventure calling you. What will you do 
-          with the skills, tools and alliences you build?
+          <strong>You've stumbled onto a great quest.</strong> Mountains range as far as 
+          the eye can see. Surrounding you is the unexplored world,
+          and you hear adventure calling you. What will you do 
+          with the skills, rewards and experience you earn?
         </p>
       </aside>
       <div class="content" v-if="!user.authenticated">
@@ -17,7 +17,7 @@
         <SignUpForm />
       </div>
       <div class="content" v-else>
-        <h1>Thank you for joining GrandQuest!</h1>
+        <h1>Great to see you are onboard!</h1>
         <h2 class="subtitle">Here are some useful links</h2>
         <p><router-link to="/about">About GrandQuest</router-link></p>
         <p><router-link to="/world">Our World</router-link></p>
@@ -80,8 +80,6 @@ $mainGrey: rgb(179, 179, 179);
       width: 30%;
 
       padding: 1em;
-      color: $mainGrey;
-      font-weight: lighter;
       line-height: 2rem;
     }
     .content {
