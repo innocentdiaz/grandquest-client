@@ -156,12 +156,7 @@
             <input class="link" id="link-input" readonly="readonly" v-bind:value="roomLink"/>
           </div>
           <span style="color: #25AD10" id="link-copy-label"></span>
-          <div class="discord-container">
-            <img class="icon" src="@/assets/img/icon/discord.png" alt="">
-            <div class="label">
-              436 ONLINE
-            </div>
-          </div>
+          <DiscordLabel/>
           <div class="reddit-container">
             <img class="icon" src="@/assets/img/icon/reddit.png" alt="">
             <div class="label">
@@ -188,6 +183,7 @@
 import { Component, Vue } from 'vue-property-decorator';
 import { Action, State, Mutation } from 'vuex-class';
 import ActivityIndicator from '@/components/ActivityIndicator.vue';
+import DiscordLabel from '@/components/DiscordLabel.vue';
 import { SocketState, User, CombatGame } from '@/types';
 import { CombatCharacter, Attack, InventoryItem } from '@/game/types';
 import _ from 'underscore';
@@ -216,7 +212,7 @@ interface GuiMasterObject {
 }
 
 @Component({
-  components: { ActivityIndicator },
+  components: { ActivityIndicator, DiscordLabel },
 })
 export default class CombatRoom extends Vue {
   @State public user!: User;
@@ -902,7 +898,7 @@ $mainGreen: #9dff5c;
             overflow: hidden;
           }
         }
-        .discord-container, .reddit-container {
+        .reddit-container {
           border-radius: calc(1.5em /2);
           display: flex;
           flex-direction: row;
@@ -921,14 +917,6 @@ $mainGreen: #9dff5c;
             align-items: center;
             justify-content: center;
             font-size: small;
-          }
-        }
-        .discord-container {
-          .icon {
-            background: #687fbf;
-          }
-          .label {
-            background: #7289da;
           }
         }
         .reddit-container {
