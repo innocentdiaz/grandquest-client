@@ -1,12 +1,17 @@
 <template>
     <div class="forum">
         <div class="control">
-            <UserControl />
-            <div class="forum-control">
-                <h2>What's trending</h2>
-                <h3>Live feed</h3>
-                <p>[ Live feed coming soon ]</p>
+            <div class='control-head'>
+                <img src="@/assets/img/icon/grandquest.png" />
+                <p class="subtitle" v-if="socket.connected">It's {{timeOfDay}} in the world!</p>
+                <p class="subtitle" v-else>You don't appear to be connected to the server.</p>
             </div>
+            <iframe
+                src="https://discordapp.com/widget?id=557628151837229074&theme=dark"
+                allowtransparency="true"
+                frameborder="0"
+                height="320px"
+            ></iframe>
         </div>
         
         <div class="forum-content">
@@ -53,7 +58,7 @@
 <script lang="ts">
     import { Component, Vue } from 'vue-property-decorator';
     import { State, Getter } from 'vuex-class';
-    import { User } from '../../types';
+    import { User, World, SocketState } from '../../types';
     import moment from 'moment';
     import UserControl from '@/components/UserControl.vue';
     import ActivityIndicator from '../../components/ActivityIndicator.vue';
@@ -63,7 +68,9 @@
     })
 
     export default class Forum extends Vue {
+        @State public socket!: SocketState;
         @State public user!: User;
+        @State public world!: World;
 
         public currentForumIndex = 0;
         public mainForums = [
@@ -132,6 +139,9 @@
         public sinceDate(date: string) {
             return moment(date).fromNow();
         }
+        get timeOfDay() {
+            return moment(this.world.timeOfDay).format("ddd, MMM Do, ha");
+        }
     }
 </script>
 
@@ -179,11 +189,15 @@
                 color: $mainGrey;
             }
             
-            .forum-control, .selected-board-control {
-                padding: 12px;
+            .control-head {
                 background: white;
+                padding: 1em;
                 border-radius: 10px;
-                min-height: 250px;
+                margin-bottom: 1em;
+
+                img {
+                    width: 200px;
+                }
             }
         }
         .forum-content {
