@@ -248,6 +248,7 @@
                         display: flex;
                         flex-direction: row;
                         align-items: stretch;
+                        transform: translateY(-2px);
 
                         button {
                             flex: 1;
@@ -258,7 +259,7 @@
                             font-size: large;
                             padding: 1em;
                             box-shadow: inset 2px 2px 3px #3c3c3c;
-                            margin-bottom: 10px;
+                            margin: 0 0 10px 0;
 
                             transition: .2s all ease-in-out;
 
