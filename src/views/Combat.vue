@@ -13,7 +13,7 @@
       </div>
       <div v-else class="loading-text">
         {{
-          !socket.loading
+          socket.loading
           ? 'Connecting to server...'
           : !socket.connected
           ? 'Failed connection to server...'
@@ -176,7 +176,7 @@
             </div>
             <div class="description">
               <h2 class="title">{{character.username}}</h2>
-              <p class="event-description">{{eventDescription(character.id)}}</p>
+              <p class="event-description" v-html="eventDescription(character.id)"></p>
             </div>
           </div>
         </div>
@@ -400,7 +400,7 @@ export default class CombatRoom extends Vue {
     }
     const receiver = characters[characterEvent.receiver.id];
 
-    return `${character.username} chose ${characterEvent.action.type} ${characterEvent.action.id} on ${String(receiver.id) == String(id) ? 'self' : receiver.username}`;
+    return `<strong>${character.username}</strong> chose <strong>${characterEvent.action.type.toUpperCase()} "${characterEvent.action.id.replace(/-/gi, ' ')}"</strong> on <strong>${String(receiver.id) == String(id) ? 'self' : receiver.username}</strong>`;
   }
   public copyLink() {
     /* Get the text field */

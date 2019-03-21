@@ -49,7 +49,7 @@ const initialState = {
       enemies: {},
       turn: -1,
       level: 0,
-      queuedEvents: {},
+      queuedEvents: [],
       turnEvents: {},
       playState: 1,
       readyToContinue: {},
@@ -155,6 +155,8 @@ const actions = {
       commit('UPDATE_SOCKET_USER', user);
     });
     socket.on('COMBAT_ROOM_STATE', (combatRoomState: CombatRoom) => {
+      console.clear();
+      console.log('received', combatRoomState.queuedEvents);
       commit('SET_COMBAT_GAME_STATE', combatRoomState);
     });
   },

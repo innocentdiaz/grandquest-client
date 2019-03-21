@@ -377,6 +377,9 @@ const newGame = (global: GameController): PhaserGame => {
         /*
           GAME LOGIC
         */
+
+        global.gameState.queuedEvents = [...networkGameState.queuedEvents];
+
         /* Level updating / rendering */
         // if we are on a different level than on the network
         if (global.gameState.level !== networkGameState.level && networkGameState.level !== -1) {
@@ -1108,7 +1111,7 @@ export default function (): GameController {
       maxPlayers: 4,
       turn: -1,
       level: -1,
-      queuedEvents: {},
+      queuedEvents: [],
       turnEvents: {},
       playState: 1,
       levelRecord: {},
