@@ -148,10 +148,8 @@ export default class Hub extends Vue {
 
     // combat hub connection attempt
     if (socket.connected && user.authenticated && this.combatHubConnection === -1) {
-      // console.log('joining combat hub');
       this.combatHubConnection = 0;
       this.SOCKET_EMIT(['COMBAT_HUB_CONNECT', (err?: string) => {
-        // console.log('combat hub callbck -> ', err);
         if (!err) {
           this.combatHubConnection = 1;
         } else {

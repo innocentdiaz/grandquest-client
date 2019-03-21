@@ -114,7 +114,6 @@ export default class Home extends Vue {
     }
   }
   public resetInputDirty() {
-    console.log('reset dirt');
     this.inputDirty = {
       email: false,
       username: false,

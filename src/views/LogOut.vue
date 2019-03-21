@@ -21,7 +21,6 @@ export default class LogOut extends Vue {
     const jwt = this.user.token || localStorage.getItem('grandquest:jwt');
 
     if (jwt) {
-      console.log('delete auth using jwt ', api.headers)
       api.delete(`/auth/${jwt}`).then(res => {
         if (res.ok) {
           localStorage.removeItem('grandquest:jwt');
@@ -29,7 +28,6 @@ export default class LogOut extends Vue {
         location.reload();
       });
     } else {
-      console.log('no user token!');
       this.$router.replace('/');
     }
   }

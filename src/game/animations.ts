@@ -57,7 +57,6 @@ const animations: Animations = {
         x: atkPosition,
         onStart() {
           character.sprite.play(`adventurer-walk`);
-          console.log('set adventurer to 15');
           character.sprite.setDepth(15);
         },
       });
@@ -120,7 +119,6 @@ const animations: Animations = {
         onComplete() {
           character.sprite.scaleX *= -1;
           character.sprite.play(`adventurer-idle`);
-          console.log('set adventurer to 10');
           character.sprite.setDepth(10);
           resolve();
         },
@@ -686,7 +684,6 @@ const animations: Animations = {
       const outcomeDamage = event.outcome.damage;
 
       const baseDamage = (character.power / receiver.defense) * event.outcome.attackBase;
-      console.log(`${outcomeDamage} <= ${character.power / receiver.defense} * ${event.outcome.attackBase}`);
       let text = '';
       if (outcomeDamage === 0) {
         text = 'MISS!';

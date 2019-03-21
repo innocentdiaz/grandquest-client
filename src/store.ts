@@ -135,11 +135,9 @@ const actions = {
     });
     socket.on('reconnect_attempt', () => {
       commit('SET_SOCKET_LOADING', true);
-      console.log('Socket attempting reconnection');
     });
     socket.on('reconnect_error', () => {
       commit('SET_SOCKET_CONNECTION', false);
-      console.log('Socket reconnection Fail');
     });
 
     /*
@@ -155,8 +153,6 @@ const actions = {
       commit('UPDATE_SOCKET_USER', user);
     });
     socket.on('COMBAT_ROOM_STATE', (combatRoomState: CombatRoom) => {
-      console.clear();
-      console.log('received', combatRoomState.queuedEvents);
       commit('SET_COMBAT_GAME_STATE', combatRoomState);
     });
   },
@@ -171,7 +167,6 @@ const actions = {
           commit('UPDATE_SOCKET_USER', { ...user, authenticated: true, token: JWT });
         } else {
           commit('UPDATE_SOCKET_USER', { ...user, authenticated: false, token: null });
-          console.log(`vuex > initializeSocket > "socket auth error = '${err}'"`);
           localStorage.removeItem('grandquest:jwt');
         }
       });
@@ -183,30 +178,6 @@ const actions = {
     }
     socket.emit(...params);
   },
-  /*
-    Provides a way to be 'connect' to rooms on the
-    socket and be reconnected in the case the socket
-    goes off and back on
-  */
-  // socketJoinRoom({ commit }: ActionContext, name: string, id?: string) {
-  //   if (!socket.connected) console.warn('Attempted to join room before socket connected');
-  //   console.log(`vuex > socketJoinRoom > "attempting to join room '${name}'..."`);
-
-  //   const cb = (err: any) => {
-  //     if (err) {
-  //       console.log(`vuex > socketJoinRoom > "room '${name}' join error = ${err} "`);
-  //     } else {
-  //       commit(`SET_SOCKET_ROOM`, { name, id });
-  //     }
-  //   }
-
-  //   // if a room id is present
-  //   if (id) {
-  //     socket.emit(`${name.toUpperCase()}_CONNECT`, id, cb);
-  //   } else {
-  //     socket.emit(`${name.toUpperCase()}_CONNECT`, cb);
-  //   }
-  // },
   socketLeaveRoom({ commit }: ActionContext, room: string) {
     if (!socket.connected) console.warn('vuex > socketLeaveRoom > "Attempted to leave room before socket connected"');
 
