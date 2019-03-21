@@ -152,8 +152,8 @@
         <div class="invitations-container">
           <h2>INVITE</h2>
           <div class="link-container" v-if="gameInterface.gameState.playerCount < gameInterface.gameState.maxPlayers">
-            <img class="icon" src="http://cdn.onlinewebfonts.com/svg/img_325088.png" v-on:click="copyLink">
-            <input class="link" id="link-input" v-bind:value="roomLink"/>
+            <img class="icon" src="@/assets/img/icon/share-link.png" v-on:click="copyLink">
+            <input class="link" id="link-input" readonly="readonly" v-bind:value="roomLink"/>
           </div>
           <span style="color: #25AD10" id="link-copy-label"></span>
           <div class="discord-container">
@@ -410,10 +410,7 @@ export default class CombatRoom extends Vue {
       return;
     }
 
-    /* Select the text field */
     copyText.select();
-
-    /* Copy the text inside the text field */
     document.execCommand("copy");
 
     /* Alert the copied text */
@@ -936,7 +933,6 @@ $mainGreen: #9dff5c;
         }
         .reddit-container {
           .icon {
-            padding: 0;
             background: #ff2f1f;
           }
           .label {
