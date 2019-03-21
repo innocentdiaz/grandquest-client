@@ -103,27 +103,23 @@ const newGame = (global: GameInterface): any => {
           return
         }
 
-        
-        var pointer = self.input.activePointer;
+        const pointer = global.pointer;
 
-        console.clear();
-        console.log('x', pointer.y);
-        console.log(`g.c.oW',`, self.game.canvas.offsetHeight);
-        // move camera
-        if (pointer.x < self.game.canvas.offsetWidth * 0.25) {
-          self.cameras.main.scrollX -= 5.5;
+        if (pointer.hovering) {
+          // move camera
+          if (pointer.x < self.game.canvas.offsetWidth * 0.25) {
+            self.cameras.main.scrollX -= 5.5;
+          }
+          if (pointer.x > self.game.canvas.offsetWidth * 0.75) {
+            self.cameras.main.scrollX += 5.5;
+          }
+          if (pointer.y < self.game.canvas.offsetHeight * 0.25) {
+            self.cameras.main.scrollY -= 5.5;
+          }
+          if (pointer.y > self.game.canvas.offsetHeight * 0.75) {
+            self.cameras.main.scrollY += 5.5;
+          }
         }
-        if (pointer.x > self.game.canvas.offsetWidth * 0.75) {
-          self.cameras.main.scrollX += 5.5;
-        }
-        if (pointer.y < self.game.canvas.offsetHeight * 0.25) {
-          self.cameras.main.scrollY -= 5.5;
-        }
-        if (pointer.y > self.game.canvas.offsetHeight * 0.75) {
-          self.cameras.main.scrollY += 5.5;
-        }
-        
-
         // update sky colors
         global._skyGradient.clear();
         const worldHour = new Date(store.state.world.timeOfDay).getHours();
@@ -304,12 +300,14 @@ interface GameInterface {
     description?: string;
   };
   chosenShop: string | null;
+  pointer: { x: number; y: number; hovering: boolean; };
   _bg: any;
   _skyGradient: any;
   launch: () => void;
   exitShop: () => void;
   destroyGame: () => void;
   scrollMonitor: (event: WheelEvent) => void;
+  mouseMonitor: (event: MouseEvent) => void;
 }
 
 /**
@@ -325,6 +323,7 @@ export default (): GameInterface => {
     _bg: null,
     _skyGradient: null,
     gameInitialized: false,
+    pointer: { x: 0, y: 0, hovering: false },
     launch() {
       if (!game) {
         game = newGame(global);
@@ -333,6 +332,17 @@ export default (): GameInterface => {
     destroyGame() {
       if (game) {
         game.destroy();
+      }
+    },
+    mouseMonitor(event) {
+      if (!global.gameInitialized) {
+        return;
+      }
+
+      global.pointer = {
+        x: event.clientX,
+        y: event.clientY,
+        hovering: true,
       }
     },
     scrollMonitor(event) {

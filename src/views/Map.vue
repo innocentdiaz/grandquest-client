@@ -11,7 +11,12 @@
         EXIT
       </button>
       <!-- Parent for the Phaser.Game canvas -->
-      <div id="canvas-parent">
+      <div
+        id="canvas-parent"
+        v-on:mousemove="gameInterface.mouseMonitor"
+        v-on:mouseleave="gameInterface.pointer.hovering = false"
+        v-on:resize="resizeMonitor"
+      >
       </div>
       <div class="tool-tip" v-if="gameInterface.tooltip.title">
         <h2>{{gameInterface.tooltip.title}}</h2>
