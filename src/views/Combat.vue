@@ -152,9 +152,10 @@
         <div class="invitations-container">
           <h2>INVITE</h2>
           <div class="link-container" v-if="gameInterface.gameState.playerCount < gameInterface.gameState.maxPlayers">
-            <img class="icon" src="http://cdn.onlinewebfonts.com/svg/img_325088.png" alt="">
-            <input class="link" v-bind:value="$route.path"/>
+            <img class="icon" src="http://cdn.onlinewebfonts.com/svg/img_325088.png" v-on:click="copyLink">
+            <input class="link" id="link-input" v-bind:value="roomLink"/>
           </div>
+          <span style="color: #25AD10" id="link-copy-label"></span>
           <div class="discord-container">
             <img class="icon" src="@/assets/img/icon/discord.png" alt="">
             <div class="label">
@@ -190,6 +191,7 @@ import ActivityIndicator from '@/components/ActivityIndicator.vue';
 import { SocketState, User, CombatGame } from '@/types';
 import { CombatCharacter, Attack, InventoryItem } from '@/game/types';
 import _ from 'underscore';
+import { TweenMax } from 'gsap';
 import io from 'socket.io-client';
 import api from '@/api';
 import GameController from '@/game/places/combat';
@@ -229,6 +231,7 @@ export default class CombatRoom extends Vue {
   @Mutation public RESET_GAME_STATE: any;
   @Mutation public SET_SOCKET_ROOM: any;
 
+  public roomLink = window.location.href;
   public roomConnection: -1 | 0 | 1 | string = -1; // -1 = not pending, 0 = pending, 1 = ok, 'string' = error
 
   public gameInterface = GameController();
@@ -387,6 +390,45 @@ export default class CombatRoom extends Vue {
     const receiver = characters[characterEvent.receiver.id];
 
     return `${character.username} chose ${characterEvent.action.type} ${characterEvent.action.id} on ${String(receiver.id) == String(id) ? 'self' : receiver.username}`;
+  }
+  public copyLink() {
+    /* Get the text field */
+    const copyText = document.getElementById("link-input") as HTMLInputElement;
+
+    if (!copyText) {
+      return;
+    }
+
+    /* Select the text field */
+    copyText.select();
+
+    /* Copy the text inside the text field */
+    document.execCommand("copy");
+
+    /* Alert the copied text */
+    const linkCopyLabel = document.getElementById('link-copy-label');
+    if (!linkCopyLabel) {
+      return;
+    }
+
+    linkCopyLabel.innerHTML = 'Copied URL to clipboard!';
+    TweenMax.fromTo(
+      linkCopyLabel,
+      0.5,
+      { opacity: 0 },
+      { opacity: 1 },
+    );
+    TweenMax.to(
+      linkCopyLabel,
+      0.8,
+      {
+        opacity: 0,
+        delay: 2,
+        onComplete() {
+          linkCopyLabel.innerHTML = '';
+        },
+      },
+    );
   }
   get guiMasterObject() {
     let guiMasterObject: GuiMasterObject = {
