@@ -81,7 +81,7 @@
         <button v-if="combatData.loaded && combatData.health === 0" class="need-health main-start" disabled="true">
           PLAY MULTIPLAYER
         </button>
-        <button v-else :class="`${user.authenticated ? '' : 'need-auth'} main-start`" :disabled="combatHubConnection !== 1 || !user.authenticated" v-on:click="setRoomsVisiblity(true)">
+        <button v-else :class="`${!user.authenticated ? 'need-auth' : user.socketLock ? 'socket-lock' : ''} main-start`" :disabled="combatHubConnection !== 1 || !user.authenticated || !!user.socketLock" v-on:click="setRoomsVisiblity(true)">
           PLAY MULTIPLAYER
         </button>
         <div class="hr-text">

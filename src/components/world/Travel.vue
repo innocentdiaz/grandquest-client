@@ -7,12 +7,13 @@
     <div class="body">
       <div class="panel" v-if="user.authenticated">
         <section>
-          <p>{{user.username}}'s travel log: </p>
+          <h3>{{user.username}}'s travel log: </h3>
         </section>
+        <p>Arrived to Monokai village...</p>
       </div>
       <div class="buttons">
-        <button :class="`${user.authenticated ? '' : 'need-auth'} main-start`" :disabled="!socket.connected || !user.authenticated" v-on:click="() => $router.replace({ name: 'map' })">
-          EXPLORE MONOKAI
+        <button :class="`${!user.authenticated ? 'need-auth' : user.socketLock ? 'socket-lock' : ''} main-start`" :disabled="!socket.connected || !user.authenticated || !!user.socketLock" v-on:click="() => $router.replace({ name: 'map' })">
+          EXPLORE MONOKAI {{user.socketLock}}
         </button>
       </div>
     </div>
@@ -29,6 +30,11 @@ export default class Travel extends Vue {
   @State public socket!: SocketState;
   @State public world!: World;
 
+  public updated() {
+    if (this.user.socketLock) {
+      this.$router.push('/world/travel');
+    }
+  }
   get bgColor() {
     // number from 0-23 relating to the hour of the day in the world
     const worldHour = new Date(this.world.timeOfDay).getHours();

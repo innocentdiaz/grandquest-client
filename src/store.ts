@@ -81,7 +81,12 @@ const mutations = {
     s.socket.loading = true;
   },
   UPDATE_SOCKET_USER (s: State, user: User) {
-    s.user = { ...s.user, ...user };
+    const prevUser = s.user;
+    s.user = {
+      ...user,
+      token: prevUser.token,
+      authenticated: true,
+    };
   },
   SET_SOCKET_ROOM (s: State, room: any) {
     s.socket.room = room;

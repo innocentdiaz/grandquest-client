@@ -426,6 +426,19 @@ export default class Main extends Vue {
                     padding: 2px 5px;
                   }
                 }
+                &.socket-lock {
+                  &::after {
+                    content: 'You are currently in game!';
+                    font-size: small;
+                    position: absolute;
+                    top: -1em;
+                    right: -1em;
+                    background: #d30938;
+                    text-shadow: none;
+                    border-radius: 2px;
+                    padding: 2px 5px;
+                  }
+                }
               }
               .play-singleplayer {
                 color: #ddc86c;

@@ -29,6 +29,7 @@ export interface User {
     level: number;
     xp: number;
     nextLevelXp: number;
+    socketLock?: string;
 }
 export interface World {
     timeOfDay: number;

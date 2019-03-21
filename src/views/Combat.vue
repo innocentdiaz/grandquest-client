@@ -3,7 +3,7 @@
     <!-- LOADING SCREEN -->
     <div v-if="!gameInterface.gameInitialized || roomConnection !== 1" id="loading-screen" :class="`${typeof roomConnection === 'string' ? 'blur' : ''}`">
       <img src="@/assets/img/icon/monokai-village/heros-trial.png" alt="Hero's Trial" class="icon" v-on:click="$router.push(`/world`)">
-      <div class="tip">Fun fact: <br/> Coordinates with others players to make the most effective use of your attacks and items!</div>
+      <div class="tip">Hot tip: <br/> {{hotTip}}</div>
       <div id="loading-error-container" v-if="typeof roomConnection === 'string'">
         <div id="loading-error">
           <h1>Error</h1>
@@ -13,10 +13,10 @@
       </div>
       <div v-else class="loading-text">
         {{
-          !socket.connected
+          !socket.loading
           ? 'Connecting to server...'
-          : !user.authenticated
-          ? 'Authenticating user...'
+          : !socket.connected
+          ? 'Failed connection to server...'
           : !gameInterface.gameInitialized
           ? 'Loading assets...'
           : 'Beginning game...'
@@ -234,6 +234,8 @@ export default class CombatRoom extends Vue {
   public roomLink = window.location.href;
   public roomConnection: -1 | 0 | 1 | string = -1; // -1 = not pending, 0 = pending, 1 = ok, 'string' = error
 
+  public hotTip = '';
+
   public gameInterface = GameController();
   public currentScreen = 'root';
   public currentCursorIndex = 0;
@@ -245,6 +247,15 @@ export default class CombatRoom extends Vue {
     // add event listeners
     document.addEventListener('keydown', this.keyMonitor, true);
     window.addEventListener('resize', this.gameInterface.resizeMonitor, true);
+
+    this.hotTip = _.sample([
+      'Coordinates with others players to make the most effective use of your attacks and items!',
+      'Different enemies have different gold and xp rewards!',
+      'Completely finishing levels rewards all players in gold. Yay gold!',
+      'You can buy potions to heal yourself or other players in combat. Hooray, teamwork!',
+      'Enemies become stronger as you advance. Keep yourself strong by upgrading your defense and power!',
+      'Leveling up in combat regenerates your health 100%!',
+    ]);
 
     // combat hub connection attempt
     if (this.socket.connected && this.user.authenticated) {
