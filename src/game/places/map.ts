@@ -9,7 +9,7 @@ import MonokaiBgImage from '@/assets/img/backgrounds/monokai-village/monokai-vil
 import PotionsShopLabelImage from '@/assets/img/icon/monokai-village/potions-shop.png';
 import VillageGateLabelImage from '@/assets/img/icon/monokai-village/village-gate.png';
 import CombatLabelImage from '@/assets/img/icon/monokai-village/heros-trial.png';
-import CombatShopLabelImage from'@/assets/img/icon/monokai-village/combat-shop.png';
+import CombatShopLabelImage from '@/assets/img/icon/monokai-village/combat-shop.png';
 
 import store from '@/store';
 
@@ -30,7 +30,7 @@ const newGame = (global: GameInterface): any => {
     },
     scene: {
       preload() {
-        let canvasParent = document.getElementById('canvas-parent');
+        const canvasParent = document.getElementById('canvas-parent');
         if (!canvasParent) {
           throw new Error('Phaser.js expected a parent element for the canvas, but at time of creating got none');
         }
@@ -50,12 +50,12 @@ const newGame = (global: GameInterface): any => {
           const num = parseInt(str.substring(0, str.length - 1));
           const decimal = num / 100;
           return global._bg.displayWidth * decimal;
-        }
+        };
         self.vh = (str: string) => {
           const num = parseInt(str.substring(0, str.length - 1));
           const decimal = num / 100;
           return global._bg.displayHeight * decimal;
-        }
+        };
 
         let assetsLoaded = 0;
         _.each([
@@ -80,7 +80,7 @@ const newGame = (global: GameInterface): any => {
               self.textures.addSpriteSheet(
                 name,
                 img,
-                { frameWidth: spriteDimensions[0], frameHeight: spriteDimensions[1] }
+                { frameWidth: spriteDimensions[0], frameHeight: spriteDimensions[1] },
               );
             }
           : () => {};
@@ -94,13 +94,13 @@ const newGame = (global: GameInterface): any => {
               global.gameInitialized = true;
               self.cameras.main.fadeIn(750);
             }
-          }
+          };
         });
       },
       update() {
         const self: any = this;
         if (!global.gameInitialized) {
-          return
+          return;
         }
 
         const pointer = global.pointer;
@@ -139,15 +139,15 @@ const newGame = (global: GameInterface): any => {
         global._skyGradient
           .fillRect(0, 0, global._bg.displayWidth, global._bg.displayHeight)
           .setDepth(1);
-      }
-    }
+      },
+    },
   });
 
   /*
     Game actions
     (All methods within are binded to the game instance on game creation)
   */
-  let actions: { [action: string]: any } = {
+  const actions: { [action: string]: any } = {
     loadScene() {
       const self: any = this;
 
@@ -156,13 +156,13 @@ const newGame = (global: GameInterface): any => {
         z-index 5 = map
         z-index 8 = labels
       */
-      
+
       // map background
       global._bg = self.add.image(0, 0, 'monokai-bg')
         .setScale(self.game.canvas.offsetWidth / 980)
         .setOrigin(0, 0)
         .setDepth(5);
-        
+
       // sky gradient
       global._skyGradient = self.add.graphics()
           .fillGradientStyle(0x89b8ff, 0x89b8ff, 0xfdaea3, 0xfdaea3, 1)
@@ -175,9 +175,9 @@ const newGame = (global: GameInterface): any => {
         .setBounds(0, 0, global._bg.displayWidth, global._bg.displayHeight - (global._bg.displayHeight * 0.10));
 
       // configure labels
-      let potionsShopLabel = self.add.image(self.vw('60%'), self.vh('28%'), 'potions-shop-label')
+      const potionsShopLabel = self.add.image(self.vw('60%'), self.vh('28%'), 'potions-shop-label')
         .setAlpha(0.75)
-        .setDisplaySize(self.vw('20%'), self.vw('20%')*(99/502))
+        .setDisplaySize(self.vw('20%'), self.vw('20%') * (99 / 502))
         .setDepth(8)
         .setInteractive()
         .on('pointerover', () => {
@@ -185,7 +185,7 @@ const newGame = (global: GameInterface): any => {
           global.tooltip = {
             title: 'Potions Shop',
             description: 'Monokai Village\'s finest alchemy shop.',
-          }
+          };
         })
         .on('pointerout', () => {
           potionsShopLabel.setAlpha(0.75);
@@ -204,9 +204,9 @@ const newGame = (global: GameInterface): any => {
           }
         });
 
-      let gateShopLabel = self.add.image(self.vw('37%'), self.vh('86%'), 'village-gate-label')
+      const gateShopLabel = self.add.image(self.vw('37%'), self.vh('86%'), 'village-gate-label')
         .setAlpha(0.6)
-        .setDisplaySize(self.vw('20%'), self.vw('20%')*(148/917))
+        .setDisplaySize(self.vw('20%'), self.vw('20%') * (148 / 917))
         .setDepth(8)
         .setInteractive()
         .on('pointerover', () => {
@@ -214,7 +214,7 @@ const newGame = (global: GameInterface): any => {
           global.tooltip = {
             title: 'Village Gate',
             description: 'Visit the gates of the Monokai Village.',
-          }
+          };
         })
         .on('pointerout', () => {
           gateShopLabel.setAlpha(0.6);
@@ -231,10 +231,10 @@ const newGame = (global: GameInterface): any => {
             });
           }
         });
-      
-      let combatLabel = self.add.image(self.vw('85%'), self.vh('86%'), 'combat-label')
+
+      const combatLabel = self.add.image(self.vw('85%'), self.vh('86%'), 'combat-label')
         .setAlpha(0.6)
-        .setDisplaySize(self.vw('20%'), self.vw('20%')*(169/821))
+        .setDisplaySize(self.vw('20%'), self.vw('20%') * (169 / 821))
         .setDepth(8)
         .setInteractive()
         .on('pointerover', () => {
@@ -242,7 +242,7 @@ const newGame = (global: GameInterface): any => {
           global.tooltip = {
             title: 'Hero\'s Trial',
             description: 'Feeling brave? Venture into the unknowns of the Monokai landscapes and slay monsters for great rewards!',
-          }
+          };
         })
         .on('pointerout', () => {
           combatLabel.setAlpha(0.6);
@@ -257,9 +257,9 @@ const newGame = (global: GameInterface): any => {
           }
         });
 
-      let combatShopLabel = self.add.image(self.vw('82%'), self.vh('61%'), 'combat-shop-label')
+      const combatShopLabel = self.add.image(self.vw('82%'), self.vh('61%'), 'combat-shop-label')
         .setAlpha(0.6)
-        .setDisplaySize(self.vw('20%'), self.vw('20%')*(106/484))
+        .setDisplaySize(self.vw('20%'), self.vw('20%') * (106 / 484))
         .setDepth(8)
         .setInteractive()
         .on('pointerover', () => {
@@ -267,7 +267,7 @@ const newGame = (global: GameInterface): any => {
           global.tooltip = {
             title: 'El Combatánte',
             description: 'Prepare yourself for battle!',
-          }
+          };
         })
         .on('pointerout', () => {
           combatShopLabel.setAlpha(0.6);
@@ -285,10 +285,10 @@ const newGame = (global: GameInterface): any => {
           }
         });
     },
-  }
+  };
 
   return game;
-}
+};
 
 /**
 * Contains an interface for sharing data outside of the Phaser.Game instance
@@ -317,7 +317,7 @@ interface GameInterface {
 export default (): GameInterface => {
   let game: any = null;
 
-  let global: GameInterface = {
+  const global: GameInterface = {
     tooltip: {},
     chosenShop: null,
     _bg: null,
@@ -343,17 +343,17 @@ export default (): GameInterface => {
         x: event.clientX,
         y: event.clientY,
         hovering: true,
-      }
+      };
     },
     scrollMonitor(event) {
       if (!game) {
         return;
       }
       if (event.deltaY < 0 && game.scene.scenes[0].cameras.main.zoom < 2) {
-        game.scene.scenes[0].cameras.main.setZoom(game.scene.scenes[0].cameras.main.zoom + 0.1)
+        game.scene.scenes[0].cameras.main.setZoom(game.scene.scenes[0].cameras.main.zoom + 0.1);
       }
       if (event.deltaY > 0 && game.scene.scenes[0].cameras.main.zoom > 1.15) {
-        game.scene.scenes[0].cameras.main.setZoom(game.scene.scenes[0].cameras.main.zoom - 0.1)
+        game.scene.scenes[0].cameras.main.setZoom(game.scene.scenes[0].cameras.main.zoom - 0.1);
       }
     },
     exitShop() {
@@ -361,8 +361,8 @@ export default (): GameInterface => {
         return;
       }
       global.chosenShop = null;
-      game.scene.scenes[0].scene.resume()
-    }
+      game.scene.scenes[0].scene.resume();
+    },
   };
 
   return global;

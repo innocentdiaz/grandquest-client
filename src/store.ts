@@ -55,13 +55,13 @@ const initialState = {
       readyToContinue: {},
       levelRecord: {},
     },
-    selectionMode: 'ACTION'
+    selectionMode: 'ACTION',
   },
   socket: {
     connected: false,
     loading: false,
     room: null,
-  }
+  },
 };
 
 const state: State = {...initialState};
@@ -73,14 +73,14 @@ const mutations = {
   /*
     Socket events
   */
-  SET_SOCKET_CONNECTION (s: State, state: boolean) {
+  SET_SOCKET_CONNECTION(s: State, state: boolean) {
     s.socket.loading = false;
     s.socket.connected = state;
   },
-  SET_SOCKET_LOADING (s: State) {
+  SET_SOCKET_LOADING(s: State) {
     s.socket.loading = true;
   },
-  UPDATE_SOCKET_USER (s: State, user: User) {
+  UPDATE_SOCKET_USER(s: State, user: User) {
     const prevUser = s.user;
     s.user = {
       ...user,
@@ -88,17 +88,17 @@ const mutations = {
       authenticated: true,
     };
   },
-  SET_SOCKET_ROOM (s: State, room: any) {
+  SET_SOCKET_ROOM(s: State, room: any) {
     s.socket.room = room;
   },
-  SET_WORLD_STATE (s: State, worldState: World) {
+  SET_WORLD_STATE(s: State, worldState: World) {
     s.world = { ...s.world, ...worldState };
   },
-  SET_COMBAT_HUB_STATE (s: State, combatHubState: CombatHub) {
+  SET_COMBAT_HUB_STATE(s: State, combatHubState: CombatHub) {
     s.combatHub = { ...s.combatHub, ...combatHubState };
   },
   RESET_GAME_STATE(s: State, name: string) {
-    switch(name) {
+    switch (name) {
       case 'COMBAT_ROOM':
         s.combatGame = { ...initialState.combatGame };
         break;
@@ -106,15 +106,15 @@ const mutations = {
         return;
     }
   },
-  SET_COMBAT_GAME_STATE (s: State, combatRoomState: CombatRoom) {
+  SET_COMBAT_GAME_STATE(s: State, combatRoomState: CombatRoom) {
     s.combatGame.gameState = { ...s.combatGame.gameState, ...combatRoomState };
   },
   SET_COMBAT_GAME_SELECTION_MODE(s: State, selectionMode: string) {
     s.combatGame.selectionMode = selectionMode;
-  }
+  },
 };
 
-let socket = io(`${api.getBaseURL()}/game`, { autoConnect: false });
+const socket = io(`${api.getBaseURL()}/game`, { autoConnect: false });
 
 const actions = {
   OPEN_SOCKET({ commit, dispatch }: ActionContext) {
@@ -128,7 +128,7 @@ const actions = {
     });
     socket.on('disconnect', () => {
       commit('SET_SOCKET_CONNECTION', false);
-      commit('UPDATE_SOCKET_USER', { authenticated: false })
+      commit('UPDATE_SOCKET_USER', { authenticated: false });
     });
     socket.on('connect_error', () => {
       commit('SET_SOCKET_CONNECTION', false);
@@ -170,7 +170,7 @@ const actions = {
           localStorage.removeItem('grandquest:jwt');
         }
       });
-    };
+    }
   },
   SOCKET_EMIT(ac: any, params: [string, ...any[]]) {
     if (params.length === 0) {
@@ -179,7 +179,7 @@ const actions = {
     socket.emit(...params);
   },
   socketLeaveRoom({ commit }: ActionContext, room: string) {
-    if (!socket.connected) console.warn('vuex > socketLeaveRoom > "Attempted to leave room before socket connected"');
+    if (!socket.connected) { console.warn('vuex > socketLeaveRoom > "Attempted to leave room before socket connected"'); }
 
     socket.emit(`${room.toUpperCase()}_LEAVE`);
     commit(`SET_SOCKET_ROOM`, null);

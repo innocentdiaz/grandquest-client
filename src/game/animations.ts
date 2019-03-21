@@ -17,7 +17,7 @@ interface Animations {
     [itemId: string]: (event: CombatEvent, gameController: GameController) => Promise<{}>;
   };
   misc: {
-    XP :(event: CombatEvent) => void;
+    XP: (event: CombatEvent) => void;
     damageText: (event: CombatEvent) => void;
   };
 }
@@ -33,7 +33,7 @@ interface AnimationsManager {
 */
 export const connectAnimations = (_gameController: GameController) => {
   animationsManager.gameController = _gameController;
-}
+};
 
 const animations: Animations = {
   attack: {
@@ -43,8 +43,8 @@ const animations: Animations = {
       }
 
       const scene = gameController.game.scene.scenes[0];
-  
-      let timeline = scene.tweens.createTimeline();
+
+      const timeline = scene.tweens.createTimeline();
       const character = {...gameController.gameState.players, ...gameController.gameState.enemies}[event.character.id];
       const receiver = {...gameController.gameState.players, ...gameController.gameState.enemies}[event.receiver.id];
 
@@ -79,7 +79,7 @@ const animations: Animations = {
             /*
               If the last enemy has been killed
             */
-            const aliveEnemies = _.filter(gameController.gameState.enemies, e => e.entity.health > 0);
+            const aliveEnemies = _.filter(gameController.gameState.enemies, (e) => e.entity.health > 0);
             if (newWidth <= 0 && !aliveEnemies.length) {
               scene.cameras.main.flash();
               AudioManager.stopAll();
@@ -131,8 +131,8 @@ const animations: Animations = {
       }
 
       const scene = gameController.game.scene.scenes[0];
-  
-      let timeline = scene.tweens.createTimeline();
+
+      const timeline = scene.tweens.createTimeline();
       const character = {...gameController.gameState.players, ...gameController.gameState.enemies}[event.character.id];
       const receiver = {...gameController.gameState.players, ...gameController.gameState.enemies}[event.receiver.id];
 
@@ -167,7 +167,7 @@ const animations: Animations = {
             /*
               If the last enemy has been killed
             */
-            const aliveEnemies = _.filter(gameController.gameState.enemies, e => e.entity.health > 0);
+            const aliveEnemies = _.filter(gameController.gameState.enemies, (e) => e.entity.health > 0);
             if (newWidth <= 0 && !aliveEnemies.length) {
               scene.cameras.main.flash();
               AudioManager.stopAll();
@@ -201,7 +201,7 @@ const animations: Animations = {
 
           if (receiver.entity.health) {
             setTimeout(() => {
-              receiver.sprite.play(`${receiver.entity.name}-idle`)
+              receiver.sprite.play(`${receiver.entity.name}-idle`);
             });
           }
         },
@@ -220,8 +220,8 @@ const animations: Animations = {
       }
 
       const scene = gameController.game.scene.scenes[0];
-  
-      let timeline = scene.tweens.createTimeline();
+
+      const timeline = scene.tweens.createTimeline();
       const character = {...gameController.gameState.players, ...gameController.gameState.enemies}[event.character.id];
       const receiver = {...gameController.gameState.players, ...gameController.gameState.enemies}[event.receiver.id];
 
@@ -256,7 +256,7 @@ const animations: Animations = {
             /*
               If the last enemy has been killed
             */
-            const aliveEnemies = _.filter(gameController.gameState.enemies, e => e.entity.health > 0);
+            const aliveEnemies = _.filter(gameController.gameState.enemies, (e) => e.entity.health > 0);
             if (newWidth <= 0 && !aliveEnemies.length) {
               scene.cameras.main.flash();
               AudioManager.stopAll();
@@ -308,8 +308,8 @@ const animations: Animations = {
       }
 
       const scene = gameController.game.scene.scenes[0];
-  
-      let timeline = scene.tweens.createTimeline();
+
+      const timeline = scene.tweens.createTimeline();
       const character = {...gameController.gameState.players, ...gameController.gameState.enemies}[event.character.id];
       const receiver = {...gameController.gameState.players, ...gameController.gameState.enemies}[event.receiver.id];
 
@@ -343,12 +343,12 @@ const animations: Animations = {
               width: Math.max(newWidth, 0),
               duration: 250,
             });
-            
+
             receiver.sprite.play(`${receiver.entity.name}-hurt`);
             /*
               If the last enemy has been killed
             */
-            const alivePlayers = _.filter(gameController.gameState.players, e => e.entity.health > 0);
+            const alivePlayers = _.filter(gameController.gameState.players, (e) => e.entity.health > 0);
             if (newWidth <= 0 && !alivePlayers.length) {
               AudioManager.stopAll();
             } else {
@@ -390,8 +390,8 @@ const animations: Animations = {
       }
 
       const scene = gameController.game.scene.scenes[0];
-  
-      let timeline = scene.tweens.createTimeline();
+
+      const timeline = scene.tweens.createTimeline();
 
       const character = {...gameController.gameState.players, ...gameController.gameState.enemies}[event.character.id];
       const receiver = {...gameController.gameState.players, ...gameController.gameState.enemies}[event.receiver.id];
@@ -427,12 +427,12 @@ const animations: Animations = {
               width: Math.max(newWidth, 0),
               duration: 250,
             });
-            
+
             receiver.sprite.play(`${receiver.entity.name}-hurt`);
             /*
               If the last enemy has been killed
             */
-            const alivePlayers = _.filter(gameController.gameState.players, e => e.entity.health > 0);
+            const alivePlayers = _.filter(gameController.gameState.players, (e) => e.entity.health > 0);
             if (newWidth <= 0 && !alivePlayers.length) {
               AudioManager.stopAll();
             } else {
@@ -476,12 +476,12 @@ const animations: Animations = {
       }
 
       const scene = gameController.game.scene.scenes[0];
-  
-      let timeline = scene.tweens.createTimeline();
+
+      const timeline = scene.tweens.createTimeline();
       const character = {...gameController.gameState.players, ...gameController.gameState.enemies}[event.character.id];
       const receiver = {...gameController.gameState.players, ...gameController.gameState.enemies}[event.receiver.id];
-  
-      let potionImg = scene.add.image(character.sprite.x, character.sprite.y, `item-${event.action.id}`);
+
+      const potionImg = scene.add.image(character.sprite.x, character.sprite.y, `item-${event.action.id}`);
 
       potionImg.setDepth(character.sprite.depth + 1);
 
@@ -500,7 +500,7 @@ const animations: Animations = {
             duration: 250,
             onStart() {
               AudioManager.playOnce('heal');
-            }
+            },
           });
 
           // animate healing text
@@ -534,7 +534,7 @@ const animations: Animations = {
                   },
                 });
               }, 1500);
-            }
+            },
           });
         },
       });
@@ -557,12 +557,12 @@ const animations: Animations = {
       }
 
       const scene = gameController.game.scene.scenes[0];
-  
-      let timeline = scene.tweens.createTimeline();
+
+      const timeline = scene.tweens.createTimeline();
       const character = {...gameController.gameState.players, ...gameController.gameState.enemies}[event.character.id];
       const receiver = {...gameController.gameState.players, ...gameController.gameState.enemies}[event.receiver.id];
-  
-      let potionImg = scene.add.image(character.sprite.x, character.sprite.y, `item-${event.action.id}`);
+
+      const potionImg = scene.add.image(character.sprite.x, character.sprite.y, `item-${event.action.id}`);
 
       potionImg.setDepth(character.sprite.depth + 1);
 
@@ -581,7 +581,7 @@ const animations: Animations = {
             duration: 250,
             onStart() {
               AudioManager.playOnce('heal');
-            }
+            },
           });
 
           // animate healing text
@@ -615,7 +615,7 @@ const animations: Animations = {
                   },
                 });
               }, 1500);
-            }
+            },
           });
         },
       });
@@ -652,7 +652,7 @@ const animations: Animations = {
         moveToY: character.sprite.y - 10,
         x: receiver.sprite.x,
         y: receiver.sprite.y,
-        emitZone:{ source: new Phaser.Geom.Circle(0,0,50), type :"random" },
+        emitZone: { source: new Phaser.Geom.Circle(0, 0, 50), type : 'random' },
       });
       scene.time.delayedCall(200, () => {
           emitter.stop();
@@ -728,10 +728,10 @@ const animations: Animations = {
               },
             });
           }, 2000);
-        }
+        },
       });
     },
-  }
+  },
 };
 
 const animationsManager: AnimationsManager = {
@@ -743,7 +743,7 @@ const animationsManager: AnimationsManager = {
     }
 
     // find the animation
-    let selectedAnimation = event.action.type === 'attack'
+    const selectedAnimation = event.action.type === 'attack'
      ? animations.attack[event.action.id]
      : event.action.type === 'item'
      ? animations.item[event.action.id]
@@ -758,6 +758,6 @@ const animationsManager: AnimationsManager = {
       .then(resolve)
       .catch(error);
   }),
-}
+};
 
 export default animationsManager;

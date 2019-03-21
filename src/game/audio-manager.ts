@@ -24,7 +24,7 @@ interface AudioManager {
   stopAll: () => void;
 }
 
-let audioManager: AudioManager = {
+const audioManager: AudioManager = {
   sounds: {
     goldDrop: new Howler.Howl({ src: [ GoldDropFX ] }),
     cursorSelect: new Howler.Howl({ src: [ CursorSelectFX ], volume: 0.65 }),
@@ -45,7 +45,7 @@ let audioManager: AudioManager = {
     if (!audioManager.sounds.hasOwnProperty(name)) {
       console.error('AudioManager does not know sound: ', name);
     } else {
-      let Howl = audioManager.sounds[name];
+      const Howl = audioManager.sounds[name];
       if (stop) {
         Howl.stop();
       }
@@ -53,10 +53,10 @@ let audioManager: AudioManager = {
     }
   },
   stopAll() {
-    for (let name in audioManager.sounds) {
+    for (const name in audioManager.sounds) {
       audioManager.sounds[name].stop();
     }
   },
-}
+};
 
 export default audioManager;

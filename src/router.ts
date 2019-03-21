@@ -89,6 +89,6 @@ export default new Router({
       component: Map,
     },
     // 404
-    { path: "*", redirect: '/' },
+    { path: '*', redirect: '/' },
   ],
 });

@@ -14,7 +14,7 @@ import { CombatCharacter, CombatEvent } from '@/game/types';
 /*
   Import images
 */
-import skyMainImage from '@/assets/img/landscapes/main-sky.png'
+import skyMainImage from '@/assets/img/landscapes/main-sky.png';
 // country landsacpe
 import countryPlatformImage from '@/assets/img/landscapes/country/platform.png';
 import countryTreesImage from '@/assets/img/landscapes/country/trees.png';
@@ -33,7 +33,7 @@ import MountainWarriorSheet from '@/assets/img/spritesheets/mountain-warrior-she
 import healPotionImage from '@/assets/img/items/heal-potion.png';
 import healPotion2Image from '@/assets/img/items/heal-potion-2.png';
 // misc
-import graveMarkerImage from'@/assets/img/misc/grave-marker.png';
+import graveMarkerImage from '@/assets/img/misc/grave-marker.png';
 import SelectTargetImage from '@/assets/img/icon/select-target.png';
 import xpOrbImage from '@/assets/img/misc/xp-orb.png';
 
@@ -44,11 +44,11 @@ interface PhaserGame {
   resize: (width: number, height: number) => PhaserGame;
   scene: {
     scenes: Scene[];
-  }
+  };
   canvas: HTMLCanvasElement;
   destroy: () => void;
 }
-type PhaserConfig = {
+interface PhaserConfig {
   type: any;
   pixelArt?: boolean;
   width: number;
@@ -60,7 +60,7 @@ type PhaserConfig = {
     preload?: () => void;
     create?: () => void;
     update?: () => void;
-  }
+  };
 }
 interface Scene {
   add: {
@@ -89,15 +89,15 @@ interface Scene {
     main: {
       flash: () => void;
       shake: () => void;
-    }
+    },
   };
   time: {
     delayedCall: (time: number, cb: () => any) => void;
-  }
-};
+  };
+}
 
 interface ControllerActions {
-  [index: string]: any,
+  [index: string]: any;
   startLevel: (level: number) => void;
   renderBackground: () => void;
   spawnCharacter: (character: CombatCharacter) => CombatCharacter;
@@ -127,7 +127,7 @@ export interface GameController {
   currentStage: {
     name: 'country' | 'mountains' | null;
     imgs: any[];
-  },
+  };
   game: PhaserGame | null;
   targetHand: any;
   isAnimating: boolean;
@@ -141,7 +141,7 @@ export interface GameController {
   resizeMonitor: (event: any) => void;
   highlightCharacters: (category: boolean | 'enemies' | 'players') => void;
   selectAction: (selectedAction: { id: string; type: string }) => void;
-};
+}
 
 /**
  * Organizes characters in specific spots of placing lines to be rendered accordingly
@@ -170,7 +170,7 @@ const newGame = (global: GameController): PhaserGame => {
   //      Configuration for Phaser Game & Game logic
   //      (I recommend collapsing this entire object when not
   //       working on the game logic, its a bit big)
-  let config: PhaserConfig = {
+  const config: PhaserConfig = {
     type: Phaser.AUTO,
     pixelArt: true,
     // width set to 98% of window width withing range of 300 and 920 pixels
@@ -181,11 +181,11 @@ const newGame = (global: GameController): PhaserGame => {
       default: 'arcade',
       arcade: {
         gravity: { y: 0 },
-      }
+      },
     },
     scene: {
       preload() {
-        let canvasParent = document.getElementById('canvas-parent');
+        const canvasParent = document.getElementById('canvas-parent');
         if (!canvasParent) {
           throw new Error('Phaser.js expected a parent element for the canvas, but at time of creating got none');
         }
@@ -200,7 +200,7 @@ const newGame = (global: GameController): PhaserGame => {
         and adding animation for sprites
       */
       create() {
-        let scene: Scene = game.scene.scenes[0];
+        const scene: Scene = game.scene.scenes[0];
         /*
           Bind GameController.actions to `scene`
         */
@@ -250,7 +250,7 @@ const newGame = (global: GameController): PhaserGame => {
               scene.textures.addSpriteSheet(
                 name,
                 img,
-                { frameWidth: spriteDimensions[0], frameHeight: spriteDimensions[1] }
+                { frameWidth: spriteDimensions[0], frameHeight: spriteDimensions[1] },
               );
             }
           : () => {};
@@ -285,7 +285,7 @@ const newGame = (global: GameController): PhaserGame => {
               });
               scene.anims.create({
                 key: 'adventurer-swing',
-                frames: scene.anims.generateFrameNumbers('adventurer', { frames:[38, 39, 40, 41, 42, 43, 47, 48, 49, 50, 51, 52] }),
+                frames: scene.anims.generateFrameNumbers('adventurer', { frames: [38, 39, 40, 41, 42, 43, 47, 48, 49, 50, 51, 52] }),
                 frameRate: 15,
                 repeat: 0,
               });
@@ -367,7 +367,7 @@ const newGame = (global: GameController): PhaserGame => {
         });
       },
       update() {
-        let scene: Scene = game.scene.scenes[0];
+        const scene: Scene = game.scene.scenes[0];
         if (!global.gameInitialized) {
           return;
         }
@@ -386,7 +386,7 @@ const newGame = (global: GameController): PhaserGame => {
           // update the level locally
           global.gameState.level = networkGameState.level;
           // despawn all the characters
-          _.forEach({...global.gameState.players, ...global.gameState.enemies}, c => {
+          _.forEach({...global.gameState.players, ...global.gameState.enemies}, (c) => {
             actions.despawnCharacter(c.id);
           });
           // load the scene
@@ -428,7 +428,7 @@ const newGame = (global: GameController): PhaserGame => {
         }
 
         // Despawn Characters
-        let charactersOnLocal = {...global.gameState.players, ...global.gameState.enemies};
+        const charactersOnLocal = {...global.gameState.players, ...global.gameState.enemies};
         _.forEach(charactersOnLocal, ({ id }) => {
           const characterOnNetwork = networkGameState.enemies.hasOwnProperty(id) || networkGameState.players.hasOwnProperty(id);
           if (!characterOnNetwork) {
@@ -438,8 +438,8 @@ const newGame = (global: GameController): PhaserGame => {
 
         // Update Characters States
         _.forEach({...global.gameState.players, ...global.gameState.enemies}, (characterOnLocal) => {
-          let id: string = String(characterOnLocal.id);
-          let characterOnNetwork = characterOnLocal.enemy
+          const id: string = String(characterOnLocal.id);
+          const characterOnNetwork = characterOnLocal.enemy
             ? networkGameState.enemies[id]
             : networkGameState.players[id];
 
@@ -447,19 +447,19 @@ const newGame = (global: GameController): PhaserGame => {
             global.gameState.enemies = {
               ...global.gameState.enemies,
               [id]: {...characterOnLocal, ...characterOnNetwork},
-            }
+            };
           } else {
             global.gameState.players = {
               ...global.gameState.players,
               [id]: {...characterOnLocal, ...characterOnNetwork},
-            }
+            };
           }
         });
 
         // IF the network is at a different turn
         if (global.gameState.turn !== networkGameState.turn && !global.isAnimating) {
           // IF we have NOT just joined the match
-          let appliedEvents = networkGameState.turnEvents[global.gameState.turn];
+          const appliedEvents = networkGameState.turnEvents[global.gameState.turn];
           if (appliedEvents && global.gameState.turn !== -1) {
             if (!appliedEvents.length) {
               store.commit('SET_COMBAT_GAME_SELECTION_MODE', 'ACTION');
@@ -485,7 +485,7 @@ const newGame = (global: GameController): PhaserGame => {
         }
         // Create & Update Characters Graphics
         _.forEach({...networkGameState.players, ...networkGameState.enemies}, (characterOnNetwork) => {
-          let id: string = String(characterOnNetwork.id);
+          const id: string = String(characterOnNetwork.id);
           let characterOnLocal = characterOnNetwork.enemy
            ? global.gameState.enemies[id]
            : global.gameState.players[id];
@@ -493,20 +493,18 @@ const newGame = (global: GameController): PhaserGame => {
           // user does not exist locally, spawn them if game is NOT animating
           if (!characterOnLocal && !global.isAnimating) {
             characterOnLocal = actions.spawnCharacter(characterOnNetwork);
-          }
-          // user does not exist locally BUT the game is animating, don't continue
-          else if (!characterOnLocal) {
+          } else if (!characterOnLocal) {
             return;
           }
 
           // if game is NOT animating, update their position
           if (!global.isAnimating) {
-            let coordinates = actions.coordinatesForEntity(characterOnLocal);
+            const coordinates = actions.coordinatesForEntity(characterOnLocal);
             characterOnLocal.sprite.x = coordinates.x;
             characterOnLocal.sprite.y = coordinates.y;
           }
           // name tag
-          if(!characterOnLocal._nameTag) {
+          if (!characterOnLocal._nameTag) {
             characterOnLocal._nameTag = scene.add.text(
               0, 0,
               characterOnLocal.username,
@@ -563,9 +561,9 @@ const newGame = (global: GameController): PhaserGame => {
                 baselineY: 0.5,
               },
             )
-            .setOrigin(0.5, 0.5)
+            .setOrigin(0.5, 0.5);
           } else if (characterOnLocal._healthText.visible) {
-            let currentDisplayedHealth = characterOnLocal.entity.maxHealth * (characterOnLocal._healthBar.width/characterOnLocal._nameTag.displayWidth);
+            const currentDisplayedHealth = characterOnLocal.entity.maxHealth * (characterOnLocal._healthBar.width / characterOnLocal._nameTag.displayWidth);
             characterOnLocal._healthText.text = `${Math.round(currentDisplayedHealth / 10) * 10}/${characterOnLocal.entity.maxHealth}`;
             characterOnLocal._healthText.x = characterOnLocal._healthBarBackground.getCenter().x;
             characterOnLocal._healthText.y = characterOnLocal._healthBarBackground.getCenter().y + 2;
@@ -624,7 +622,7 @@ const newGame = (global: GameController): PhaserGame => {
 
   // -----------------------------------------------------
   //  Create Phaser Game using config
-  let game: PhaserGame = new Phaser.Game(config);
+  const game: PhaserGame = new Phaser.Game(config);
 
   /*
     GameController actions
@@ -643,7 +641,7 @@ const newGame = (global: GameController): PhaserGame => {
         HealthBar: CombatCharacter.depth + 1
         HealthText: CombatCharacter.depth + 2
       */
-      let scene: Scene = game.scene.scenes[0];
+      const scene: Scene = game.scene.scenes[0];
 
       // stop all audio
       AudioManager.stopAll();
@@ -653,7 +651,7 @@ const newGame = (global: GameController): PhaserGame => {
       _.each({...global.gameState.players, ...global.gameState.enemies}, (character) => {
         actions.despawnCharacter(character.id);
       });
-      
+
       if (level <= 4) {
         global.currentStage.name = 'country';
       } else {
@@ -664,22 +662,22 @@ const newGame = (global: GameController): PhaserGame => {
       global.isAnimating = true;
 
       // create a cover for the screen
-      var width = scene.game.canvas.offsetWidth + 10;
-      var height = scene.game.canvas.offsetHeight + 10;
-      var slope = 200;
-      var polygon = new Phaser.Geom.Polygon([
-          0-slope, height,
+      const width = scene.game.canvas.offsetWidth + 10;
+      const height = scene.game.canvas.offsetHeight + 10;
+      const slope = 200;
+      const polygon = new Phaser.Geom.Polygon([
+          0 - slope, height,
           0, 0,
           width, 0,
           width, height,
       ]);
 
-      let screenCover = scene.add.graphics()
+      const screenCover = scene.add.graphics()
         .fillStyle(0x000)
         .fillPoints(polygon.points, true)
         .setDepth(100);
 
-      let timeline = scene.tweens.createTimeline();
+      const timeline = scene.tweens.createTimeline();
       timeline.add({
         targets: [screenCover],
         duration: 150,
@@ -702,24 +700,24 @@ const newGame = (global: GameController): PhaserGame => {
       }, 2000);
     },
     renderBackground() {
-      let scene: Scene = game.scene.scenes[0];
+      const scene: Scene = game.scene.scenes[0];
       /*
       Handy dimensions
       */
-     const canvasWidth = scene.game.canvas.offsetWidth;
-     const canvasHeight = scene.game.canvas.offsetHeight;
+      const canvasWidth = scene.game.canvas.offsetWidth;
+      const canvasHeight = scene.game.canvas.offsetHeight;
       let imagePixelHeight = 0;
       let scaleRatio = 0;
       scene.add.image(canvasWidth / 2, 0, 'main-sky')
         .setDepth(0)
-        .setScale(canvasWidth/800)
-        .setOrigin(0.5, 0)
+        .setScale(canvasWidth / 800)
+        .setOrigin(0.5, 0);
 
       /*
         Wipe the old scene if it exists
       */
       if (global.currentStage.imgs.length) {
-        for (let img of global.currentStage.imgs) {
+        for (const img of global.currentStage.imgs) {
           img.destroy();
         }
       }
@@ -727,8 +725,8 @@ const newGame = (global: GameController): PhaserGame => {
       global.currentStage.imgs = [
         scene.add.image(canvasWidth / 2, 0, 'main-sky')
           .setDepth(0)
-          .setScale(canvasWidth/800)
-          .setOrigin(0.5, 0)
+          .setScale(canvasWidth / 800)
+          .setOrigin(0.5, 0),
       ];
 
       if (global.currentStage.name === 'country') {
@@ -787,17 +785,17 @@ const newGame = (global: GameController): PhaserGame => {
       }
     },
     spawnCharacter(character): CombatCharacter {
-      let scene: Scene = game.scene.scenes[0];
+      const scene: Scene = game.scene.scenes[0];
 
-      let { entity } = character;
+      const { entity } = character;
 
       // place them in our game state
-      let placingLine = character.enemy
+      const placingLine = character.enemy
         ? global.enemyPlacingLine
         : global.playerPlacingLine;
 
       // find empty spot in line
-      let emptySpotInLine = _.findKey({...placingLine}, (spot) => {
+      const emptySpotInLine = _.findKey({...placingLine}, (spot) => {
         return spot.character === null;
       });
 
@@ -813,13 +811,13 @@ const newGame = (global: GameController): PhaserGame => {
         : 'playerPlacingLine';
 
       // create game sprite
-      let sprite =
+      const sprite =
         scene.add.sprite(-20, 0, entity.name)
         .setScale(scene.game.canvas.offsetHeight / 210)
         .setDepth(10)
         .setOrigin(0.5)
         .play(`${entity.name}-idle`, false, Math.floor(Math.random() * 3));
-      let characterId = String(character.id);
+      const characterId = String(character.id);
       // add character with sprite to the global game state!
       global.gameState[characterType] = {
         ...global.gameState[characterType],
@@ -835,7 +833,7 @@ const newGame = (global: GameController): PhaserGame => {
           global[p][emptySpotInLine],
           'character',
           {
-            get: function() {
+            get() {
               const character = global.gameState[characterType][characterId];
               if (!character) {
                 return null;
@@ -843,7 +841,7 @@ const newGame = (global: GameController): PhaserGame => {
                 return global.gameState[characterType][characterId];
               }
             },
-          })
+          }),
       };
 
       // animate spawning
@@ -868,24 +866,24 @@ const newGame = (global: GameController): PhaserGame => {
       return global.gameState[characterType][character.id];
     },
     coordinatesForEntity(character): { x: number, y: number } {
-      let scene: any = this;
+      const scene: any = this;
       // place them in our game state
-      let placingLine = character.enemy
+      const placingLine = character.enemy
         ? global.enemyPlacingLine
         : global.playerPlacingLine;
-      let spotInLine: string = _.findKey({...placingLine}, (spot) => {
+      const spotInLine: string = _.findKey({...placingLine}, (spot) => {
         const characterInSpot = spot.character;
-        return !!characterInSpot && characterInSpot.id == character.id
+        return !!characterInSpot && characterInSpot.id == character.id;
       });
 
       const canvasWidth = scene.game.canvas.offsetWidth;
       const canvasHeight = scene.game.canvas.offsetHeight;
 
       // begin placing the enemies at 60% of the screen width AND enemies at 35% of the screen width
-      let bx = character.enemy ? 0.6 : 0.35;
+      const bx = character.enemy ? 0.6 : 0.35;
       // begin placing the characters at 80% of the screen height
       let by = 0.8;
-      
+
       // space the characters horizontally by 8% of the screen width
       let run = 0.08;
       // space the characters vertically by 2% of the screen height
@@ -917,40 +915,40 @@ const newGame = (global: GameController): PhaserGame => {
       };
     },
     despawnCharacter(id) {
-      let character: CombatCharacter = global.gameState.players[id] || global.gameState.enemies[id];
+      const character: CombatCharacter = global.gameState.players[id] || global.gameState.enemies[id];
 
       if (!character) {
         return;
       }
 
-      let cat = character.enemy
+      const cat = character.enemy
         ? global.gameState.enemies
         : global.gameState.players;
-      
+
       // remove character from game state;
       delete cat[id];
 
       // remove character from placing line
       if (character.enemy) {
         global.enemyPlacingLine = _.mapObject(global.enemyPlacingLine, (spot) => {
-          let newSpot = {...spot};
+          const newSpot = {...spot};
           const enemyInSpot = spot.character;
           if (!enemyInSpot || enemyInSpot.id === character.id) {
             // set placingSpot.character to a getter that returns null
             Object.defineProperty(newSpot, 'character', {
-              get: function() { return null },
+              get() { return null; },
             });
           }
           return newSpot;
         });
       } else {
         global.playerPlacingLine = _.mapObject(global.playerPlacingLine, (spot, i) => {
-          let newSpot = {...spot};
+          const newSpot = {...spot};
           const playerInSpot = spot.character;
           if (!playerInSpot || playerInSpot.id === character.id) {
             // set placingSpot.character to a getter that returns null
             Object.defineProperty(newSpot, 'character', {
-              get: function() { return null },
+              get() { return null; },
             });
           }
           return newSpot;
@@ -977,11 +975,11 @@ const newGame = (global: GameController): PhaserGame => {
       }
     },
     addTargetHand() {
-      let scene: Scene = game.scene.scenes[0];
+      const scene: Scene = game.scene.scenes[0];
 
       if (global.targetHand) {
         return;
-      };
+      }
 
       let config!: { index: number; side: 0|1 };
       // find a valid spot withing both placing lines to place the target hand in
@@ -1018,7 +1016,7 @@ const newGame = (global: GameController): PhaserGame => {
       if (!global.targetHand) {
         return;
       }
-      global.targetHand.destroy()
+      global.targetHand.destroy();
       global.targetHand = null;
     },
     moveTargetHandTo(settings: { index: number, side: number }) {
@@ -1030,7 +1028,7 @@ const newGame = (global: GameController): PhaserGame => {
 
       const character = placingLine[index].character;
 
-      if(!character) {
+      if (!character) {
         throw new Error('No characters at index ' + index);
       }
 
@@ -1038,23 +1036,23 @@ const newGame = (global: GameController): PhaserGame => {
         throw new Error('No target hand in game controller');
       }
 
-      global.targetHand.x = character.sprite.x - character.sprite.width
-      global.targetHand.y = character.sprite.y
+      global.targetHand.x = character.sprite.x - character.sprite.width;
+      global.targetHand.y = character.sprite.y;
     },
     animateEvents(events: CombatEvent[], i = 0) {
       global.isAnimating = true;
       const event = events[i];
       const next = events[i + 1];
 
-      if (!event) return global.isAnimating = false;
+      if (!event) { return global.isAnimating = false; }
 
       animations.animateEvent(event)
       .then(() => {
         if (!!next) {
           actions.animateEvents(events, i + 1);
         } else {
-          let aliveEnemies = _.filter(global.gameState.enemies, e => e.entity.health > 0);
-          let alivePlayers = _.filter(global.gameState.players, p => p.entity.health > 0);
+          const aliveEnemies = _.filter(global.gameState.enemies, (e) => e.entity.health > 0);
+          const alivePlayers = _.filter(global.gameState.players, (p) => p.entity.health > 0);
 
           if (!aliveEnemies.length || !alivePlayers.length && global.gameState.turn % 2 == 0) {
             AudioManager.stopAll();
@@ -1081,7 +1079,7 @@ const newGame = (global: GameController): PhaserGame => {
         actions.stopInterval(name);
       }
       let i = 0;
-      let int = setInterval(() => {
+      const int = setInterval(() => {
         func(i);
         i++;
       }, interval);
@@ -1095,13 +1093,13 @@ const newGame = (global: GameController): PhaserGame => {
     },
   };
   return game;
-}
+};
 
 /*
   GameController generator function
 */
-export default function (): GameController {
-  let gameController: GameController = {
+export default function(): GameController {
+  const gameController: GameController = {
     gameState: {
       id: '',
       title: '',
@@ -1151,7 +1149,7 @@ export default function (): GameController {
         gameController.game.destroy();
         gameController.game = null;
       }
-  
+
       this.gameInitialized = false;
     },
     // this will be binded to the game on launch
@@ -1160,7 +1158,7 @@ export default function (): GameController {
         return;
       }
 
-      let scene: any = gameController.game.scene.scenes[0];
+      const scene: any = gameController.game.scene.scenes[0];
       if (Date.now() - scene.cursorMoveDate <= 100) {
         return;
       }
@@ -1196,11 +1194,11 @@ export default function (): GameController {
         const characters = this.currentTargetSide === 0
           ? gameController.gameState.players
           : gameController.gameState.enemies;
-        
+
         // algorith to find next occupied spot in the specified direction (up or down)
         let j = this.currentTargetIndex;
         for (const key in placingLine) {
-          let p = placingLine[j];
+          const p = placingLine[j];
           if (indexDirection == 'down') {
             j = p.nextIndex;
           } else {
@@ -1220,9 +1218,7 @@ export default function (): GameController {
             break;
           }
         }
-      }
-      // user is moving left/right
-      else if (typeof side === 'number') {
+      } else if (typeof side === 'number') {
         if (side === this.currentTargetSide) {
           return;
         }
@@ -1243,9 +1239,7 @@ export default function (): GameController {
         }
         // sound effect
         AudioManager.playOnce('cursorMove');
-      }
-      // user is making a selection
-      else if (event.key.toUpperCase() === 'ENTER') {
+      } else if (event.key.toUpperCase() === 'ENTER') {
         // sound effect
         AudioManager.playOnce('cursorSelect');
         const placingLine = gameController.currentTargetSide == 0
@@ -1264,7 +1258,7 @@ export default function (): GameController {
           'COMBAT_ROOM_ACTION', {
             receiverId: target.id,
             action: gameController.selectedAction,
-          }
+          },
         ]);
       }
     },
@@ -1297,17 +1291,11 @@ export default function (): GameController {
         _.each({...gameController.gameState.players, ...gameController.gameState.enemies}, (character) => {
             character.sprite.setDepth(15);
         });
-      }
-      // category = false
-      // REMOVE highlights all characters
-      else if (category === false) {
+      } else if (category === false) {
         _.each({...gameController.gameState.players, ...gameController.gameState.enemies}, (character) => {
           character.sprite.setDepth(10);
         });
-      }
-      // category = 'players' / 'enemies'
-      // ADD highlight all category
-      else if (typeof category === 'string') {
+      } else if (typeof category === 'string') {
         const oppositeCategory = category === 'enemies'
           ? 'players'
           : 'enemies';
@@ -1322,8 +1310,8 @@ export default function (): GameController {
     selectAction(action) {
       gameController.selectedAction = action;
       store.commit('SET_COMBAT_GAME_SELECTION_MODE', 'TARGET');
-    }
-  }
+    },
+  };
 
   return gameController;
-};
+}

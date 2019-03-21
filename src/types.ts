@@ -11,9 +11,9 @@ export interface State {
 }
 // Action Context
 export interface ActionContext {
-    state: State,
-    dispatch: any,
-    commit: any,
+    state: State;
+    dispatch: any;
+    commit: any;
 }
 
 // Models
@@ -39,7 +39,7 @@ export interface World {
 export interface CombatHub {
     rooms: {
         [id: string]: CombatRoom,
-    }
+    };
 }
 export interface CombatRoom {
     id: string;
@@ -51,17 +51,17 @@ export interface CombatRoom {
     playState: number;
     players: {
         [id: string]: CombatCharacter,
-    },
+    };
     enemies: {
         [id: string]: CombatCharacter,
-    },
+    };
     queuedEvents: CombatEvent[];
     turnEvents: { // TODO: probably should make an interface for ``
-        [turnIndex: string]: [CombatEvent]
-    }
+        [turnIndex: string]: [CombatEvent],
+    };
     readyToContinue: {
         [userId: string]: boolean;
-    },
+    };
     levelRecord: {
         [userId: string]: {
             killed: {
@@ -73,8 +73,8 @@ export interface CombatRoom {
             gold: number;
             damageDealt: number;
             damageReceived: number;
-        }
-    }
+        },
+    };
 }
 export interface CombatGame {
     gameState: CombatRoom;

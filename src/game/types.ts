@@ -54,11 +54,11 @@ export interface CombatEvent {
   action: {
       type: string;
       id: string;
-  }
+  };
   outcome: {
     damage: number;
     attackBase: number;
     heal: number;
     xp: number;
-  }
+  };
 }

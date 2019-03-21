@@ -6,6 +6,6 @@ export default {
       baseDamage: 13,
       maxHealth: 50,
       endurance: 40,
-    }
+    },
   },
-}
+};
