@@ -97,8 +97,6 @@ const newGame = (global: GameInterface): any => {
 
         const canvas = self.game.canvas;
 
-        self.game.resize(window.innerWidth, window.innerHeight);
-
         const pointer = global.pointer;
 
         if (pointer.hovering) {
