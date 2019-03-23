@@ -15,7 +15,6 @@
         id="canvas-parent"
         v-on:mousemove="gameInterface.mouseMonitor"
         v-on:mouseleave="gameInterface.pointer.hovering = false"
-        v-on:resize="resizeMonitor"
       >
       </div>
       <div class="tool-tip" v-if="gameInterface.tooltip.title">
