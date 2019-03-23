@@ -17,17 +17,9 @@ const newGame = (global: GameInterface): any => {
   const game = new Phaser.Game({
     type: Phaser.AUTO,
     pixelArt: true,
-    // width set to 98% of window width withing range of 300 and 920 pixels
     width: window.innerWidth,
     height: window.innerHeight,
-    // backgroundColor: '#7fb8f9',
     parent: 'canvas-parent',
-    physics: {
-      default: 'arcade',
-      arcade: {
-        gravity: { y: 0 },
-      },
-    },
     scene: {
       preload() {
         const canvasParent = document.getElementById('canvas-parent');
@@ -49,12 +41,12 @@ const newGame = (global: GameInterface): any => {
         self.vw = (str: string) => {
           const num = parseInt(str.substring(0, str.length - 1));
           const decimal = num / 100;
-          return global._bg.displayWidth * decimal;
+          return self.game.canvas.clientWidth * decimal;
         };
         self.vh = (str: string) => {
           const num = parseInt(str.substring(0, str.length - 1));
           const decimal = num / 100;
-          return global._bg.displayHeight * decimal;
+          return self.game.canvas.clientHeight * decimal;
         };
 
         let assetsLoaded = 0;
@@ -90,9 +82,9 @@ const newGame = (global: GameInterface): any => {
             method();
             assetsLoaded++;
             if (assetsLoaded === l.length) {
-              actions.loadScene();
               global.gameInitialized = true;
               self.cameras.main.fadeIn(750);
+              actions.loadScene();
             }
           };
         });
@@ -103,20 +95,24 @@ const newGame = (global: GameInterface): any => {
           return;
         }
 
+        const canvas = self.game.canvas;
+
+        self.game.resize(window.innerWidth, window.innerHeight);
+
         const pointer = global.pointer;
 
         if (pointer.hovering) {
           // move camera
-          if (pointer.x < self.game.canvas.offsetWidth * 0.25) {
+          if (pointer.x < canvas.clientWidth * 0.25) {
             self.cameras.main.scrollX -= 5.5;
           }
-          if (pointer.x > self.game.canvas.offsetWidth * 0.75) {
+          if (pointer.x > canvas.clientWidth * 0.75) {
             self.cameras.main.scrollX += 5.5;
           }
-          if (pointer.y < self.game.canvas.offsetHeight * 0.25) {
+          if (pointer.y < canvas.clientHeight * 0.25) {
             self.cameras.main.scrollY -= 5.5;
           }
-          if (pointer.y > self.game.canvas.offsetHeight * 0.75) {
+          if (pointer.y > canvas.clientHeight * 0.75) {
             self.cameras.main.scrollY += 5.5;
           }
         }
