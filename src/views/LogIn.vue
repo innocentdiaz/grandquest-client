@@ -85,7 +85,7 @@ export default class LogIn extends Vue {
 
         this.INIT_SOCKET();
 
-        this.$router.replace('/forum');
+        this.$router.push('/forum');
       } else {
         this.apiError = body.errors
           ? body.errors.join(', ') + '.'
