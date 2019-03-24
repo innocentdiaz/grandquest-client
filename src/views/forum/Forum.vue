@@ -5,15 +5,25 @@
                 <img src="@/assets/img/icon/grandquest.png" />
                 <p class="subtitle" v-if="socket.connected">It's {{timeOfDay}} in the world!</p>
                 <p class="subtitle" v-else>You don't appear to be connected to the server.</p>
+                <hr/>
+                <div class="player-showcase framed">
+                    <div class="player" v-for="user in world.connectedUsers" :key="user.id">
+                        <img src="@/assets/img/icon/gq.png" class="thumbnail">
+                        <div class="content">
+                            <p class="title">{{user.username}}</p>
+                            <p class="subtitle">joined {{sinceDate(user.createdAt)}}</p>
+                        </div>
+                    </div>
+                </div>
+                <p class="subtitle">Players currently online</p>
             </div>
-            <iframe
-                src="https://discordapp.com/widget?id=557628151837229074&theme=dark"
-                allowtransparency="true"
-                frameborder="0"
-                height="320px"
-            ></iframe>
+            <iframe 
+                src="https://discordapp.com/widget?id=557628151837229074&theme=dark" 
+                height="500" 
+                allowtransparency="true" 
+                frameborder="0"></iframe>
         </div>
-        
+
         <div class="forum-content">
             <div class="forum-main">
                 <!-- header rendering -->
@@ -188,7 +198,38 @@
                 font-weight: lighter;
                 color: $mainGrey;
             }
-            
+            .player-showcase {
+                display: inline-flex;
+                flex-direction: row;
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                width: 100%;
+                // auto hide ugly ms scrollbar
+                -ms-overflow-style: -ms-autohiding-scrollbar; 
+                // smooth mobile scrolling
+                -webkit-overflow-scrolling: touch;
+                // hide scrollbar in webkit browsers
+                &::-webkit-scrollbar { display: none; }
+                .player {
+                    flex: 0 0 auto;
+                    padding: 1em 1em 1em 0;
+                    display: flex;
+                    flex-direction: row;
+                    .title {
+                        color: gold;
+                        margin: 0;
+                    }
+                    .subtitle {
+                        margin: 0;
+                    }
+                    .thumbnail {
+                        align-self: flex-start;
+                        width: 2.3em;
+                        border-radius: 1em;
+                        margin-right: 5px;
+                    }
+                }
+            }
             .control-head {
                 background: white;
                 padding: 1em;

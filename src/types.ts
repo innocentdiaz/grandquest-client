@@ -33,7 +33,14 @@ export interface User {
 }
 export interface World {
     timeOfDay: number;
-    connections: number;
+    connectedUsers: {
+        [id: number]: {
+            id: number;
+            username: string;
+            gold: number;
+            createdAt: string;
+        }
+    };
     inCombat: number;
 }
 export interface CombatHub {

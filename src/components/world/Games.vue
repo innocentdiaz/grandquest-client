@@ -31,8 +31,8 @@
             <div class="selection">
               <div class="img-container">
                 <img :src="require(`@/assets/img/icon/people/${currentCharacter.name.toLowerCase()}.png`)" alt="character avatar">
-                <div class="cover" v-if="user.level < currentCharacter.level">
-                  <p>Unlocked at level {{currentCharacter.level}}</p>
+                <div class="cover" v-if="true || user.level < currentCharacter.level">
+                  <p>Coming soon!</p>
                 </div>
               </div>
               <div class="control">
@@ -40,7 +40,7 @@
                 <span class="character-name">{{user.level >= currentCharacter.level ? currentCharacter.name : '???'}}</span>
                 <button :class="`chevron right ${currentCharacterIndex === availableCharacters.length - 1 ? 'disabled' : ''}`" v-on:click="moveSelection(1)"></button>
               </div>
-              <p>{{user.level >= currentCharacter.level ? currentCharacter.description : ''}}</p>
+              <p>{{false && user.level >= currentCharacter.level ? currentCharacter.description : ''}}</p>
             </div>
             <div class="info" v-if="combatData.loaded === 0">
               <ActivityIndicator />

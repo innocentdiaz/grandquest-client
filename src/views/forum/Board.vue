@@ -1,12 +1,12 @@
 <template>
     <div class="forum">
         <div class="control">
-            <div class="user-control" v-if="user.authenticated">
-                <h2>{{user.username}}</h2>
-                <p>Joined {{playerJoinDate}}</p>
-            </div>
-            <div class="user-control" v-else>
-                <h2>Have an account?</h2>
+            <div style="background: white; border-radius: 5px; width: 100%; padding: 1em;">
+                <h1>Important!</h1>
+                <p>
+                    The forums are currently under construction!<br/>
+                    We recommend using the <a href="http://discord.gg/hU29ZUK">discord server</a> for the time being!
+                </p>
             </div>
             <div class="selected-board-control" v-if="!board.loading">
                 <h2>{{board.title}}</h2>
@@ -14,7 +14,6 @@
                     Admin managed
                     <br>
                 </span>
-                <h3>Live chat coming soon</h3>
             </div>
             <div class="selected-board-control" v-else>
                 <ActivityIndicator/>

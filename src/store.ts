@@ -33,7 +33,7 @@ const initialState = {
   },
   world: {
     timeOfDay: 0,
-    connections: 0,
+    connectedUsers: {},
     inCombat: 0,
   },
   combatHub: {

@@ -46,7 +46,7 @@
         <h2 class="subtitle">Connecting to the world <ActivityIndicator /></h2>
       </div>
       <div class="stats" v-else-if="socket.connected">
-        <h3 class="subtitle">There are {{ world.connections }} players currently online.</h3>
+        <h3 class="subtitle">There are {{ currentlyOnline }} players currently online.</h3>
       </div>
     </div>
   </div>
@@ -115,6 +115,9 @@ export default class Main extends Vue {
   }
   get readableTimeOfDay() {
     return moment(this.world.timeOfDay).format('LT'); ;
+  }
+  get currentlyOnline() {
+    return Object.keys(this.world.connectedUsers).length
   }
 }
 </script>
