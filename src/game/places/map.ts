@@ -1,306 +1,236 @@
 import $vm from '@/main';
-import Phaser from 'phaser';
+import { TweenMax } from 'gsap';
 import _ from 'underscore';
 
 /*
   Assets
 */
-import MonokaiBgImage from '@/assets/img/backgrounds/monokai-village/monokai-village.png';
 import PotionsShopLabelImage from '@/assets/img/icon/monokai-village/potions-shop.png';
 import VillageGateLabelImage from '@/assets/img/icon/monokai-village/village-gate.png';
 import CombatLabelImage from '@/assets/img/icon/monokai-village/heros-trial.png';
 import CombatShopLabelImage from '@/assets/img/icon/monokai-village/combat-shop.png';
 
 import store from '@/store';
+import audioManager from '../audio-manager';
 
 const newGame = (global: GameInterface): any => {
-  const game = new Phaser.Game({
-    type: Phaser.AUTO,
-    pixelArt: true,
-    width: window.innerWidth,
-    height: window.innerHeight,
-    parent: 'canvas-parent',
-    scene: {
-      preload() {
-        const canvasParent = document.getElementById('canvas-parent');
-        if (!canvasParent) {
-          throw new Error('Phaser.js expected a parent element for the canvas, but at time of creating got none');
-        }
+
+  const preload = () => {
+    const map = document.getElementById('map');
+    const container = document.getElementById('map-container');
+    if (!map || !container) {
+      throw new Error('Found no #map || #map-container element to add labels to');
+    }
+
+    let labelsLoaded = 0;
+    _.each([
+      {
+        tooltip: {
+          title: 'Potions Shop',
+          description: 'Monokai Village\'s finest alchemy shop.',
+        },
+        shop: 'monokai-village/potions-shop',
+        coordinates: ['50%', '28%'],
+        src: PotionsShopLabelImage,
       },
-      create() {
-        const self: any = this;
-        /*
-          Bind gameInterface.actions to `self`
-        */
-        _.each(actions, (func: any, action: string) => {
-          actions[action] = func.bind(self);
-        });
-        /*
-          Bind minor helper functions
-        */
-        self.vw = (str: string) => {
-          const num = parseInt(str.substring(0, str.length - 1));
-          const decimal = num / 100;
-          return self.game.canvas.clientWidth * decimal;
-        };
-        self.vh = (str: string) => {
-          const num = parseInt(str.substring(0, str.length - 1));
-          const decimal = num / 100;
-          return self.game.canvas.clientHeight * decimal;
-        };
-
-        let assetsLoaded = 0;
-        _.each([
-          { name: 'monokai-bg', type: 'image', src: MonokaiBgImage, spriteDimensions: [] },
-          { name: 'potions-shop-label', type: 'image', src: PotionsShopLabelImage, spriteDimensions: [] },
-          { name: 'village-gate-label', type: 'image', src: VillageGateLabelImage, spriteDimensions: [] },
-          { name: 'combat-label', type: 'image', src: CombatLabelImage, spriteDimensions: [] },
-          { name: 'combat-shop-label', type: 'image', src: CombatShopLabelImage, spriteDimensions: [] },
-        ], (a, i, l) => {
-          const { name, src, type, spriteDimensions } = a;
-
-          const img = new Image();
-          img.src = src;
-
-          // method to add texture `onload` according to type
-          const method = type === 'image'
-          ? () => {
-              self.textures.addImage(name, img);
-            }
-          : type === 'spritesheet' && spriteDimensions
-          ? () => {
-              self.textures.addSpriteSheet(
-                name,
-                img,
-                { frameWidth: spriteDimensions[0], frameHeight: spriteDimensions[1] },
-              );
-            }
-          : () => {};
-
-          // image onload event
-          img.onload = () => {
-            method();
-            assetsLoaded++;
-            if (assetsLoaded === l.length) {
-              global.gameInitialized = true;
-              self.cameras.main.fadeIn(750);
-              actions.loadScene();
-            }
-          };
-        });
+      {
+        tooltip: {
+          title: 'Village Gate',
+          description: 'Visit the gates of the Monokai Village.',
+        },
+        shop: 'monokai-village/village-gate',
+        coordinates: ['25%', '86%'],
+        src: VillageGateLabelImage,
       },
-      update() {
-        const self: any = this;
-        if (!global.gameInitialized) {
+      {
+        tooltip: {
+          title: 'Hero\'s Trial',
+          description: 'Feeling brave? Venture into the unknowns of the Monokai landscapes and slay monsters for great rewards!',
+        },
+        route: '/world/games',
+        coordinates: ['75%', '86%'],
+        src: CombatLabelImage,
+      },
+      {
+        tooltip: {
+          title: 'El Combatánte',
+          description: 'Prepare yourself for battle!',
+        },
+        shop: 'monokai-village/combat-shop',
+        coordinates: ['73%', '60%'],
+        src: CombatShopLabelImage,
+      },
+    ], (label, i, list) => {
+      const {
+        shop,
+        route,
+        tooltip,
+        coordinates,
+        src,
+      } = label;
+
+      const img = new Image();
+      img.src = src;
+      img.style.left = coordinates[0];
+      img.style.top = coordinates[1];
+      img.style.opacity = '0.75';
+      img.style.position = 'absolute';
+      img.style.height = '2.6em';
+      img.style.cursor = 'pointer';
+
+      img.addEventListener('mouseover', () => {
+        img.style.opacity = '1';
+        global.tooltip = tooltip;
+      });
+      img.addEventListener('mouseleave', () => {
+        img.style.opacity = '0.75';
+        global.tooltip = {};
+      });
+      img.addEventListener('click', () => {
+        if (global.paused) {
           return;
         }
+        global.tooltip = {};
+        global.paused = true;
 
-        const canvas = self.game.canvas;
+        audioManager.playOnce('cursorSelect');
 
-        const pointer = global.pointer;
+        TweenMax.to(
+          container,
+          0.8,
+          {
+            opacity: 0,
+            onComplete() {
+              if (shop) {
+                global.chosenShop = shop;
+              } else if (route) {
+                $vm.$router.push(route);
+              }
+            }
+          },
+        );
+      });
 
-        if (pointer.hovering) {
-          // move camera
-          if (pointer.x < canvas.clientWidth * 0.25) {
-            self.cameras.main.scrollX -= 5.5;
-          }
-          if (pointer.x > canvas.clientWidth * 0.75) {
-            self.cameras.main.scrollX += 5.5;
-          }
-          if (pointer.y < canvas.clientHeight * 0.25) {
-            self.cameras.main.scrollY -= 5.5;
-          }
-          if (pointer.y > canvas.clientHeight * 0.75) {
-            self.cameras.main.scrollY += 5.5;
-          }
+      map.appendChild(img);
+
+      // load the image
+      img.onload = () => {
+        labelsLoaded++;
+        if (labelsLoaded === list.length && global.gameRunning) {
+          global.gameLoaded = true;
+          create();
         }
-        // update sky colors
-        global._skyGradient.clear();
-        const worldHour = new Date(store.state.world.timeOfDay).getHours();
-        if (worldHour >= 5 && worldHour < 9) {
-          // morning
-          global._skyGradient.fillGradientStyle(0x89b8ff, 0x89b8ff, 0xfdaea3, 0xfdaea3);
-        } else if (worldHour >= 9 && worldHour < 19) {
-          // day
-          global._skyGradient.fillGradientStyle(0x1c6fcf, 0x1c6fcf, 0x95d6f8, 0x95d6f8);
-        } else if (worldHour >= 19 && worldHour < 21) {
-          // evening
-          global._skyGradient.fillGradientStyle(0x52adff, 0x52adff, 0xed8d45, 0xed8d45);
-        } else {
-          // night
-          global._skyGradient.fillGradientStyle(0x01071f, 0x01071f, 0x663c94, 0x663c94);
+      }
+    });
+  }
+  const create = () => {
+    const mapContainer = document.getElementById('map-container');
+    if (!mapContainer) {
+      throw new Error('Failed to find #map-container on game creation');
+    }
+
+    // fade in
+    TweenMax.fromTo(
+      mapContainer,
+      0.8,
+      { opacity: 0 },
+      { opacity: 1 },
+    );
+
+    step();
+  }
+  const step = () => {
+    if (!global.gameLoaded || global.paused) {
+      return;
+    }
+
+    const container = document.getElementById('map-container');
+    const map = document.getElementById('map');
+
+    if (!map || !container) {
+      throw new Error('Could no find #map or #map-container in game step');
+    }
+
+    // update sky colors!
+    const worldHour = new Date(store.state.world.timeOfDay).getHours();
+    let bg = '';
+
+    if (worldHour >= 5 && worldHour < 9) {
+      // morning
+       bg = 'linear-gradient(#89b8ff, #89b8ff, #fdaea3, #fdaea3)';
+    } else if (worldHour >= 9 && worldHour < 19) {
+      // day
+      bg = 'linear-gradient(#1c6fcf, #1c6fcf, #95d6f8, #95d6f8)';
+    } else if (worldHour >= 19 && worldHour < 21) {
+      // evening
+      bg = 'linear-gradient(#52adff, #52adff, #ed8d45, #ed8d45)';
+    } else {
+      // night
+      bg = 'linear-gradient(#01071f, #01071f, #663c94, #663c94)';
+    }
+
+    container.style.backgroundImage = bg;
+
+    // animate panning
+    const pointer = global.pointer;
+    const speed = 8;
+
+    if (pointer.hovering) {
+      // left / right
+      const containerWidth = container.clientWidth;
+      const mapWidth = map.clientWidth;
+      const leftVal = parseInt(map.style.left || '0px', 10) ;
+
+      if (pointer.x < containerWidth * 0.25) {
+        if (leftVal < -speed) {
+          map.style.left = (leftVal + speed) + "px"; 
         }
-        global._skyGradient
-          .fillRect(0, 0, global._bg.displayWidth, global._bg.displayHeight)
-          .setDepth(1);
-      },
-    },
-  });
+      } else if (pointer.x > containerWidth * 0.75) {
+        if (leftVal > containerWidth - mapWidth + speed) {
+          map.style.left = (leftVal - speed) + "px"; 
+        }
+      }
+      
+      // up / down
+      const containerHeight = container.clientHeight;
+      const mapHeight = map.clientHeight;
+      const topVal = parseInt(map.style.top || '0px', 10);
 
-  /*
-    Game actions
-    (All methods within are binded to the game instance on game creation)
-  */
-  const actions: { [action: string]: any } = {
-    loadScene() {
-      const self: any = this;
+      if (pointer.y < containerHeight * 0.25) {
+        if (topVal < -speed) {
+          map.style.top = (topVal + speed) + "px"; 
+        }
+      } else if (pointer.y > containerHeight * 0.75) {
+        if (topVal >= containerHeight - mapHeight + speed) {
+          map.style.top = (topVal - speed) + "px";
+        }
+      }
+    }
+    
+    if (global.gameLoaded) {
+      window.requestAnimationFrame(step);
+    }
+  }
 
-      /*
-        z-index 1 = sky gradient
-        z-index 5 = map
-        z-index 8 = labels
-      */
-
-      // map background
-      global._bg = self.add.image(0, 0, 'monokai-bg')
-        .setScale(self.game.canvas.offsetWidth / 980)
-        .setOrigin(0, 0)
-        .setDepth(5);
-
-      // sky gradient
-      global._skyGradient = self.add.graphics()
-          .fillGradientStyle(0x89b8ff, 0x89b8ff, 0xfdaea3, 0xfdaea3, 1)
-          .fillRect(0, 0, global._bg.displayWidth, global._bg.displayHeight)
-          .setDepth(1);
-
-      // configure main camera
-      self.cameras.main
-        .setZoom(1.25)
-        .setBounds(0, 0, global._bg.displayWidth, global._bg.displayHeight - (global._bg.displayHeight * 0.10));
-
-      // configure labels
-      const potionsShopLabel = self.add.image(self.vw('60%'), self.vh('28%'), 'potions-shop-label')
-        .setAlpha(0.75)
-        .setDisplaySize(self.vw('20%'), self.vw('20%') * (99 / 502))
-        .setDepth(8)
-        .setInteractive()
-        .on('pointerover', () => {
-          potionsShopLabel.setAlpha(1);
-          global.tooltip = {
-            title: 'Potions Shop',
-            description: 'Monokai Village\'s finest alchemy shop.',
-          };
-        })
-        .on('pointerout', () => {
-          potionsShopLabel.setAlpha(0.75);
-          global.tooltip = {};
-        })
-        .on('pointerup', (pointer: any) => {
-          // if pointer is still within image bounds when click is released
-          if (!pointer.wasCancelled) {
-            self.cameras.main.fadeOut(750);
-            self.cameras.main.once('camerafadeoutcomplete', () => {
-              global.chosenShop = 'monokai-village/potions-shop';
-              global.tooltip = {};
-              self.scene.pause();
-              self.cameras.main.fadeIn(750);
-            });
-          }
-        });
-
-      const gateShopLabel = self.add.image(self.vw('37%'), self.vh('86%'), 'village-gate-label')
-        .setAlpha(0.6)
-        .setDisplaySize(self.vw('20%'), self.vw('20%') * (148 / 917))
-        .setDepth(8)
-        .setInteractive()
-        .on('pointerover', () => {
-          gateShopLabel.setAlpha(1);
-          global.tooltip = {
-            title: 'Village Gate',
-            description: 'Visit the gates of the Monokai Village.',
-          };
-        })
-        .on('pointerout', () => {
-          gateShopLabel.setAlpha(0.6);
-          global.tooltip = {};
-        })
-        .on('pointerup', (pointer: any) => {
-          if (!pointer.wasCancelled) {
-            self.cameras.main.fadeOut(750);
-            self.cameras.main.once('camerafadeoutcomplete', () => {
-              global.chosenShop = 'monokai-village/village-gate';
-              global.tooltip = {};
-              self.scene.pause();
-              self.cameras.main.fadeIn(750);
-            });
-          }
-        });
-
-      const combatLabel = self.add.image(self.vw('85%'), self.vh('86%'), 'combat-label')
-        .setAlpha(0.6)
-        .setDisplaySize(self.vw('20%'), self.vw('20%') * (169 / 821))
-        .setDepth(8)
-        .setInteractive()
-        .on('pointerover', () => {
-          combatLabel.setAlpha(1);
-          global.tooltip = {
-            title: 'Hero\'s Trial',
-            description: 'Feeling brave? Venture into the unknowns of the Monokai landscapes and slay monsters for great rewards!',
-          };
-        })
-        .on('pointerout', () => {
-          combatLabel.setAlpha(0.6);
-          global.tooltip = {};
-        })
-        .on('pointerup', (pointer: any) => {
-          if (!pointer.wasCancelled) {
-            self.cameras.main.fadeOut(750);
-            self.cameras.main.once('camerafadeoutcomplete', () => {
-              $vm.$router.push('/world/games');
-            });
-          }
-        });
-
-      const combatShopLabel = self.add.image(self.vw('82%'), self.vh('61%'), 'combat-shop-label')
-        .setAlpha(0.6)
-        .setDisplaySize(self.vw('20%'), self.vw('20%') * (106 / 484))
-        .setDepth(8)
-        .setInteractive()
-        .on('pointerover', () => {
-          combatShopLabel.setAlpha(1);
-          global.tooltip = {
-            title: 'El Combatánte',
-            description: 'Prepare yourself for battle!',
-          };
-        })
-        .on('pointerout', () => {
-          combatShopLabel.setAlpha(0.6);
-          global.tooltip = {};
-        })
-        .on('pointerup', (pointer: any) => {
-          if (!pointer.wasCancelled) {
-            self.cameras.main.fadeOut(750);
-            self.cameras.main.once('camerafadeoutcomplete', () => {
-              global.chosenShop = 'monokai-village/combat-shop';
-              global.tooltip = {};
-              self.scene.pause();
-              self.cameras.main.fadeIn(750);
-            });
-          }
-        });
-    },
-  };
-
-  return game;
+  preload();
 };
 
 /**
 * Contains an interface for sharing data outside of the Phaser.Game instance
 */
 interface GameInterface {
-  gameInitialized: boolean;
+  gameRunning: boolean;
+  gameLoaded: boolean;
   tooltip: {
     title?: string;
     description?: string;
   };
   chosenShop: string | null;
+  paused: boolean;
   pointer: { x: number; y: number; hovering: boolean; };
-  _bg: any;
-  _skyGradient: any;
   launch: () => void;
   exitShop: () => void;
   destroyGame: () => void;
-  scrollMonitor: (event: WheelEvent) => void;
   mouseMonitor: (event: MouseEvent) => void;
 }
 
@@ -309,27 +239,27 @@ interface GameInterface {
 * @returns returns a new GameInterface
 */
 export default (): GameInterface => {
-  let game: any = null;
-
   const global: GameInterface = {
     tooltip: {},
     chosenShop: null,
-    _bg: null,
-    _skyGradient: null,
-    gameInitialized: false,
+    paused: false,
+    gameRunning: false,
+    gameLoaded: false,
     pointer: { x: 0, y: 0, hovering: false },
     launch() {
-      if (!game) {
-        game = newGame(global);
+      if (!global.gameRunning) {
+        newGame(global);
+        global.gameRunning = true;
       }
     },
     destroyGame() {
-      if (game) {
-        game.destroy();
+      if (global.gameRunning) {
+        global.gameLoaded = false;
+        global.gameRunning = false;
       }
     },
     mouseMonitor(event) {
-      if (!global.gameInitialized) {
+      if (!global.gameLoaded) {
         return;
       }
 
@@ -339,23 +269,27 @@ export default (): GameInterface => {
         hovering: true,
       };
     },
-    scrollMonitor(event) {
-      if (!game) {
-        return;
-      }
-      if (event.deltaY < 0 && game.scene.scenes[0].cameras.main.zoom < 2) {
-        game.scene.scenes[0].cameras.main.setZoom(game.scene.scenes[0].cameras.main.zoom + 0.1);
-      }
-      if (event.deltaY > 0 && game.scene.scenes[0].cameras.main.zoom > 1.15) {
-        game.scene.scenes[0].cameras.main.setZoom(game.scene.scenes[0].cameras.main.zoom - 0.1);
-      }
-    },
     exitShop() {
-      if (!game) {
+      if (!global.gameRunning) {
         return;
       }
+      const container = document.getElementById('map-container');
+      if (!container) {
+        throw new Error('Could not find #map-container on exit shop');
+      }
+
       global.chosenShop = null;
-      game.scene.scenes[0].scene.resume();
+
+      TweenMax.to(
+        container,
+        0.8,
+        {
+          opacity: 1,
+          onComplete() {
+            global.paused = false;
+          }
+        },
+      );
     },
   };
 
