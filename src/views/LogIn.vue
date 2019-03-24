@@ -30,7 +30,7 @@
     <div class="content">
       <h1>Congrats!</h1>
       <h2 class="subtitle">You're already authenticated! Go and have some fun.</h2>
-      <router-link to="/">Back home</router-link>
+      <router-link to="/world">Back home</router-link>
     </div>
   </div>
 </template>

@@ -5,7 +5,7 @@
       <div class="label">
         {{
           fetchStatus === -1 || fetchStatus === 0
-            ? 'Open server'
+            ? 'GrandQuest server'
             : fetchStatus
         }}
       </div>
@@ -20,11 +20,13 @@ import _ from 'underscore';
 @Component
 export default class DiscordLabel extends Vue {
   public fetchStatus: -1 | 0 | string = -1;
+  public lastFetch = Date.now();
   
   public mounted() {
     this.fetch();
   }
   public fetch() {
+    this.lastFetch = Date.now();
     this.fetchStatus = 0;
     Axios.get('https://discordapp.com/api/guilds/557628151837229074/widget.json')
     .then((res) => {
@@ -44,10 +46,16 @@ export default class DiscordLabel extends Vue {
       this.fetchStatus = `${onlineMembers} USERS ONLINE`;
     })
     .catch(() => {
-      // retry
       this.fetchStatus = -1;
-      this.fetch();
     });
+  }
+  public updated() {
+    const deltaTime = Date.now() - this.lastFetch;
+
+    // fetch every 8 seconds
+    if (deltaTime >= 8000 && this.fetchStatus !== 0) {
+      this.fetch();
+    }
   }
 }
 </script>

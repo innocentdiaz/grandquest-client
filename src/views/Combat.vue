@@ -157,12 +157,12 @@
           </div>
           <span style="color: #25AD10" id="link-copy-label"></span>
           <DiscordLabel/>
-          <div class="reddit-container">
+          <a href="https://reddit.com/r/grandquest" target="_blank" class="reddit-container">
             <img class="icon" src="@/assets/img/icon/reddit.png" alt="">
             <div class="label">
               r/grandquest
             </div>
-          </div>
+          </a>
         </div>
         <div class="queued-events" v-if="!gameInterface.isAnimating && gameInterface.gameState.playState === 1">
           <div class="character-container" v-for="character in gameInterface.turn % 2 ? gameInterface.gameState.enemies : gameInterface.gameState.players" :key="character.id">
