@@ -140,15 +140,18 @@ const newGame = (global: GameInterface): any => {
     step();
   }
   const step = () => {
+    if (!global.gameRunning) {
+      return
+    }
     if (!global.gameLoaded || global.paused) {
-      return;
+      return window.requestAnimationFrame(step);
     }
 
     const container = document.getElementById('map-container');
     const map = document.getElementById('map');
 
     if (!map || !container) {
-      throw new Error('Could no find #map or #map-container in game step');
+      return window.requestAnimationFrame(step);
     }
 
     // update sky colors!
