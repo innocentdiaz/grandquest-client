@@ -6,7 +6,7 @@
                 <p class="subtitle" v-if="socket.connected">It's {{timeOfDay}} in the world!</p>
                 <p class="subtitle" v-else>You don't appear to be connected to the server.</p>
                 <hr/>
-                <div class="player-showcase framed">
+                <div class="player-showcase framed" v-if="socket.connected">
                     <div class="player" v-for="user in world.connectedUsers" :key="user.id">
                         <img src="@/assets/img/icon/gq.png" class="thumbnail">
                         <div class="content">

@@ -31,7 +31,7 @@
             <div class="selection">
               <div class="img-container">
                 <img :src="require(`@/assets/img/icon/people/${currentCharacter.name.toLowerCase()}.png`)" alt="character avatar">
-                <div class="cover" v-if="true || user.level < currentCharacter.level">
+                <div class="cover" v-if="user.level < currentCharacter.level">
                   <p>Coming soon!</p>
                 </div>
               </div>
@@ -40,7 +40,7 @@
                 <span class="character-name">{{user.level >= currentCharacter.level ? currentCharacter.name : '???'}}</span>
                 <button :class="`chevron right ${currentCharacterIndex === availableCharacters.length - 1 ? 'disabled' : ''}`" v-on:click="moveSelection(1)"></button>
               </div>
-              <p>{{false && user.level >= currentCharacter.level ? currentCharacter.description : ''}}</p>
+              <p>{{user.level >= currentCharacter.level ? currentCharacter.description : ''}}</p>
             </div>
             <div class="info" v-if="combatData.loaded === 0">
               <ActivityIndicator />
@@ -130,7 +130,7 @@ export default class Hub extends Vue {
     {
       name: 'Ninja',
       description: 'A sneaky ninja...',
-      level: 3,
+      level: 300,
     },
   ];
   public currentCharacterIndex = 0;
