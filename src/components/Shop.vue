@@ -382,12 +382,21 @@ export default class Shop extends Vue {
         npcSpeak: [
           'I used to be an adventurer like you.',
           'Are you sure you\'re supposed to be wandering the village all by yourself?',
+          'Careful, adventurer! There are fierce creatures outside the safe closures of Monokai.',
+          'I had another one of you vagabonds come talk to me earlier about some slimes!',
+          'How\'s the view from up here, traveller?',
         ],
         guiMasterObject: {
           // screens
           'root': [
             // options
-            { title: 'Order Caravan', description: 'Send a caravan on an expedition for treasure', to: 'caravan', disabled: false },
+            { 
+              title: 'Order Caravan',
+              description: 'Send a caravan on an expedition for treasure',
+              select: () => {
+                this.animateSpeech('Sorry, but the caravans are temporarily busy traveling other lands.')
+              }
+            },
             { title: 'Exit',
               description: 'Back to the map',
               to: null,
@@ -413,6 +422,8 @@ export default class Shop extends Vue {
         npcName: 'Marco',
         npcSpeak: [
           'Welcome to `El Combatánte!`',
+          'Is it strength you seek? I\'ve got quite the bribe for you, my friend.',
+          'It\'s dangerous to go out alone... Get yourself in fighting shape!',
         ],
         guiMasterObject: {
           // screens
@@ -778,6 +789,7 @@ export default class Shop extends Vue {
   height: 100vh;
   overflow: hidden;
   opacity: 0;
+  z-index: 15;
   animation-name: fade-in;
   animation-duration: .5s;
   animation-play-state: running;
