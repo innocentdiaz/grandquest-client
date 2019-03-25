@@ -81,20 +81,18 @@ const mutations = {
     s.socket.loading = true;
   },
   UPDATE_SOCKET_USER(s: State, user: User) {
-    const prevUser = s.user;
     s.user = {
+      ...s.user,
       ...user,
-      token: prevUser.token,
-      authenticated: true,
     };
   },
   SET_SOCKET_ROOM(s: State, room: any) {
     s.socket.room = room;
   },
-  SET_WORLD_STATE(s: State, worldState: World) {
+  UPDATE_WORLD_STATE(s: State, worldState: World) {
     s.world = { ...s.world, ...worldState };
   },
-  SET_COMBAT_HUB_STATE(s: State, combatHubState: CombatHub) {
+  UPDATE_COMBAT_HUB_STATE(s: State, combatHubState: CombatHub) {
     s.combatHub = { ...s.combatHub, ...combatHubState };
   },
   RESET_GAME_STATE(s: State, name: string) {
@@ -128,7 +126,7 @@ const actions = {
     });
     socket.on('disconnect', () => {
       commit('SET_SOCKET_CONNECTION', false);
-      commit('UPDATE_SOCKET_USER', { authenticated: false });
+      commit('UPDATE_SOCKET_USER', { authenticated: false, id: null, currentJWT: '' });
     });
     socket.on('connect_error', () => {
       commit('SET_SOCKET_CONNECTION', false);
@@ -144,10 +142,10 @@ const actions = {
       Server events
     */
     socket.on('WORLD_STATE', (worldState: World) => {
-      commit('SET_WORLD_STATE', worldState);
+      commit('UPDATE_WORLD_STATE', worldState);
     });
     socket.on('COMBAT_HUB_STATE', (combatHubState: CombatHub) => {
-      commit('SET_COMBAT_HUB_STATE', combatHubState);
+      commit('UPDATE_COMBAT_HUB_STATE', combatHubState);
     });
     socket.on('USER_STATE', (user: User) => {
       commit('UPDATE_SOCKET_USER', user);
@@ -164,9 +162,9 @@ const actions = {
     if (JWT) {
       socket.emit('AUTHENTICATE_SOCKET', JWT, (err: string | null, user?: User) => {
         if (!err && user) {
-          commit('UPDATE_SOCKET_USER', { ...user, authenticated: true, token: JWT });
+          commit('UPDATE_SOCKET_USER', { ...user, authenticated: true, currentJWT: JWT });
         } else {
-          commit('UPDATE_SOCKET_USER', { ...user, authenticated: false, token: null });
+          commit('UPDATE_SOCKET_USER', { ...user, authenticated: false, currentJWT: '' });
           localStorage.removeItem('grandquest:jwt');
         }
       });
