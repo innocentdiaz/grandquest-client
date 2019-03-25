@@ -15,6 +15,7 @@ import HealAudio from '@/assets/audio/heal.mp3';
 import npcBubbleAudio from '@/assets/audio/npc-bubble.mp3';
 import AttackMissAudio from '@/assets/audio/attack-miss.mp3';
 import JumpAudio from '@/assets/audio/jump.mp3';
+import JoinAudio from '@/assets/audio/join.mp3';
 
 interface AudioManager {
   sounds: {
@@ -40,6 +41,7 @@ const audioManager: AudioManager = {
     npcBubble: new Howler.Howl({ src: [ npcBubbleAudio ], volume: 0.2 }),
     attackMiss: new Howler.Howl({ src: [ AttackMissAudio ], volume: 0.8 }),
     jump: new Howler.Howl({ src: [ JumpAudio ], volume: 0.8 }),
+    join: new Howler.Howl({ src: [ JoinAudio ], volume: 0.8 }),
   },
   playOnce(name, stop) {
     if (!audioManager.sounds.hasOwnProperty(name)) {
