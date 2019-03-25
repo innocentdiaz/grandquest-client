@@ -391,12 +391,34 @@ export default class CombatRoom extends Vue {
       return event.character.id === id;
     });
 
+    if (character.entity.health === 0) {
+      return 'Dead.';
+    }
     if (!characterEvent) {
       return 'Waiting...';
     }
+
+    let spotInLine = 0;
+    _.each([
+      ..._.values(this.gameInterface.playerPlacingLine),
+      ..._.values(this.gameInterface.enemyPlacingLine)
+    ],
+    (spot) => {
+      if (spotInLine) { return };
+      if (!!spot.character && String(spot.character.id) == id) {
+        spotInLine = spot.index;
+      }
+    });
+
     const receiver = characters[characterEvent.receiver.id];
 
-    return `<strong>${character.username}</strong> chose <strong>${characterEvent.action.type.toUpperCase()} "${characterEvent.action.id.replace(/-/gi, ' ')}"</strong> on <strong>${String(receiver.id) == String(id) ? 'self' : receiver.username}</strong>`;
+    // labelName examples:
+    // self, Slime#2, Skepdimi
+    const labelName = String(receiver.id) == String(id)
+      ? 'self'
+      : receiver.username + (receiver.enemy ? `#${spotInLine}` : '');
+
+    return `<strong>${character.username}</strong> chose ${characterEvent.action.type} <strong>${characterEvent.action.id.replace(/-/gi, ' ')}</strong> on <strong>${labelName}</strong>`;
   }
   public copyLink() {
     /* Get the text field */
@@ -529,6 +551,8 @@ export default class CombatRoom extends Vue {
 
     if (this.combatGame.selectionMode === 'ACTION') {
       let selectedOption = guiMasterObject[this.currentScreen][this.currentCursorIndex];
+      let currentPlayer = this.currentPlayer;
+
       if (!selectedOption) {
         this.currentScreen = 'root';
         this.currentCursorIndex = 0;
@@ -536,7 +560,7 @@ export default class CombatRoom extends Vue {
       }
 
       if (!this.gameInterface.isAnimating) {
-        if (selectedOption.disabled) {
+        if (selectedOption.disabled || (currentPlayer && currentPlayer.entity.health === 0)) {
           this.gameInterface.highlightCharacters(false);
         } else if (
           this.currentScreen === 'attacks' ||
@@ -613,8 +637,7 @@ export default class CombatRoom extends Vue {
         `;
       } else {
         return `
-          <h2>${target.username}</h2>
-          <h3 class="subtitle">${target.entity.name}</h3>
+          <h2>${target.username}${target.enemy ? `#${targetIndex}` : ''}</h2>
           <ul>
             <li>HP: ${Math.round(target.entity.health * 10) / 10}/${target.entity.maxHealth}</li>
             ${

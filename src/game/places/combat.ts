@@ -1,7 +1,6 @@
 import Phaser from 'phaser';
 import _ from 'underscore';
 import AudioManager from '../audio-manager';
-import animationsManager from '@/game/animations';
 import animations, { connectAnimations } from '@/game/animations';
 import store from '@/store';
 
@@ -150,6 +149,7 @@ interface PlacingLine {
   [placingIndex: string]: {
     readonly character: CombatCharacter | null;
     nextIndex: number;
+    index: number;
     prevIndex: number;
   };
 }
@@ -405,6 +405,7 @@ const newGame = (global: GameController): PhaserGame => {
                 return null;
               },
               nextIndex: index >= networkGameState.maxPlayers ? 1 : index + 1,
+              index,
               prevIndex: index === 1 ? networkGameState.maxPlayers : index - 1,
             },
           }), {});
@@ -422,6 +423,7 @@ const newGame = (global: GameController): PhaserGame => {
                 return null;
               },
               nextIndex: index >= Object.keys(networkGameState.enemies).length ? 1 : index + 1,
+              index,
               prevIndex: index === 1 ? Object.keys(networkGameState.enemies).length : index - 1,
             },
           }), {});
@@ -607,7 +609,9 @@ const newGame = (global: GameController): PhaserGame => {
         }
         // update fadeScreen size
         if (global._fadeScreen) {
-          if (global.isAnimating) {
+          const currentPlayer = _.find(networkGameState.players, p => p.id === store.state.user.id);
+
+          if (global.isAnimating || (currentPlayer && currentPlayer.entity.health === 0)) {
             global.highlightCharacters(false);
             global._fadeScreen.destroy();
             global._fadeScreen = null;
@@ -855,6 +859,9 @@ const newGame = (global: GameController): PhaserGame => {
           duration: 375,
           onStart() {
             sprite.play(`${character.entity.name}-walk`);
+            if (character.id != store.state.user.id) {
+              AudioManager.playOnce('join');
+            }
           },
           onComplete() {
             sprite.play(`${character.entity.name}-idle`);
