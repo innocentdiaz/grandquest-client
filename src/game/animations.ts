@@ -83,16 +83,14 @@ const animations: Animations = {
             if (newWidth <= 0 && !aliveEnemies.length) {
               scene.cameras.main.flash();
               AudioManager.stopAll();
-            } else {
-              if (event.outcome.damage === 0) {
-                AudioManager.playOnce('attackMiss');
-              } else {
-                AudioManager.playOnce('combatHit');
-                receiver.sprite.play(`${receiver.entity.name}-hurt`);
-                AudioManager.playOnce(`enemyHurt`);
-              }
             }
-
+            if (event.outcome.damage === 0) {
+              AudioManager.playOnce('attackMiss');
+            } else {
+              AudioManager.playOnce('combatHit');
+              receiver.sprite.play(`${receiver.entity.name}-hurt`);
+              AudioManager.playOnce(`enemyHurt`);
+            }
             // damage text
             animationsManager.animations.misc.damageText(event);
 
@@ -171,14 +169,13 @@ const animations: Animations = {
             if (newWidth <= 0 && !aliveEnemies.length) {
               scene.cameras.main.flash();
               AudioManager.stopAll();
+            }
+            if (event.outcome.damage === 0) {
+              AudioManager.playOnce('attackMiss');
             } else {
-              if (event.outcome.damage === 0) {
-                AudioManager.playOnce('attackMiss');
-              } else {
-                AudioManager.playOnce('combatHit');
-                receiver.sprite.play(`${receiver.entity.name}-hurt`);
-                AudioManager.playOnce(`enemyHurt`);
-              }
+              AudioManager.playOnce('combatHit');
+              receiver.sprite.play(`${receiver.entity.name}-hurt`);
+              AudioManager.playOnce(`enemyHurt`);
             }
 
             // damage text
@@ -256,19 +253,18 @@ const animations: Animations = {
             /*
               If the last enemy has been killed
             */
-            const aliveEnemies = _.filter(gameController.gameState.enemies, (e) => e.entity.health > 0);
-            if (newWidth <= 0 && !aliveEnemies.length) {
-              scene.cameras.main.flash();
-              AudioManager.stopAll();
-            } else {
-              if (event.outcome.damage === 0) {
-                AudioManager.playOnce('attackMiss');
-              } else {
-                AudioManager.playOnce('combatHit');
-                receiver.sprite.play(`${receiver.entity.name}-hurt`);
-                AudioManager.playOnce(`enemyHurt`);
-              }
-            }
+           const aliveEnemies = _.filter(gameController.gameState.enemies, (e) => e.entity.health > 0);
+           if (newWidth <= 0 && !aliveEnemies.length) {
+             scene.cameras.main.flash();
+             AudioManager.stopAll();
+           }
+           if (event.outcome.damage === 0) {
+             AudioManager.playOnce('attackMiss');
+           } else {
+             AudioManager.playOnce('combatHit');
+             receiver.sprite.play(`${receiver.entity.name}-hurt`);
+             AudioManager.playOnce(`enemyHurt`);
+           }
 
             // damage text
             animationsManager.animations.misc.damageText(event);
@@ -348,16 +344,17 @@ const animations: Animations = {
             /*
               If the last enemy has been killed
             */
-            const alivePlayers = _.filter(gameController.gameState.players, (e) => e.entity.health > 0);
-            if (newWidth <= 0 && !alivePlayers.length) {
+            const aliveEnemies = _.filter(gameController.gameState.enemies, (e) => e.entity.health > 0);
+            if (newWidth <= 0 && !aliveEnemies.length) {
+              scene.cameras.main.flash();
               AudioManager.stopAll();
+            }
+            if (event.outcome.damage === 0) {
+              AudioManager.playOnce('attackMiss');
             } else {
+              AudioManager.playOnce('combatHit');
               receiver.sprite.play(`${receiver.entity.name}-hurt`);
-              if (event.outcome.damage === 0) {
-                AudioManager.playOnce('attackMiss');
-              } else {
-                AudioManager.playOnce('combatHit');
-              }
+              AudioManager.playOnce(`enemyHurt`);
             }
 
             // damage text
@@ -432,16 +429,17 @@ const animations: Animations = {
             /*
               If the last enemy has been killed
             */
-            const alivePlayers = _.filter(gameController.gameState.players, (e) => e.entity.health > 0);
-            if (newWidth <= 0 && !alivePlayers.length) {
+            const aliveEnemies = _.filter(gameController.gameState.enemies, (e) => e.entity.health > 0);
+            if (newWidth <= 0 && !aliveEnemies.length) {
+              scene.cameras.main.flash();
               AudioManager.stopAll();
+            }
+            if (event.outcome.damage === 0) {
+              AudioManager.playOnce('attackMiss');
             } else {
+              AudioManager.playOnce('combatHit');
               receiver.sprite.play(`${receiver.entity.name}-hurt`);
-              if (event.outcome.damage === 0) {
-                AudioManager.playOnce('attackMiss');
-              } else {
-                AudioManager.playOnce('combatHit');
-              }
+              AudioManager.playOnce(`enemyHurt`);
             }
 
             // damage text
