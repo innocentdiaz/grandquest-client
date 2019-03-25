@@ -217,6 +217,7 @@ export default class Hub extends Vue {
 <style lang="scss" scoped>
 #display {
   background-image: url('../../assets/img/combat.png');
+  background-size: cover;
 }
 #combat-rooms-container {
   position: absolute;

@@ -56,7 +56,7 @@ $mainGrey: rgb(179, 179, 179);
     background-position: center center;
     background-repeat: no-repeat;
     background-attachment: fixed;
-    min-height: 42rem;
+    height: 600px;
     width: 100%;
     top: 0;
     

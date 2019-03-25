@@ -13,7 +13,7 @@
             <router-link to="/world">World</router-link> •
           </li>
           <li>
-            <router-link to="/community">Community</router-link> •
+            <router-link to="/forum">Community</router-link> •
           </li>
           <li>
             <router-link to="/donate">Donate</router-link>
@@ -21,7 +21,7 @@
         </ul>
       </div>
       <div id="center">
-        <button>Staff Support</button>
+        <a href="http://discord.gg/hU29ZUK" target="_blank">Staff Support</a>
       </div>
       <div id="right">
         <p>
@@ -55,6 +55,18 @@
           a {
             color: #7B75A8;
           }
+        }
+      }
+    }
+    #center {
+      a {
+        color: white;
+        background-image: linear-gradient(to bottom, #7B75A8 80%, rgb(84, 79, 128));
+        border: none;
+        border-radius: 5px;
+        padding: 6px 8px;
+        &:hover {
+          background-image: linear-gradient(to bottom, rgb(84, 79, 128) 80%, #7B75A8);
         }
       }
     }
