@@ -13,7 +13,7 @@
       </div>
       <div class="buttons">
         <button :class="`${!user.authenticated ? 'need-auth' : user.socketLock ? 'socket-lock' : ''} main-start`" :disabled="!socket.connected || !user.authenticated || !!user.socketLock" v-on:click="() => $router.replace({ name: 'map' })">
-          EXPLORE MONOKAI {{user.socketLock}}
+          EXPLORE MONOKAI
         </button>
       </div>
     </div>
