@@ -25,19 +25,21 @@
       <div class="content">
         <Games v-if="view==='games'"/>
         <Travel v-if="view==='travel'"/>
+        <Leaderboards v-if="view==='leaderboards'"/>
+
         <div id="side-menu">
           <ul>
             <li v-on:click="setView('travel')" :class="view === 'travel' ? 'active' : ''">
-              <img src="@/assets/img/icon/bag.png" alt="Travel">Explore
+              <img src="@/assets/img/icon/bag.png">Explore
             </li>
-            <li class="disabled">
-              <img src="@/assets/img/icon/scroll.png" alt="Leaderboards">Leaderboards
+            <li v-on:click="setView('leaderboards')" :class="view === 'leaderboards' ? 'active' : ''">
+              <img src="@/assets/img/icon/scroll.png">Leaderboards
             </li>
             <li v-on:click="setView('games')" :class="view === 'games' ? 'active' : ''">
-              <img src="@/assets/img/icon/chest.png" alt="Games">Games
+              <img src="@/assets/img/icon/chest.png">Games
             </li>
             <li class="disabled">
-              <img src="@/assets/img/icon/guild.png" alt="Guild">Guild
+              <img src="@/assets/img/icon/guild.png">Guild
             </li>
           </ul>
         </div>
@@ -60,6 +62,7 @@ import api from '@/api';
 import ActivityIndicator from '@/components/ActivityIndicator.vue';
 import Travel from '@/components/world/Travel.vue';
 import Games from '@/components/world/Games.vue';
+import Leaderboards from '@/components/world/Leaderboards.vue';
 import { TweenLite, Elastic } from 'gsap';
 
 @Component({
@@ -67,6 +70,7 @@ import { TweenLite, Elastic } from 'gsap';
     ActivityIndicator,
     Games,
     Travel,
+    Leaderboards,
   },
 })
 export default class Main extends Vue {
