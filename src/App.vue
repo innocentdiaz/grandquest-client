@@ -211,12 +211,20 @@ span, p {
 .GUI .right {
   border-left: 2px solid white
 }
+.GUI li {
+  user-select: none;
+  cursor: pointer;
+}
 .GUI li.disabled {
   color: rgb(87, 87, 87);
+  cursor: default;
 }
 .GUI.disabled li.active {
   color: grey;
   padding-left: 2px;
+}
+.GUI.GUI.disabled li {
+  cursor: default;
 }
 .stats-container {
   padding: 10px 20px 10px 0;

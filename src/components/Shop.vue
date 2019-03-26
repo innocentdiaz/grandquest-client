@@ -37,6 +37,8 @@
             v-for="(option, index) in currentScreenObject"
             :key="option.title"
             :class="`${option.disabled ? 'disabled' : ''} ${currentCursorIndex == index ? 'active' : ''}`"
+            v-on:mouseover="setCursorIndex(index)"
+            v-on:click="selectOption"
           >
             {{ option.title }}
           </li>
@@ -728,7 +730,12 @@ export default class Shop extends Vue {
     } else if (option.to) {
       this.currentScreen = option.to;
       this.currentCursorIndex = 0;
-      AudioManager.playOnce('cursorSelect');
+    }
+  }
+  public setCursorIndex(index: number) {
+    if (this.currentCursorIndex !== index) {
+      this.currentCursorIndex = index;
+      AudioManager.playOnce('cursorMove');
     }
   }
   public moveCursor(direction: string) {
@@ -753,8 +760,7 @@ export default class Shop extends Vue {
     } else {
       return;
     }
-    AudioManager.playOnce('cursorMove');
-    this.currentCursorIndex = j;
+    this.setCursorIndex(j);
   }
   @Watch('user')
   onChildChanged(cur: User, prev: User) {

@@ -817,6 +817,34 @@ const newGame = (global: GameController): PhaserGame => {
       // create game sprite
       const sprite =
         scene.add.sprite(-20, 0, entity.name)
+        .setInteractive()
+        .on('pointerover', () => {
+          if (store.state.combatGame.selectionMode !== 'TARGET' || global.isAnimating) {
+            return;
+          }
+          const targetSide = character.enemy
+            ? 1
+            : 0;
+          if (global.currentTargetIndex !== Number(emptySpotInLine) || global.currentTargetSide !== targetSide) {
+            AudioManager.playOnce('cursorMove');
+            global.currentTargetIndex = Number(emptySpotInLine);
+            global.currentTargetSide = targetSide;
+          }
+        })
+        .on('pointerup', (pointer: any) => {
+          if (!pointer.wasCancelled && store.state.combatGame.selectionMode === 'TARGET' && !global.isAnimating) {
+            AudioManager.playOnce('cursorSelect');
+            if (!global.selectedAction) {
+              return;
+            }
+            store.dispatch('SOCKET_EMIT', [
+              'COMBAT_ROOM_ACTION', {
+                receiverId: character.id,
+                action: global.selectedAction,
+              },
+            ]);
+          }
+        })
         .setScale(scene.game.canvas.offsetHeight / 210)
         .setDepth(10)
         .setOrigin(0.5)

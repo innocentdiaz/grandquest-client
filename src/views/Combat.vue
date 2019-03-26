@@ -93,6 +93,8 @@
                   v-for="(option, index) in currentScreenObject"
                   :key="option.title"
                   :class="`${option.disabled ? 'disabled' : ''} ${combatGame.selectionMode !== 'TARGET' && combatGame.selectionMode !== 'HIDDEN' && currentCursorIndex == index ? 'active' : ''}`"
+                  v-on:mouseover="setCursorIndex(index)"
+                  v-on:click="combatGame.selectionMode === 'TARGET' ? guiWakeup() : selectOption()"
                 >
                   {{ option.title }}
                 </li>
@@ -309,22 +311,18 @@ export default class CombatRoom extends Vue {
     this.cursorMoveDate = Date.now();
 
     if (this.combatGame.selectionMode === 'ACTION' && this.currentPlayerSelectionStatus === 0) {
-      switch (event.key.toUpperCase()) {
-        case 'W':
-          this.moveCursor('up');
-          break;
-        case 'A':
-          this.moveCursor('left');
-          break;
-        case 'S':
-          this.moveCursor('down');
-          break;
-        case 'D':
-          this.moveCursor('right');
-          break;
-        case 'ENTER':
-          this.selectOption();
-          break;
+      const key = event.key.toUpperCase();
+
+      if (key === 'W' || key === 'ARROWUP') {
+        this.moveCursor('up');
+      } else if (key === 'A' || key === 'ARROWLEFT') {
+        this.moveCursor('left');
+      } else if (key === 'S' || key === 'ARROWDOWN') {
+        this.moveCursor('down');
+      } else if (key === 'D' || key === 'ARROWRIGHT') {
+        this.moveCursor('right');
+      } else if (key === 'ENTER') {
+        this.selectOption();
       }
     } else {
       this.gameInterface.keyMonitor(event);
@@ -353,9 +351,13 @@ export default class CombatRoom extends Vue {
       return;
     }
 
-    AudioManager.playOnce('cursorMove');
-
-    this.currentCursorIndex = j;
+    this.setCursorIndex(j);
+  }
+  public setCursorIndex(index: number) {
+    if (this.currentCursorIndex != index && this.combatGame.selectionMode === 'ACTION') {
+      AudioManager.playOnce('cursorMove');
+      this.currentCursorIndex = index;
+    }
   }
   public selectOption() {
     const currentScreenObj = this.guiMasterObject[this.currentScreen];
@@ -365,11 +367,13 @@ export default class CombatRoom extends Vue {
     if (!selectedOption || selectedOption.disabled) {
       return;
     }
-    AudioManager.playOnce('cursorSelect')
+
+    AudioManager.playOnce('cursorSelect');
+
     // this is a route
     if(selectedOption.to) {
-      this.currentScreen = selectedOption.to;
       this.currentCursorIndex = 0;
+      this.currentScreen = selectedOption.to;
     } else if (selectedOption.select) {
       this.gameInterface.selectAction(selectedOption.select);
     }
@@ -455,6 +459,12 @@ export default class CombatRoom extends Vue {
         },
       },
     );
+  }
+  public guiWakeup() {
+    this.currentCursorIndex = 0;
+    this.currentScreen = 'root';
+    this.SET_COMBAT_GAME_SELECTION_MODE('ACTION');
+    AudioManager.playOnce('cursorBack');
   }
   get guiMasterObject() {
     let guiMasterObject: GuiMasterObject = {
@@ -683,6 +693,7 @@ $mainGreen: #9dff5c;
 
       #canvas-parent {
         text-align: center;
+        cursor: pointer;
       }
       .game-header {
         position: absolute;
