@@ -1,6 +1,5 @@
 <template>
   <div class="landing">
-    <div id="combat-img"></div>
     <div class="container">
       <aside>
         <img :src="require('@/assets/img/icon/gq.png')" id="logo">
@@ -9,6 +8,15 @@
           the eye can see. Surrounding you is the unexplored world,
           and you hear adventure calling you. What will you do 
           with the skills, rewards and experience you earn?
+        </p>
+        <hr>
+        <p id="news">
+          Latest News
+        </p>
+        <p>
+          <strong>GrandQuest has just opened up to play-testers!</strong>
+          GrandQuest beta is now available online for users to play games and report 
+          issues in exchange for gold. <strong>Start saving up for when the game launches!</strong>
         </p>
       </aside>
       <div class="content" v-if="!user.authenticated">
@@ -49,42 +57,44 @@ $mainBlack: rgb(24, 24, 24);
 $mainGrey: rgb(179, 179, 179);
 
 .landing {
-  #combat-img {
-    z-index: -1;
-    background-image: url('../assets/img/combat.png');
-    background-size: cover;
-    background-position: center center;
-    background-repeat: no-repeat;
-    background-attachment: fixed;
-    height: 600px;
-    width: 100%;
-    top: 0;
-    
-    position: absolute;
-  }
   #logo {
     height:100px;
     border-radius: 5px;
   }
 
   .container {
-    background: white;
-    z-index: 30;
-    margin-top: 75vh;
+    background-image: url('../assets/img/combat.png');
+    background-size: cover;
+    background-position: center center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
     min-height: 90vh;
+    padding: 1em;
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
 
     aside {
-      clear:right;
-      margin-right: 2.75em;
-      float: left;
+      background: white;
+      border-radius: 10px;
+      margin-right: 50px;
       width: 30%;
-
       padding: 1em;
       line-height: 2rem;
+      #news {
+        background: $mainBlue;
+        border: none;
+        color: white;
+        padding: 5px 8px;
+        border-radius: 2px;
+      }
     }
     .content {
+      flex: 1;
       text-align: right;
       padding: 1em;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.95);
     }
   }
 }
