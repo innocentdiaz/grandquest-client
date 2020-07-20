@@ -1,7 +1,6 @@
 <template>
   <div class="world-main">
     <div class="container">
-
       <!-- <header>
         <div class="stats" v-if="socket.loading">
           <h2>Connecting to the world <ActivityIndicator /></h2>
@@ -16,14 +15,8 @@
           <h3>You are currently offline</h3>
         </div>
       </header> -->
-      <div v-if="!user.authenticated" class="auth-banner">
-        <h2 class="main-title">In order to browse GrandQuest you should sign in!</h2>
-        <div class="auth">
-          <h2>Are you new to GrandQuest?</h2>
-          <router-link to='/signup'>Join for free!</router-link>
-        </div>
-      </div>
-  <div class="s-control">
+      
+      <div class="s-control">
         <div class='control-head'>
             <img src="@/assets/img/icon/grandquest.png" />
 
@@ -39,35 +32,44 @@
             </div>
         </div>
       </div>
-      <div class="content">
-        <Games v-if="view==='games'"/>
-        <Travel v-if="view==='travel'"/>
-        <Leaderboards v-if="view==='leaderboards'"/>
 
-        <div id="side-menu">
-          <ul>
-            <li v-on:click="setView('travel')" :class="view === 'travel' ? 'active' : ''">
-              <img src="@/assets/img/icon/bag.png">Explore
-            </li>
-            <li v-on:click="setView('leaderboards')" :class="view === 'leaderboards' ? 'active' : ''">
-              <img src="@/assets/img/icon/scroll.png">Leaderboards
-            </li>
-            <li v-on:click="setView('games')" :class="view === 'games' ? 'active' : ''">
-              <img src="@/assets/img/icon/chest.png">Games
-            </li>
-            <li class="disabled">
-              <img src="@/assets/img/icon/guild.png">Guild
-            </li>
-          </ul>
+      <div id="world-content-hold">
+        <div v-if="!user.authenticated" class="auth-banner">
+          <h2 class="main-title">In order to browse GrandQuest you should sign in!</h2>
+          <div class="auth">
+            <h2>Are you new to GrandQuest?</h2>
+            <router-link to='/signup'>Join for free!</router-link>
+          </div>
+        </div>
+        <div class="content">
+          <Games v-if="view==='games'"/>
+          <Travel v-if="view==='travel'"/>
+          <Leaderboards v-if="view==='leaderboards'"/>
+
+          <div id="side-menu">
+            <ul>
+              <li v-on:click="setView('travel')" :class="view === 'travel' ? 'active' : ''">
+                <img src="@/assets/img/icon/bag.png">Explore
+              </li>
+              <li v-on:click="setView('leaderboards')" :class="view === 'leaderboards' ? 'active' : ''">
+                <img src="@/assets/img/icon/scroll.png">Leaderboards
+              </li>
+              <li v-on:click="setView('games')" :class="view === 'games' ? 'active' : ''">
+                <img src="@/assets/img/icon/chest.png">Games
+              </li>
+              <li class="disabled">
+                <img src="@/assets/img/icon/guild.png">Guild
+              </li>
+            </ul>
+          </div>
         </div>
       </div>
-      
     </div>
-      <div v-if="socket.loading">
-        <h2 class="subtitle">Connecting to the world <ActivityIndicator /></h2>
-      </div>
-      <div class="stats" v-else-if="socket.connected">
-        <h3 class="subtitle">There are {{ currentlyOnline }} players currently online.</h3>
+    <div v-if="socket.loading">
+      <h2 class="subtitle">Connecting to the world <ActivityIndicator /></h2>
+    </div>
+    <div class="stats" v-else-if="socket.connected">
+      <h3 class="subtitle">There are {{ currentlyOnline }} players currently online.</h3>
       </div>
   </div>
       
@@ -159,6 +161,11 @@ export default class Main extends Vue {
   $mainBlueHover: #005e91;
   $mainLightGrey: #e0e0e0;
 
+  #world-content-hold {
+    flex: 1;
+    max-width: 1080px;
+  }
+
   .s-control {        
     flex: 1;
     max-width: 340px;
@@ -214,7 +221,6 @@ export default class Main extends Vue {
     }
   }
   .world-main {
-    max-width: 100%;
     display: flex;
     flex-direction: column;
     align-items: flex-start;

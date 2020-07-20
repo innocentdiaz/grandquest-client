@@ -30,11 +30,6 @@ export default new Router({
       component: About,
     },
     {
-      path: '/devlog/:id?',
-      name: 'devlog',
-      component: DevLog,
-    },
-    {
       path: '/login',
       name: 'login',
       component: LogIn,
