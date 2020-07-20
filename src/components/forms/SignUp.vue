@@ -43,11 +43,6 @@
         </p>
       </div>
 
-      <label>Gender: </label>
-      <select :disabled='isInvalid("password") || isInvalid("username") || isInvalid("email")' name="gender" v-model='gender'>
-        <option value="male">Male</option>
-        <option value="female">Female</option>
-      </select>
       <button :disabled='isInvalid("password") || isInvalid("username") || isInvalid("email")'>
         Sign Up
       </button>

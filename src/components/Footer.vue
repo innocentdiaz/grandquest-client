@@ -12,12 +12,6 @@
           <li>
             <router-link to="/world">World</router-link> •
           </li>
-          <li>
-            <router-link to="/forum">Community</router-link> •
-          </li>
-          <li>
-            <router-link to="/donate">Donate</router-link>
-          </li>
         </ul>
       </div>
       <div id="center">

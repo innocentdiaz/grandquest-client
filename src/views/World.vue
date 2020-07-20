@@ -1,6 +1,7 @@
 <template>
   <div class="world-main">
     <div class="container">
+
       <!-- <header>
         <div class="stats" v-if="socket.loading">
           <h2>Connecting to the world <ActivityIndicator /></h2>
@@ -20,6 +21,22 @@
         <div class="auth">
           <h2>Are you new to GrandQuest?</h2>
           <router-link to='/signup'>Join for free!</router-link>
+        </div>
+      </div>
+  <div class="s-control">
+        <div class='control-head'>
+            <img src="@/assets/img/icon/grandquest.png" />
+
+            <p class="subtitle">Players currently online</p>
+            <div class="player-showcase framed" v-if="socket.connected">
+                <div class="player" v-for="user in world.connectedUsers" :key="user.id">
+                    <img src="@/assets/img/icon/gq.png" class="thumbnail">
+                    <div class="u-content">
+                        <p class="title">{{user.username}}</p>
+                        <p class="subtitle">joined {{sinceDate(user.createdAt)}}</p>
+                    </div>
+                </div>
+            </div>
         </div>
       </div>
       <div class="content">
@@ -44,14 +61,16 @@
           </ul>
         </div>
       </div>
+      
+    </div>
       <div v-if="socket.loading">
         <h2 class="subtitle">Connecting to the world <ActivityIndicator /></h2>
       </div>
       <div class="stats" v-else-if="socket.connected">
         <h3 class="subtitle">There are {{ currentlyOnline }} players currently online.</h3>
       </div>
-    </div>
   </div>
+      
 </template>
 <script lang="ts">
 import { Vue, Component } from 'vue-property-decorator';
@@ -63,6 +82,7 @@ import ActivityIndicator from '@/components/ActivityIndicator.vue';
 import Travel from '@/components/world/Travel.vue';
 import Games from '@/components/world/Games.vue';
 import Leaderboards from '@/components/world/Leaderboards.vue';
+import moment from "moment";
 import { TweenLite, Elastic } from 'gsap';
 
 @Component({
@@ -123,6 +143,12 @@ export default class Main extends Vue {
   get currentlyOnline() {
     return Object.keys(this.world.connectedUsers).length
   }
+  public sinceDate(date: string) {
+    return moment(date).fromNow();
+  }
+  get timeOfDay() {
+    return moment(this.world.timeOfDay).format("ddd, MMM Do, ha");
+  }
 }
 </script>
 
@@ -133,11 +159,64 @@ export default class Main extends Vue {
   $mainBlueHover: #005e91;
   $mainLightGrey: #e0e0e0;
 
+  .s-control {        
+    flex: 1;
+    max-width: 340px;
+    margin-right: 2em;
+    color: $mainBlack;
+    h2 {
+        margin: .5em 0;
+    }
+    h3 {
+        font-weight: lighter;
+        color: $mainGrey;
+    }
+    .player-showcase {
+        display: inline-flex;
+        flex-direction: row;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        width: 100%;
+        // auto hide ugly ms scrollbar
+        -ms-overflow-style: -ms-autohiding-scrollbar; 
+        // smooth mobile scrolling
+        -webkit-overflow-scrolling: touch;
+        // hide scrollbar in webkit browsers
+        &::-webkit-scrollbar { display: none; }
+        .player {
+            flex: 0 0 auto;
+            padding: 1em 1em 1em 0;
+            display: flex;
+            flex-direction: row;
+            .title {
+                color: gold;
+                margin: 0;
+            }
+            .subtitle {
+                margin: 0;
+            }
+            .thumbnail {
+                align-self: flex-start;
+                width: 2.3em;
+                border-radius: 1em;
+                margin-right: 5px;
+            }
+        }
+    }
+    .control-head {
+        background: $mainBlack;
+        padding: 1em;
+        border-radius: 10px;
+
+        img {
+            width: 200px;
+        }
+    }
+  }
   .world-main {
-    min-height: 90vh;
     max-width: 100%;
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
     align-items: flex-start;
     padding: 1em 2em;
 
@@ -170,14 +249,16 @@ export default class Main extends Vue {
       }
     }
     .container {
-      max-width: 1080px;
       width: 100%;
       color: white;
       overflow: hidden;
       border-radius: 5px;
-      margin: 0 auto;
+      display: flex;
+      flex-direction: row;
 
       .content {
+        max-width: 1080px;
+        flex: 1;
         background: black;
         overflow: hidden;
         padding: 10px;

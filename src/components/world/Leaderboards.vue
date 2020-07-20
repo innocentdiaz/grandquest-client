@@ -13,7 +13,7 @@
             <img src="@/assets/img/icon/monokai-village/ht.png"> <span>Hero's Trial</span>
           </div>
           <div class="tab disabled">
-            <img src="@/assets/img/icon/gq.png"><span>Community</span>
+            <img src="@/assets/img/icon/gq.png"><em>Coming soon...</em>
           </div>
         </div>
         <div class="main-container">
