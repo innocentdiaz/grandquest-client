@@ -84,7 +84,6 @@ import ActivityIndicator from '@/components/ActivityIndicator.vue';
 import Travel from '@/components/world/Travel.vue';
 import Games from '@/components/world/Games.vue';
 import Leaderboards from '@/components/world/Leaderboards.vue';
-import moment from "moment";
 import { TweenLite, Elastic } from 'gsap';
 
 @Component({

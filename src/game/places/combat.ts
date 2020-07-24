@@ -47,20 +47,6 @@ interface PhaserGame {
   canvas: HTMLCanvasElement;
   destroy: () => void;
 }
-interface PhaserConfig {
-  type: any;
-  pixelArt?: boolean;
-  width: number;
-  height: number;
-  backgroundColor?: string;
-  physics: any;
-  parent?: string;
-  scene: {
-    preload?: () => void;
-    create?: () => void;
-    update?: () => void;
-  };
-}
 interface Scene {
   add: {
     image: (x: number, y: number, id: string) => any;
@@ -127,7 +113,7 @@ export interface GameController {
     name: 'country' | 'mountains' | null;
     imgs: any[];
   };
-  game: PhaserGame | null;
+  game: Phaser.Game | null;
   targetHand: any;
   isAnimating: boolean;
   selectedAction: null | { id: string; type: string };
@@ -165,14 +151,13 @@ interface PlacingLine {
   3) Game controller actions creation
   4) Return game
 */
-const newGame = (global: GameController): PhaserGame => {
+const newGame = (global: GameController): Phaser.Game => {
   // -------------------------------------------------
   //      Configuration for Phaser Game & Game logic
   //      (I recommend collapsing this entire object when not
   //       working on the game logic, its a bit big)
-  const config: PhaserConfig = {
+  const config: Phaser.Types.Core.GameConfig = {
     type: Phaser.AUTO,
-    pixelArt: true,
     // width set to 98% of window width withing range of 300 and 920 pixels
     width: window.innerWidth * .98 > 920 ? 920 : window.innerWidth * .98 < 300 ? 300 : window.innerWidth * .98,
     height: window.innerHeight * .68,
@@ -626,7 +611,7 @@ const newGame = (global: GameController): PhaserGame => {
 
   // -----------------------------------------------------
   //  Create Phaser Game using config
-  const game: PhaserGame = new Phaser.Game(config);
+  const game = new Phaser.Game(config);
 
   /*
     GameController actions
@@ -670,10 +655,10 @@ const newGame = (global: GameController): PhaserGame => {
       const height = scene.game.canvas.offsetHeight + 10;
       const slope = 200;
       const polygon = new Phaser.Geom.Polygon([
-          0 - slope, height,
-          0, 0,
-          width, 0,
-          width, height,
+          new Phaser.Geom.Point(-200, height),
+          new Phaser.Geom.Point(0, 0),
+          new Phaser.Geom.Point(width, 0),
+          new Phaser.Geom.Point(width, height)
       ]);
 
       const screenCover = scene.add.graphics()
@@ -1181,7 +1166,7 @@ export default function(): GameController {
       });
       // destroy the phaser game instance
       if (gameController.game) {
-        gameController.game.destroy();
+        gameController.game.destroy(false);
         gameController.game = null;
       }
 
@@ -1303,7 +1288,7 @@ export default function(): GameController {
       }
       const width = window.innerWidth * .98;
       const height = window.innerHeight * .68;
-      gameController.game.resize(width > 920 ? 920 : width < 300 ? 300 : width, height);
+      // gameController.game.resize(width > 920 ? 920 : width < 300 ? 300 : width, height);
     },
     highlightCharacters(category) {
       if (!gameController.gameInitialized || !gameController.game) {

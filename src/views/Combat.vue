@@ -253,7 +253,7 @@ export default class CombatRoom extends Vue {
       'You can buy potions to heal yourself or other players in combat. Hooray, teamwork!',
       'Enemies become stronger as you advance. Keep yourself strong by upgrading your defense and power!',
       'Leveling up in combat regenerates your health 100%!',
-    ]);
+    ]) || '';
 
     // combat hub connection attempt
     if (this.socket.connected && this.user.authenticated) {
