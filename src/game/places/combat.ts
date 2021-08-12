@@ -1188,15 +1188,19 @@ export default function(): GameController {
       let side: 0 | 1 | null = null;
 
       switch (event.key.toUpperCase()) {
+        case 'ARROWUP':
         case 'W':
           indexDirection = 'up';
           break;
+        case 'ARROWDOWN':
         case 'S':
           indexDirection = 'down';
           break;
+        case 'ARROWLEFT':
         case 'A':
           side = 0;
           break;
+        case 'ARROWRIGHT':
         case 'D':
           side = 1;
           break;
