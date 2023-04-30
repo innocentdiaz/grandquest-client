@@ -33,7 +33,7 @@
     "@vue/cli-plugin-e2e-cypress": "^4.4.6",
     "@vue/cli-plugin-pwa": "^4.4.6",
     "@vue/cli-plugin-typescript": "^4.4.6",
-    "@vue/cli-service": "^4.4.6",
+    "@vue/cli-service": "^5.0.8",
     "jest": "^26.1.0",
     "node-sass": "^4.14.1",
     "phaser3-docs": "github:photonstorm/phaser3-docs",
